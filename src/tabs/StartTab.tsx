@@ -5,7 +5,7 @@ import { startTour } from "../components/Tour";
 import { WB_SOUND } from "../core/sound";
 import { studyEvents, dueList } from "../features/study";
 import { wbWeak, weakEvents } from "../features/weak";
-import { openWifi } from "./ArcadeTab";
+import { openWifi, worldUi } from "./ArcadeTab";
 import { TrailBackground } from "../components/TrailBackground";
 import { eduRequest } from "./EduTab";
 
@@ -169,8 +169,12 @@ export function StartTab() {
               className="start-card"
               data-goto={c.goto}
               key={c.goto}
-              // The original looked up a matching tab BUTTON; Block World has none, so that card does nothing.
-              onClick={() => { if (c.goto !== "tab-world") goto(c.goto); }}
+              // The original looked up a matching tab BUTTON and Block World has none, so its card did nothing.
+              // 5.59.4 port: the card now opens Block World at its mode picker, the same as Arcade → Block World.
+              onClick={() => {
+                if (c.goto === "tab-world") worldUi.modeSelect.set(true);
+                goto(c.goto);
+              }}
             >
               <div className="sc-icon">{c.icon}</div>
               <h3>{c.title}</h3>

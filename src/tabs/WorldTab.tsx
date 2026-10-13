@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { activeTab, arcadeSub, goto } from "../core/nav";
 import { useValue } from "../core/store";
 import { WORLD_MARKUP } from "../world/markup";
@@ -47,6 +47,15 @@ export function WorldTab() {
     initWorld();
     return () => root.removeEventListener("click", onClick);
   }, []);
+
+  // The engine sizes its canvas from this section, which has no size while it is hidden. The original added the
+  // "active" class and THEN sent game:resize; here the class is applied by React, so the event has to wait for the commit
+  // or the renderer keeps the window's size and the picture comes out squashed (and the world picks the wrong spots).
+  useLayoutEffect(() => {
+    if (tab !== "tab-world") return;
+    window.dispatchEvent(new Event("game:resize"));
+    window.dispatchEvent(new Event("world:check-resume"));
+  }, [tab]);
 
   // Arcade "Block World" sub-tab asks for the mode picker.
   useEffect(() => {

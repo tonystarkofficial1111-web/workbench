@@ -7,12 +7,14 @@ const root = join(import.meta.dir, "..");
 const L = readFileSync(join(root, "_orig/029_script.js"), "utf8").split("\n");
 const range = (a: number, b: number) => L.slice(a - 1, b).join("\n"); // 1-based inclusive
 
+// Source is Workbench 5.59.4: the F1 Cockpit grew by 123 lines (5.59.1-5.59.4 realistic cockpit), so the ranges after it moved down.
+const F1_GROWTH = 123;
 const pieces = [
   range(953, 962), // KeyTracker
   range(704, 884), // CAR hub, rally, thinking
   range(1220, 1351), // Drift King
-  range(1854, 2642), // F1 Cockpit
-  range(2776, 2814), // six car cabinets
+  range(1854, 2642 + F1_GROWTH), // F1 Cockpit
+  range(2776 + F1_GROWTH, 2814 + F1_GROWTH), // six car cabinets
 ];
 
 const header = `// @ts-nocheck

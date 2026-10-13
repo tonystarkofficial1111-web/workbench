@@ -1,4 +1,4 @@
-﻿# Workbench 5.59.0 — React + TypeScript rewrite
+﻿# Workbench 5.59.4 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -12,6 +12,21 @@ bun run build:plain  # minified, not obfuscated
 bun run build:dev    # readable build for debugging
 bun run typecheck
 ```
+
+### Updating to a newer original release
+
+```bash
+bun run tools/split-html.ts "<Workbench_x_y_z.html>" _orig_new   # split it into script/style blocks
+# diff _orig_new against _orig (blocks with a different hash are what changed), copy the changed blocks into _orig,
+# then re-run the matching generators (bun run gen:engines, bun run tools/extract-data.ts) and rebuild.
+```
+
+### Comparing against the original in a browser
+
+`bun run serve` serves the original at `/orig` and the build at `/new`; `/orig-dbg` and `/new-dbg` (build the port with `--dev`) add
+test hooks to the Block World engine, and `/harness.js` (`tools/dev-harness.js`) holds the click / placement helpers used to check that
+every Block World button behaves the same in both. `bun run build.ts --dbg` puts the same hooks into the real obfuscated build so it can
+be driven too. **Never ship a `--dbg` build.**
 
 ## Layout
 

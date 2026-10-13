@@ -1,4 +1,4 @@
-﻿{
+{
     "name":  "workbench",
     "type":  "module",
     "private":  true,
@@ -28,5 +28,6 @@
                          "react-dom":  "18.3.1",
                          "three":  "0.160.0"
                      },
-    "workbenchVersion":  "5.59.0"
+    "workbenchVersion":  "5.59.4"
 }
+

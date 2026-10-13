@@ -7,12 +7,15 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { BunPlugin } from "bun";
+import { hasHooks, injectHooks } from "./tools/dev-hooks";
 
 const root = import.meta.dir;
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const version: string = pkg.workbenchVersion ?? "5.59.0";
 const watchMode = process.argv.includes("--dev");
 const obfuscate = !watchMode && !process.argv.includes("--no-obf");
+// --dbg: inject the Block World test hooks (tools/dev-hooks.ts) so the real production build can be driven by tests. Never ship this build.
+const debugHooks = process.argv.includes("--dbg");
 
 // Cascade order matters: every stylesheet in src/styles is imported in filename order (see PORTING_NOTES.md).
 writeFileSync(
@@ -70,7 +73,14 @@ const obfPlugin: BunPlugin = {
     };
     build.onLoad({ filter: /[\\/]src[\\/].*\.(ts|tsx)$/ }, (args) => {
       if (args.path.endsWith(".d.ts") || /src[\\/]styles\.ts$/.test(args.path)) return undefined;
-      const code = readFileSync(args.path, "utf8");
+      const hookEngine = debugHooks && /src[\\/]world[\\/]engine\.ts$/.test(args.path);
+      if (!obfuscate && !hookEngine) return undefined;
+      let code = readFileSync(args.path, "utf8");
+      if (hookEngine) {
+        if (!hasHooks(code)) throw new Error("--dbg: hook markers not found in the world engine");
+        code = injectHooks(code);
+        if (!obfuscate) return { contents: code, loader: "ts" };
+      }
       let js = (args.path.endsWith(".tsx") ? transpilers.tsx : transpilers.ts).transformSync(code);
       // Bun's standalone transpiler leaves the automatic-JSX helper names (jsx_xxx / jsxs_xxx / Fragment_xxx) unimported.
       const jsxRefs = new Map<string, string>();
@@ -91,7 +101,7 @@ const result = await Bun.build({
   format: "iife",
   minify: !watchMode,
   sourcemap: "none",
-  plugins: obfuscate ? [obfPlugin] : [],
+  plugins: obfuscate || debugHooks ? [obfPlugin] : [],
   define: {
     "process.env.NODE_ENV": JSON.stringify(watchMode ? "development" : "production"),
     __WB_VERSION__: JSON.stringify(version),
