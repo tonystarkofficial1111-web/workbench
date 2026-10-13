@@ -1,0 +1,690 @@
+{
+ "reg": [
+  {
+   "slot": "ac-slot-1",
+   "key": "rooftopRumble",
+   "name": "Rooftop Rumble",
+   "cat": "skill"
+  },
+  {
+   "slot": "rc-slot-2",
+   "key": "circuitRacer",
+   "name": "Neon Sprint",
+   "cat": "skill"
+  },
+  {
+   "slot": "bb-slot-3",
+   "key": "neonBreaker",
+   "name": "Neon Breaker",
+   "cat": "skill"
+  },
+  {
+   "slot": "sf-slot-4",
+   "key": "starfallDefender",
+   "name": "Starfall Defender",
+   "cat": "skill"
+  },
+  {
+   "slot": "sn-slot-5",
+   "key": "circuitSnake",
+   "name": "Circuit Snake",
+   "cat": "skill"
+  },
+  {
+   "slot": "pg-slot-6",
+   "key": "neonPong",
+   "name": "Neon Pong",
+   "cat": "skill"
+  },
+  {
+   "slot": "mc-slot-7",
+   "key": "meteorCommand",
+   "name": "Meteor Command",
+   "cat": "skill"
+  },
+  {
+   "slot": "ss-slot-8",
+   "key": "stackSurge",
+   "name": "Stack Surge",
+   "cat": "skill"
+  },
+  {
+   "slot": "bd-slot-9",
+   "key": "botDefense",
+   "name": "Bot Defense",
+   "cat": "skill"
+  },
+  {
+   "slot": "cg-slot-10",
+   "key": "crystalGarden",
+   "name": "Crystal Garden",
+   "cat": "patience"
+  },
+  {
+   "slot": "mm-slot-11",
+   "key": "memoryMatch",
+   "name": "Memory Match",
+   "cat": "patience"
+  },
+  {
+   "slot": "cm-slot-12",
+   "key": "colorMixer",
+   "name": "Color Mixer",
+   "cat": "patience"
+  },
+  {
+   "slot": "fh-slot-13",
+   "key": "fishingHole",
+   "name": "Fishing Hole",
+   "cat": "patience"
+  },
+  {
+   "slot": "dc-slot-14",
+   "key": "dotConnect",
+   "name": "Dot Connect",
+   "cat": "patience"
+  },
+  {
+   "slot": "sp-slot-15",
+   "key": "slidingPuzzle",
+   "name": "Slide Puzzle",
+   "cat": "patience"
+  },
+  {
+   "slot": "pm-slot-16",
+   "key": "patternMemory",
+   "name": "Pattern Memory",
+   "cat": "patience"
+  },
+  {
+   "slot": "tb-slot-17",
+   "key": "towerBuilder",
+   "name": "Tower Builder",
+   "cat": "patience"
+  },
+  {
+   "slot": "bs-slot-18",
+   "key": "bubbleSort",
+   "name": "Bubble Sort",
+   "cat": "patience"
+  },
+  {
+   "slot": "if-slot-19",
+   "key": "idleFarm",
+   "name": "Idle Farm",
+   "cat": "patience"
+  },
+  {
+   "slot": "ld-slot-20",
+   "key": "laserDodge",
+   "name": "Laser Dodge",
+   "cat": "fast"
+  },
+  {
+   "slot": "nd-slot-21",
+   "key": "ninjaDash",
+   "name": "Ninja Dash",
+   "cat": "fast"
+  },
+  {
+   "slot": "oc-slot-22",
+   "key": "orbCatcher",
+   "name": "Orb Catcher",
+   "cat": "fast"
+  },
+  {
+   "slot": "bs2-slot-23",
+   "key": "bladeSlice",
+   "name": "Blade Slice",
+   "cat": "fast"
+  },
+  {
+   "slot": "gf-slot-24",
+   "key": "gravityFlip",
+   "name": "Gravity Flip",
+   "cat": "fast"
+  },
+  {
+   "slot": "bt-slot-25",
+   "key": "bulletStorm",
+   "name": "Bullet Storm",
+   "cat": "fast"
+  },
+  {
+   "slot": "pj-slot-26",
+   "key": "platformJumper",
+   "name": "Platform Jumper",
+   "cat": "fast"
+  },
+  {
+   "slot": "pr-slot-27",
+   "key": "pixelRunner",
+   "name": "Pixel Runner",
+   "cat": "fast"
+  },
+  {
+   "slot": "cr-slot-28",
+   "key": "chainReactor",
+   "name": "Chain Reactor",
+   "cat": "fast"
+  },
+  {
+   "slot": "rd-slot-29",
+   "key": "rocketDash",
+   "name": "Rocket Dash",
+   "cat": "fast"
+  },
+  {
+   "slot": "plp-30-slot",
+   "key": "protoReaction",
+   "name": "REACTION TEST",
+   "cat": "patience",
+   "prototype": true,
+   "hybrid": true,
+   "placeholder": false,
+   "desc": "Wait for green, then click as fast as you can. 5 rounds — lower reaction time wins."
+  },
+  {
+   "slot": "plf-40-slot",
+   "key": "protoTapRush",
+   "name": "TAP RUSH",
+   "cat": "fast",
+   "prototype": true,
+   "hybrid": true,
+   "placeholder": false,
+   "desc": "Tap as many targets as you can in 15 seconds. Pure speed."
+  },
+  {
+   "slot": "pls-50-slot",
+   "key": "protoAimTrainer",
+   "name": "AIM TRAINER",
+   "cat": "skill",
+   "prototype": true,
+   "hybrid": true,
+   "placeholder": false,
+   "desc": "Click the bouncing target as many times as possible in 20 seconds."
+  },
+  {
+   "slot": "plp-30-slot",
+   "key": "protoReaction",
+   "name": "REACTION TEST",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Wait for green, then click as fast as you can. 5 rounds — lower reaction time wins.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-31-slot",
+   "key": "zen519",
+   "name": "ZEN GARDEN",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Rake patterns in the sand and arrange stones to match a target layout. Soothing and slow.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-32-slot",
+   "key": "hanoi519",
+   "name": "TOWER OF HANOI",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Move stacked rings to the far peg one at a time. Never place a larger ring on a smaller one.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-33-slot",
+   "key": "slide520",
+   "name": "SLIDE PUZZLE",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Slide numbered tiles into order on a 4x4 grid. Plan every move ahead.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-34-slot",
+   "key": "mines520",
+   "name": "MINE SWEEPER",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Flag every hidden mine using numeric clues. Pure logic, no timer pressure.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-35-slot",
+   "key": "maze520",
+   "name": "MAZE WEAVER",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Trace a path through a procedurally woven labyrinth. Take your time finding the exit.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-36-slot",
+   "key": "domino520",
+   "name": "DOMINO CASCADE",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Place dominoes so a single push topples them all in sequence. Satisfying chain reactions.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-37-slot",
+   "key": "colorsort520",
+   "name": "COLOR SORT",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Pour colored liquids between tubes until each holds a single color. Easy to learn, hard to master.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-38-slot",
+   "key": "nonogram520",
+   "name": "NONOGRAM",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Reveal a hidden pixel picture using row and column number clues.",
+   "prototype": true
+  },
+  {
+   "slot": "plp-39-slot",
+   "key": "jigsaw520",
+   "name": "JIGSAW RELAX",
+   "cat": "patience",
+   "placeholder": false,
+   "desc": "Drag puzzle pieces into place to complete a calm image.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-40-slot",
+   "key": "protoTapRush",
+   "name": "TAP RUSH",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Tap as many targets as you can in 15 seconds. Pure speed.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-41-slot",
+   "key": "laser519",
+   "name": "LASER DASH",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Sprint down a corridor weaving between sweeping laser beams.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-42-slot",
+   "key": "turbo519",
+   "name": "TURBO TAP",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Tap as many targets as possible before the timer hits zero. Reflexes only.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-43-slot",
+   "key": "asteroid520",
+   "name": "ASTEROID RUN",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Pilot a ship through a dense asteroid belt. One hit and you are dust.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-44-slot",
+   "key": "bladefall520",
+   "name": "BLADE FALL",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Sidestep falling blades while grabbing coins. The drop rate never stops rising.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-45-slot",
+   "key": "neonjump520",
+   "name": "NEON JUMP",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Leap between disappearing platforms that fade the instant you land.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-46-slot",
+   "key": "volley520",
+   "name": "VOLLEY BLITZ",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Keep the ball off your side in a frantic single-button volley rally.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-47-slot",
+   "key": "spike520",
+   "name": "SPIKE SURGE",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Dodge rising spikes from every wall. Survive as long as you can.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-48-slot",
+   "key": "dashclash520",
+   "name": "DASH CLASH",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Charge a dash to burst through barriers before they crush you.",
+   "prototype": true
+  },
+  {
+   "slot": "plf-49-slot",
+   "key": "pixelDuel",
+   "name": "PIXEL DUEL",
+   "cat": "fast",
+   "placeholder": false,
+   "desc": "Two players, one keyboard. P1: W/S + Space. P2: arrows + Enter. First to 5.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-50-slot",
+   "key": "protoAimTrainer",
+   "name": "AIM TRAINER",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Click the bouncing target as many times as possible in 20 seconds.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-51-slot",
+   "key": "tank519",
+   "name": "TANK BARRAGE",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Maneuver a tank across a warzone, destroying enemy armor and turrets.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-52-slot",
+   "key": "sniper519",
+   "name": "SNIPER ALLEY",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Line up long-range shots against moving targets under a tight clock.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-53-slot",
+   "key": "drift519",
+   "name": "DRIFT KING",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Drift around hairpin turns to rack up style points before the lap ends.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-54-slot",
+   "key": "mecha520",
+   "name": "MECHA BRAWL",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Pilot a mech in close-quarters combat against rival machines.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-55-slot",
+   "key": "arrow520",
+   "name": "ARROW STORM",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Loose arrows at advancing hordes from the castle wall.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-56-slot",
+   "key": "gridracer520",
+   "name": "GRID RACER",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Navigate a vector racing track and beat the ghost lap time.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-57-slot",
+   "key": "chess520",
+   "name": "CHESS DUEL",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Outwit an adaptive AI opponent in a classic chess match.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-58-slot",
+   "key": "bomber520",
+   "name": "BOMBER RAID",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Lay bombs strategically to trap foes in a maze arena.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-59-slot",
+   "key": "starpilot520",
+   "name": "STAR PILOT",
+   "cat": "skill",
+   "placeholder": false,
+   "desc": "Dogfight enemy fighters across a scrolling starfield. Manage shields and weapons.",
+   "prototype": true
+  },
+  {
+   "slot": "pls-60-slot",
+   "key": "pitstop532",
+   "name": "PIT STOP PRO",
+   "cat": "skill",
+   "sub": "car · service",
+   "desc": "Service four tires under pressure, then release the car on the pit window.",
+   "placeholder": false,
+   "prototype": true
+  },
+  {
+   "slot": "pls-61-slot",
+   "key": "reactionlights532",
+   "name": "REACTION LIGHTS",
+   "cat": "skill",
+   "sub": "car · reflex",
+   "desc": "Five-light race-start reaction test. Wait for green, then react instantly.",
+   "placeholder": false,
+   "prototype": true
+  },
+  {
+   "slot": "pls-62-slot",
+   "key": "apexhunter532",
+   "name": "APEX HUNTER",
+   "cat": "skill",
+   "sub": "car · racing line",
+   "desc": "Position the car through the apex gate and learn to hit the racing line.",
+   "placeholder": false,
+   "prototype": true
+  },
+  {
+   "slot": "pls-63-slot",
+   "key": "parking532",
+   "name": "PARKING MASTER",
+   "cat": "skill",
+   "sub": "car · precision",
+   "desc": "Park a car cleanly inside a marked bay using throttle and steering.",
+   "placeholder": false,
+   "prototype": true
+  },
+  {
+   "slot": "pls-64-slot",
+   "key": "draglaunch532",
+   "name": "DRAG LAUNCH",
+   "cat": "skill",
+   "sub": "car · shifting",
+   "desc": "Launch hard, manage RPM, and shift through the gears to reach 60 MPH.",
+   "placeholder": false,
+   "prototype": true
+  },
+  {
+   "slot": "pls-65-slot",
+   "key": "setuplab532",
+   "name": "RACE SETUP LAB",
+   "cat": "skill",
+   "sub": "car · tuning",
+   "desc": "Tune front/rear aero, brake bias, and ride height for a balanced baseline.",
+   "placeholder": false,
+   "prototype": true
+  }
+ ],
+ "ph": [
+  {
+   "slot": "plp-30",
+   "name": "SOLITAIRE SPIRES",
+   "desc": "Stack cards in descending order across four medieval towers. A calm, classic patience challenge."
+  },
+  {
+   "slot": "plp-31",
+   "name": "ZEN GARDEN",
+   "desc": "Rake patterns in the sand and arrange stones to match a target layout. Soothing and slow."
+  },
+  {
+   "slot": "plp-32",
+   "name": "TOWER OF HANOI",
+   "desc": "Move stacked rings to the far peg one at a time. Never place a larger ring on a smaller one."
+  },
+  {
+   "slot": "plp-33",
+   "name": "SLIDE PUZZLE",
+   "desc": "Slide numbered tiles into order on a 4x4 grid. Plan every move ahead."
+  },
+  {
+   "slot": "plp-34",
+   "name": "MINE SWEEPER",
+   "desc": "Flag every hidden mine using numeric clues. Pure logic, no timer pressure."
+  },
+  {
+   "slot": "plp-35",
+   "name": "MAZE WEAVER",
+   "desc": "Trace a path through a procedurally woven labyrinth. Take your time finding the exit."
+  },
+  {
+   "slot": "plp-36",
+   "name": "DOMINO CASCADE",
+   "desc": "Place dominoes so a single push topples them all in sequence. Satisfying chain reactions."
+  },
+  {
+   "slot": "plp-37",
+   "name": "COLOR SORT",
+   "desc": "Pour colored liquids between tubes until each holds a single color. Easy to learn, hard to master."
+  },
+  {
+   "slot": "plp-38",
+   "name": "NONOGRAM",
+   "desc": "Reveal a hidden pixel picture using row and column number clues."
+  },
+  {
+   "slot": "plp-39",
+   "name": "JIGSAW RELAX",
+   "desc": "Drag puzzle pieces into place to complete a calm landscape image."
+  },
+  {
+   "slot": "plf-40",
+   "name": "COMET CHASE",
+   "desc": "Dodge incoming comets while collecting stardust. Speed ramps up every few seconds."
+  },
+  {
+   "slot": "plf-41",
+   "name": "LASER DASH",
+   "desc": "Sprint down a corridor weaving between sweeping laser beams."
+  },
+  {
+   "slot": "plf-42",
+   "name": "TURBO TAP",
+   "desc": "Tap as many targets as possible before the timer hits zero. Reflexes only."
+  },
+  {
+   "slot": "plf-43",
+   "name": "ASTEROID RUN",
+   "desc": "Pilot a ship through a dense asteroid belt. One hit and you are dust."
+  },
+  {
+   "slot": "plf-44",
+   "name": "BLADE FALL",
+   "desc": "Sidestep falling blades while grabbing coins. The drop rate never stops rising."
+  },
+  {
+   "slot": "plf-45",
+   "name": "NEON JUMP",
+   "desc": "Leap between disappearing platforms that fade the instant you land."
+  },
+  {
+   "slot": "plf-46",
+   "name": "VOLLEY BLITZ",
+   "desc": "Keep the ball off your side in a frantic single-button volley rally."
+  },
+  {
+   "slot": "plf-47",
+   "name": "SPIKE SURGE",
+   "desc": "Dodge rising spikes from every wall. Survive as long as you can."
+  },
+  {
+   "slot": "plf-48",
+   "name": "DASH CLASH",
+   "desc": "Charge a dash to burst through barriers before they crush you."
+  },
+  {
+   "slot": "plf-49",
+   "name": "ORBIT RUSH",
+   "desc": "Orbit a star and fling yourself between gravity wells at breakneck speed."
+  },
+  {
+   "slot": "pls-50",
+   "name": "GLADIATOR ARENA",
+   "desc": "Trade blows with wave after wave of arena fighters. Time your blocks and counters."
+  },
+  {
+   "slot": "pls-51",
+   "name": "TANK BARRAGE",
+   "desc": "Maneuver a tank across a warzone, destroying enemy armor and turrets."
+  },
+  {
+   "slot": "pls-52",
+   "name": "SNIPER ALLEY",
+   "desc": "Line up long-range shots against moving targets under a tight clock."
+  },
+  {
+   "slot": "pls-53",
+   "name": "DRIFT KING",
+   "desc": "Drift around hairpin turns to rack up style points before the lap ends."
+  },
+  {
+   "slot": "pls-54",
+   "name": "MECHA BRAWL",
+   "desc": "Pilot a mech in close-quarters combat against rival machines."
+  },
+  {
+   "slot": "pls-55",
+   "name": "ARROW STORM",
+   "desc": "Loose arrows at advancing hordes from the castle wall."
+  },
+  {
+   "slot": "pls-56",
+   "name": "GRID RACER",
+   "desc": "Navigate a vector racing track and beat the ghost lap time."
+  },
+  {
+   "slot": "pls-57",
+   "name": "CHESS DUEL",
+   "desc": "Outwit an adaptive AI opponent in a classic chess match."
+  },
+  {
+   "slot": "pls-58",
+   "name": "BOMBER RAID",
+   "desc": "Lay bombs strategically to trap foes in a maze arena."
+  },
+  {
+   "slot": "pls-59",
+   "name": "STAR PILOT",
+   "desc": "Dogfight enemy fighters across a scrolling starfield. Manage shields and weapons."
+  }
+ ]
+}

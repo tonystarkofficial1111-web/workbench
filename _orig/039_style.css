@@ -1,0 +1,70 @@
+
+html body .f1-center-stage>.f1-bottom-hud{overflow:visible;position:relative;z-index:2}
+html body .f1-center-stage>.f1-bottom-hud .f1-wheel-wrap{transform:rotate(var(--f1-steer,0deg)) scale(.84)!important;transform-origin:50% 50%;transition:transform .05s linear;will-change:transform;border:0;clip-path:polygon(0 20%,3% 8%,18% 8%,24% 0,76% 0,82% 8%,97% 8%,100% 20%,100% 82%,97% 100%,3% 100%,0 82%);background:repeating-linear-gradient(45deg,#1b1e24 0 3px,#0e1014 3px 6px),linear-gradient(145deg,#2b313b,#0b0d11);background-blend-mode:overlay;box-shadow:inset 0 0 0 2px rgba(224,164,88,.4),inset 0 2px 0 rgba(255,255,255,.1)}
+html body .f1-wheel-grip{background:linear-gradient(180deg,#14171c,#050608);border-color:#111}
+html body .f1-knob{width:19px;height:19px;position:relative;background:conic-gradient(#2a2f38,#0d0f13,#2a2f38,#0d0f13,#2a2f38)}
+html body .f1-knob:after{content:'';position:absolute;left:50%;top:1px;width:2px;height:6px;margin-left:-1px;background:#e0a458}
+html body .f1-center-screen{box-shadow:inset 0 0 12px rgba(57,255,136,.18);border:1px solid #2c3b46}
+
+/* ===== 5.43.1 layout patch (2026-10-06): scrollable Start tab, full-window Assistant lock, centered content ===== */
+.tab{min-height:0!important;}
+#tab-start{position:absolute!important;inset:0!important;height:auto!important;overflow:hidden!important;}
+#tab-start .start-wrap{height:100%!important;max-width:1180px!important;margin-left:auto!important;margin-right:auto!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+#tab-ai > #assistant-page-gate,#assistant-page-gate{position:fixed!important;inset:0!important;top:0!important;right:0!important;bottom:0!important;left:0!important;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;margin:0!important;padding:24px!important;box-sizing:border-box!important;display:grid!important;place-items:center!important;z-index:2147483000!important;background:radial-gradient(circle at 50% 38%,rgba(95,212,199,.10),transparent 46%),rgba(4,7,11,.97)!important;-webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;}
+#tab-ai > #assistant-page-gate[aria-hidden="true"],#assistant-page-gate[aria-hidden="true"]{display:none!important;}
+#assistant-page-gate .assistant-page-gate-card{margin:0 auto!important;}
+#assistant-page-gate .assistant-gate-back{display:block;margin:14px auto 0;padding:6px 10px;background:transparent;border:0;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;}
+#assistant-page-gate .assistant-gate-back:hover{color:var(--cyan);}
+#tab-data .data-wrap,#tab-dev .dev-wrap,#tab-videos .vid-wrap{margin-left:auto!important;margin-right:auto!important;width:100%!important;box-sizing:border-box!important;}
+#tab-data .data-wrap{align-items:center!important;}
+#tab-ai .ai-layout{margin-left:auto!important;margin-right:auto!important;}
+#tab-edu .edu-workspace,#tab-arcade .arcade-wrap{margin-left:auto!important;margin-right:auto!important;}
+
+/* ===== 5.43.2 (2026-10-06): lock screens like the Developer lock, breathing blue glow, bigger titles, diagonal glowing grid ===== */
+@keyframes wbGridDrift{from{transform:translate(0,0)}to{transform:translate(72px,72px)}}
+@keyframes wbBreath{0%,100%{opacity:.30}50%{opacity:1}}
+@keyframes wbGateGlow{0%,100%{box-shadow:0 0 12px rgba(95,212,255,.16),0 0 36px rgba(95,212,255,.07),inset 0 0 10px rgba(95,212,255,.04);border-color:rgba(95,212,255,.30)}50%{box-shadow:0 0 26px rgba(95,212,255,.60),0 0 90px rgba(95,212,255,.30),inset 0 0 24px rgba(95,212,255,.14);border-color:rgba(95,212,255,.95)}}
+@keyframes wbGateText{0%,100%{text-shadow:0 0 6px rgba(95,212,255,.15)}50%{text-shadow:0 0 14px rgba(95,212,255,.75),0 0 34px rgba(95,212,255,.40)}}
+
+/* Developer background squares: drift top-left -> bottom-right, glowing and breathing */
+#tab-dev::before,#assistant-page-gate::before{
+  content:"";position:absolute;inset:-72px 0 0 -72px!important;pointer-events:none;will-change:transform;
+  background-image:
+    linear-gradient(180deg,rgba(95,212,255,.45) 0,rgba(95,212,255,.45) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(95,212,255,.45) 0,rgba(95,212,255,.45) 1px,transparent 1px),
+    linear-gradient(180deg,rgba(95,212,255,.16) 0,rgba(95,212,255,.16) 6px,transparent 6px),
+    linear-gradient(90deg,rgba(95,212,255,.16) 0,rgba(95,212,255,.16) 6px,transparent 6px)!important;
+  background-size:72px 72px!important;background-repeat:repeat!important;
+  animation:wbGridDrift 7s linear infinite,wbBreath 4.2s ease-in-out infinite!important;
+}
+
+/* Assistant lock: same look as the Developer lock, inside the page, nav stays visible */
+#tab-ai > #assistant-page-gate,#assistant-page-gate{
+  position:absolute!important;inset:0!important;top:0!important;right:0!important;bottom:0!important;left:0!important;
+  width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;margin:0!important;
+  padding:24px!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;place-items:center!important;
+  z-index:30!important;overflow:hidden!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  background:radial-gradient(circle at 50% 30%,rgba(95,212,255,.12),transparent 40%),radial-gradient(circle at 82% 75%,rgba(176,112,255,.10),transparent 30%),#05080d!important;
+}
+#tab-ai > #assistant-page-gate[aria-hidden="true"],#assistant-page-gate[aria-hidden="true"]{display:none!important;}
+#assistant-gate-back{display:none!important;}
+#assistant-page-gate .assistant-page-gate-card,#tab-dev .dev-gate{
+  position:relative;z-index:1;width:min(520px,100%)!important;max-width:520px!important;box-sizing:border-box!important;
+  padding:36px 32px!important;text-align:center;background:#0e151e!important;border:1px solid rgba(95,212,255,.35)!important;border-radius:14px!important;box-shadow:none!important;
+}
+#tab-dev .dev-gate{margin:8vh auto 0!important;}
+#assistant-page-gate .assistant-page-gate-card::after,#tab-dev .dev-gate::after{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;border:1px solid rgba(95,212,255,.30);
+  animation:wbGateGlow 3.8s ease-in-out infinite;
+}
+#assistant-page-gate .assistant-page-gate-card h2,#tab-dev .dev-gate h2{
+  font-family:'Space Grotesk','Inter',sans-serif!important;font-size:clamp(30px,8.5vw,46px)!important;font-weight:800!important;line-height:1.05!important;letter-spacing:-.04em!important;margin:0 0 10px!important;color:#eef3f5;
+  animation:wbGateText 3.8s ease-in-out infinite;
+}
+#assistant-page-gate .assistant-page-gate-kicker{font-size:12px!important;letter-spacing:.3em!important;margin-bottom:12px!important;animation:wbGateText 3.8s ease-in-out infinite;}
+#assistant-page-gate .assistant-page-gate-card p,#tab-dev .dev-gate p{font-size:15px!important;margin:0 0 20px!important;}
+#assistant-page-gate-form,#tab-dev .dev-gate form{display:flex!important;flex-direction:row!important;gap:10px!important;}
+#assistant-page-gate-form #assistant-password,#tab-dev .dev-gate input{font-size:18px!important;padding:13px 14px!important;border:1px solid rgba(95,212,255,.35)!important;border-radius:9px!important;background:#0a1017!important;color:#eef3f5!important;min-width:0;}
+#assistant-page-gate-form #assistant-password{text-align:center;letter-spacing:.3em;}
+#assistant-page-gate-form button,#tab-dev .dev-gate button{font-size:16px!important;padding:13px 20px!important;border-radius:9px!important;}
+@media(prefers-reduced-motion:reduce){#tab-dev::before,#assistant-page-gate::before,#assistant-page-gate .assistant-page-gate-card::after,#tab-dev .dev-gate::after,#assistant-page-gate .assistant-page-gate-card h2,#tab-dev .dev-gate h2,#assistant-page-gate .assistant-page-gate-kicker{animation:none!important}}

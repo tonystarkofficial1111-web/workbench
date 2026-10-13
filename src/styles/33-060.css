@@ -1,0 +1,14 @@
+
+.yt-panes{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+#vid-online-view .yt-panes button{background:var(--panel-2);color:var(--muted);border:2px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px}
+#vid-online-view .yt-panes button:hover{color:var(--text);border-color:var(--amber)}
+#vid-online-view .yt-panes button.on{background:var(--amber);color:#1c1408;border-color:var(--amber)}
+.yt-cardw{position:relative;min-width:0}
+.yt-cardw>button.yt-card{width:100%}
+.yt-ctl{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:2}
+#vid-online-view .yt-ctl button{padding:4px 8px;font-size:13px;line-height:1;background:rgba(0,0,0,.72);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:6px}
+#vid-online-view .yt-ctl button:hover{border-color:var(--amber)}
+#vid-online-view .yt-ctl button.on{background:var(--amber);color:#1c1408;border-color:var(--amber)}
+.yt-saved-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px;font-size:15px}
+.yt-saved-note{font-size:13px;color:var(--muted);margin:4px 0 12px;min-height:1em}
+#vid-online-view .yt-btnrow button.yt-on{background:var(--amber);color:#1c1408;border-color:var(--amber)}

@@ -1,0 +1,59 @@
+
+/* 5.41.0: final Start hero and Educational hover polish requested by user. */
+#tab-edu .edu-cab:hover .edu-cab-title,
+#tab-edu .edu-cab:focus-visible .edu-cab-title,
+#tab-edu .edu-cab:hover .edu-cab-meta,
+#tab-edu .edu-cab:focus-visible .edu-cab-meta{
+  color:#ffffff!important;
+}
+#tab-edu .edu-cab:hover .edu-cab-art,
+#tab-edu .edu-cab:focus-visible .edu-cab-art{
+  font-size:76px!important;
+  opacity:.20!important;
+  filter:brightness(1.35)!important;
+}
+#tab-edu .edu-cab:hover .edu-logo-ti,
+#tab-edu .edu-cab:focus-visible .edu-logo-ti{
+  filter:brightness(1.35)!important;
+}
+
+#tab-start .start-hero{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#tab-start .start-hero h2{
+  font-size:44px!important;
+  line-height:1.08!important;
+  margin:8px 0 0!important;
+}
+#tab-start .start-hero p{
+  margin:12px auto 0!important;
+  max-width:760px!important;
+  font-size:16px!important;
+  line-height:1.6!important;
+  color:#d4dbe2!important;
+  text-shadow:0 0 12px rgba(255,255,255,.08)!important;
+}
+#wb-tour-launch{
+  margin-top:18px!important;
+  font-size:16px!important;
+  line-height:1.2!important;
+  padding:10px 14px!important;
+  color:#ffffff!important;
+  border-color:#1fb6ff!important;
+  background:#182229!important;
+  box-shadow:0 0 12px rgba(31,182,255,.22)!important;
+}
+#wb-tour-launch:hover{
+  border-color:#1fb6ff!important;
+  color:#ffffff!important;
+  box-shadow:0 0 20px rgba(31,182,255,.38)!important;
+}
+@media(max-width:600px){
+  #tab-start .start-hero h2{font-size:36px!important;}
+  #tab-start .start-hero p{font-size:15px!important;}
+}
+/* [port] dropped: original rule was invalid CSS (stray <style> prefix) and never applied in the browser */

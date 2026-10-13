@@ -1,0 +1,32 @@
+﻿{
+    "name":  "workbench",
+    "type":  "module",
+    "private":  true,
+    "scripts":  {
+                    "build":  "bun run build.ts",
+                    "build:dev":  "bun run build.ts --dev",
+                    "build:plain":  "bun run build.ts --no-obf",
+                    "typecheck":  "tsc -p . --noEmit",
+                    "serve":  "bun run serve.ts",
+                    "gen:engines":  "bun run tools/convert-cabinets.ts \u0026\u0026 bun run tools/convert-029.ts \u0026\u0026 bun run tools/convert-protos.ts \u0026\u0026 bun run tools/convert-duel.ts \u0026\u0026 bun run tools/convert-world.ts \u0026\u0026 bun run tools/convert-recorder.ts \u0026\u0026 bun run tools/gen-world-markup.ts"
+                },
+    "devDependencies":  {
+                            "@types/bun":  "latest",
+                            "@types/react":  "18",
+                            "@types/react-dom":  "18",
+                            "@types/three":  "0.160.0",
+                            "javascript-obfuscator":  "^5.9.0"
+                        },
+    "peerDependencies":  {
+                             "typescript":  "^7"
+                         },
+    "dependencies":  {
+                         "@fontsource/dancing-script":  "^5.3.0",
+                         "@fontsource/inter":  "^5.3.0",
+                         "@fontsource/space-grotesk":  "^5.3.0",
+                         "react":  "18.3.1",
+                         "react-dom":  "18.3.1",
+                         "three":  "0.160.0"
+                     },
+    "workbenchVersion":  "5.59.0"
+}

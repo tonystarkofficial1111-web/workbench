@@ -1,0 +1,6 @@
+
+#game-hint,#legacy-hint{display:none!important}
+#bw-instr-btn{position:absolute;right:16px;top:84px;z-index:5}
+#bw-instr{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+#bw-instr .c{max-width:min(560px,90vw);max-height:80vh;overflow:auto;padding:18px 20px;background:var(--panel,#1c1c26);color:var(--text);border:2px solid var(--line);border-radius:10px;font-size:14px;line-height:1.55}
+#bw-instr h3{margin:0 0 8px}

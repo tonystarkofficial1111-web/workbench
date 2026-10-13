@@ -1,0 +1,41 @@
+
+/* 5.40.15: center the Assistant workspace, fully cover the locked page, and force Type Rush phrase wrapping. */
+#tab-ai .ai-layout{
+  width:min(100%,1500px)!important;
+  max-width:1500px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  justify-content:center!important;
+  grid-template-columns:minmax(250px,280px) minmax(0,900px) minmax(240px,280px)!important;
+}
+#tab-ai .ai-shell{min-width:0!important;}
+.assistant-page-gate{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  z-index:99999!important;
+  background:#080c11!important;
+  opacity:1!important;
+  backdrop-filter:none!important;
+}
+.assistant-page-gate-card{
+  width:min(430px,calc(100vw - 32px))!important;
+  box-sizing:border-box!important;
+}
+.tr-main{min-width:0!important;overflow:hidden!important;}
+.tr-phrase{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+  overflow:hidden!important;
+  line-height:1.8!important;
+}
+.tr-phrase .c{
+  white-space:normal!important;
+}

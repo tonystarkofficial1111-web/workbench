@@ -1,0 +1,35 @@
+
+/* 5.40.7 — Arcade presentation only. Existing Arcade HTML, IDs, handlers, and game logic remain unchanged. */
+#tab-arcade .arcade-wrap{background:#1c1c1e;color:#e8e6df;padding:24px 26px 40px;}
+#tab-arcade .arcade-platform-wall,#tab-arcade .arcade-race-sweep{opacity:.12;pointer-events:none;}
+#tab-arcade .arcade-head{background:#242427;border:1px solid #3d3d42;border-radius:14px;padding:18px 20px;margin-bottom:12px;}
+#tab-arcade .arcade-head h2{color:#e8e6df;}
+#tab-arcade .arcade-head p{color:#9a9a9e;}
+#tab-arcade .arcade-subtabs{border-color:#3d3d42;background:#1c1c1e;}
+#tab-arcade .arcade-subtabs button,#tab-arcade .arcade-toolbar button,#tab-arcade .arcade-filter button{border-color:#3d3d42;color:#e8e6df;}
+#tab-arcade .arcade-toolbar,#tab-arcade .arcade-recents,#tab-arcade .arcade-side > *{background:#242427;border-color:#3d3d42;color:#e8e6df;border-radius:14px;}
+#tab-arcade .arcade-toolbar input{background:#1c1c1e;border-color:#3d3d42;color:#e8e6df;}
+#tab-arcade .arcade-toolbar input::placeholder{color:#9a9a9e;}
+#tab-arcade .arcade-layout{gap:14px;}
+#tab-arcade .arcade-side{gap:12px;}
+#tab-arcade .arcade-categories{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+#tab-arcade .arcade-category{--cat-accent:#1fb6ff;background:#242427;border:1px solid #3d3d42;border-radius:14px;padding:12px;}
+#tab-arcade .category-patience,#tab-arcade .category-fast,#tab-arcade .category-skill{--cat-accent:#1fb6ff;}
+#tab-arcade .arcade-category-head{background:#1c1c1e;border:1px solid #3d3d42;border-radius:10px;padding:11px;margin-bottom:10px;}
+#tab-arcade .arcade-category-head h3{color:#e8e6df;}
+#tab-arcade .arcade-category-head p{color:#9a9a9e;}
+#tab-arcade .arcade-category-slots{gap:10px;}
+#tab-arcade .arcade-category .ac-slot{min-height:138px;aspect-ratio:auto;background:linear-gradient(145deg,#f2f1ee 0%,#d9d8d4 100%);border:1px solid #3d3d42;border-left:1px solid #3d3d42;border-radius:12px;color:#1a1a1a;box-shadow:none;}
+#tab-arcade .arcade-category .ac-bubble{background:linear-gradient(145deg,#f2f1ee 0%,#d9d8d4 100%);color:#1a1a1a;border:0;}
+#tab-arcade .arcade-category .ac-bubble-inner{position:relative;z-index:1;align-items:flex-start;justify-content:flex-start;text-align:left;gap:5px;padding:14px;}
+#tab-arcade .arcade-category .ac-title{color:#1a1a1a;}
+#tab-arcade .arcade-category .ac-sub,#tab-arcade .arcade-category .ac-desc,#tab-arcade .arcade-category .ac-tap{color:#6b6b6b;}
+#tab-arcade .arcade-category .ac-vs,#tab-arcade .arcade-category .ac-glow{opacity:.28;}
+#tab-arcade .arcade-category .ac-bubble::before{content:"ARCADE";position:absolute;right:-18px;bottom:-28px;font-family:inherit;font-size:68px;line-height:1;font-weight:800;letter-spacing:-.05em;color:#1a1a1a;opacity:.09;white-space:nowrap;pointer-events:none;transition:opacity .16s ease,color .16s ease;}
+#tab-arcade .arcade-category .ac-slot:hover,#tab-arcade .arcade-category .ac-slot:focus-within{background:#242427;border-color:#1fb6ff;}
+#tab-arcade .arcade-category .ac-slot:hover .ac-bubble,#tab-arcade .arcade-category .ac-slot:focus-within .ac-bubble{background:#242427;color:#e8e6df;}
+#tab-arcade .arcade-category .ac-slot:hover .ac-title,#tab-arcade .arcade-category .ac-slot:focus-within .ac-title{color:#e8e6df;}
+#tab-arcade .arcade-category .ac-slot:hover .ac-sub,#tab-arcade .arcade-category .ac-slot:hover .ac-desc,#tab-arcade .arcade-category .ac-slot:hover .ac-tap,#tab-arcade .arcade-category .ac-slot:focus-within .ac-sub,#tab-arcade .arcade-category .ac-slot:focus-within .ac-desc,#tab-arcade .arcade-category .ac-slot:focus-within .ac-tap{color:#9a9a9e;}
+#tab-arcade .arcade-category .ac-slot:hover .ac-bubble::before,#tab-arcade .arcade-category .ac-slot:focus-within .ac-bubble::before{color:#e8e6df;opacity:.09;}
+@media (max-width:1100px){#tab-arcade .arcade-categories{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:700px){#tab-arcade .arcade-wrap{padding:16px 14px 28px;}#tab-arcade .arcade-categories{grid-template-columns:1fr;}#tab-arcade .arcade-head{padding:15px;}#tab-arcade .arcade-category .ac-slot{min-height:128px;}}

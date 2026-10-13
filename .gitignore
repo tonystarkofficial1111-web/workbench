@@ -1,0 +1,8 @@
+﻿node_modules/
+dist/
+*.log
+# Large local-only comparison artifacts (regenerate with the browser dump steps in PORTING_NOTES.md)
+_orig/original.html
+_orig/data/body-final*.html
+_orig/data/txt-*
+.claude/

@@ -1,0 +1,114 @@
+// Converts the original app's 29 arcade cabinets (script 024) into TypeScript engine modules.
+// The game logic is kept verbatim; only the page glue (tile rendering, implicit globals, profile calls) is adapted.
+// Run: bun run tools/convert-cabinets.ts
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+const root = join(import.meta.dir, "..");
+const src = readFileSync(join(root, "_orig/024_script.js"), "utf8").split("\n");
+const out = join(root, "src/arcade/games");
+mkdirSync(out, { recursive: true });
+
+const KEYS: Record<number, string> = {
+  1: "rooftopRumble", 2: "circuitRacer", 3: "neonBreaker", 4: "starfallDefender", 5: "circuitSnake", 6: "neonPong",
+  7: "meteorCommand", 8: "stackSurge", 9: "botDefense", 10: "crystalGarden", 11: "memoryMatch", 12: "colorMixer",
+  13: "fishingHole", 14: "dotConnect", 15: "slidingPuzzle", 16: "patternMemory", 17: "towerBuilder", 18: "bubbleSort",
+  19: "idleFarm", 20: "laserDodge", 21: "ninjaDash", 22: "orbCatcher", 23: "bladeSlice", 24: "gravityFlip",
+  25: "bulletStorm", 26: "platformJumper", 27: "pixelRunner", 28: "chainReactor", 29: "rocketDash",
+};
+
+const starts: [number, number][] = [];
+src.forEach((l, i) => {
+  const m = l.match(/^\/\* ---- Arcade cabinet #(\d+): /);
+  if (m) starts.push([+m[1]!, i]);
+});
+const endAll = src.findIndex((l) => l.startsWith("// --- Videos Tab"));
+
+const GLOBALS: Record<string, string> = {
+  wbRecordFightResult: "recordFightResult",
+  wbRecordGameScore: "recordGameScore",
+  wbTrackGamePlayed: "trackGamePlayed",
+  wbTrackSpecialAchievement: "trackSpecialAchievement",
+  wbKoRatioText: "koRatioText",
+  wbCheckAchievements: "checkAchievements",
+  wbSaveProfile: "saveProfile",
+  wbDefaultHighScores: "defaultHighScores",
+};
+
+const index: string[] = [];
+for (let k = 0; k < starts.length; k++) {
+  const [n, from] = starts[k]!;
+  const to = k + 1 < starts.length ? starts[k + 1]![0] && starts[k + 1]![1] : endAll;
+  const key = KEYS[n]!;
+  let lines = src.slice(from, to);
+  let text = lines.join("\n");
+
+  const slotVar = text.match(/var (\w+) = document\.getElementById\('([a-z0-9-]+-slot-?\w*)'\);/);
+  const tile = text.match(/function (\w+RenderTile)\(\)/);
+  if (!slotVar || !tile) throw new Error("cabinet " + n + ": boilerplate not found");
+  const tileFn = tile[1]!;
+
+  // open function = the click handler registered on the tile bubble
+  const openM = text.match(/addEventListener\('click', (\w+), \{ once:true \}\)/);
+  if (!openM) throw new Error("cabinet " + n + ": open fn not found");
+  const openFn = openM[1]!;
+
+  // 1. drop `var xSlot = ...` and `if(!xSlot) return;`
+  text = text.replace(new RegExp("^\\s*var " + slotVar[1] + " = document\\.getElementById\\('[^']+'\\);\\r?\\n", "m"), "");
+  text = text.replace(new RegExp("^\\s*if\\(!" + slotVar[1] + "\\) return;\\r?\\n", "m"), "");
+
+  // 2. remove the tile-render function (up to the first line that is exactly two-space-indented "}")
+  const tl = text.split("\n");
+  const ti = tl.findIndex((l) => l.includes("function " + tileFn + "()"));
+  let te = ti;
+  while (te < tl.length && !/^  \}\s*$/.test(tl[te]!)) te++;
+  tl.splice(ti, te - ti + 1);
+  text = tl.join("\n");
+
+  // 3. other calls to the tile renderer (in close) become no-ops; the final one launches the game
+  const tailRe = new RegExp("^\\s*" + tileFn + "\\(\\);\\s*\\r?\\n\\}\\)\\(\\);", "m");
+  if (!tailRe.test(text)) throw new Error("cabinet " + n + ": tail call not found");
+  text = text.replace(tailRe, "  " + openFn + "();\n})();");
+  text = text.replace(new RegExp("^\\s*" + tileFn + "\\(\\);\\s*$", "gm"), "");
+  text = text.replace(new RegExp("^\\s*setTimeout\\(" + tileFn + ",\\s*\\d+\\);\\s*$", "gm"), "");
+
+  // 4. IIFE -> exported launcher
+  text = text.replace(/^\(function\(\)\{/m, "export function launch(){");
+  text = text.replace(/\}\)\(\);\s*$/m, "}");
+  text = text.replace(/\}\)\(\);\s*\n*\s*$/, "}\n");
+
+  // 5. implicit globals (module code is strict): hoist `name = function` assignments with `var`
+  text = text.replace(/^(  )(\w+)(\s*=\s*function\s*\()/gm, (m, ind, name, rest) => {
+    const declared = new RegExp("(var|let|const|function)\\s+" + name + "\\b").test(text);
+    return declared ? m : ind + "var " + name + rest;
+  });
+
+  // 6. tell the shell the overlay closed
+  const ovVar = text.match(/var (\w+) = document\.getElementById\('ac-overlay'\);/)![1]!;
+  text = text.replace(new RegExp(ovVar + "\\.innerHTML = '';", "g"), ovVar + ".innerHTML = ''; engineClosed();");
+
+  // 7. profile access through the module API
+  text = text.replace(/\bwbProfile\b/g, "getProfile()");
+  const used = new Set<string>(["getProfile"]);
+  for (const [g, f] of Object.entries(GLOBALS)) {
+    const re = new RegExp("\\b" + g + "\\b", "g");
+    if (re.test(text)) { text = text.replace(re, f); used.add(f); }
+  }
+
+  const header =
+    "// @ts-nocheck\n" +
+    `// Cabinet #${n} (${key}) — generated by tools/convert-cabinets.ts from the original app's engine code.\n` +
+    `import { ${[...used].join(", ")} } from "../../core/profile";\n` +
+    'import { engineClosed } from "../../core/overlay";\n\n';
+  writeFileSync(join(out, key + ".ts"), header + text);
+  index.push(key);
+  console.log("converted", n, key, text.split("\n").length, "lines");
+}
+
+writeFileSync(
+  join(out, "index.ts"),
+  index.map((k) => `import { launch as ${k} } from "./${k}";`).join("\n") +
+    "\n\n/** Engine launchers keyed by game key. */\nexport const ENGINES: Record<string, () => void> = {\n" +
+    index.map((k) => `  ${k},`).join("\n") +
+    "\n};\n",
+);

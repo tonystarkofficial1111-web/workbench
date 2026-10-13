@@ -1,0 +1,132 @@
+
+/* 5.40.8: restore the requested Assistant desktop arrangement and widen computer layouts. */
+#tab-ai .ai-layout{
+  display:grid!important;
+  grid-template-columns:minmax(280px,300px) minmax(720px,1fr) minmax(260px,300px)!important;
+  grid-template-rows:minmax(170px,auto) minmax(260px,1fr)!important;
+  gap:14px!important;
+  width:100%!important;
+  max-width:1720px!important;
+  margin:0 auto!important;
+  padding:22px 28px 30px!important;
+  box-sizing:border-box!important;
+  align-items:stretch!important;
+}
+#tab-ai .model-info{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:auto!important;
+}
+#tab-ai .ai-local-memory-card{
+  grid-column:1!important;
+  grid-row:2!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:auto!important;
+}
+#tab-ai .ai-shell{
+  grid-column:2!important;
+  grid-row:1 / span 2!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  padding:0 10px!important;
+}
+#tab-ai .chat-stats{
+  grid-column:3!important;
+  grid-row:1 / span 2!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:auto!important;
+}
+#tab-ai .ai-shell #chat-log{min-height:360px!important;}
+#tab-ai .ai-shell .ai-settings{padding:12px 0 12px!important;}
+
+@media(min-width:1201px){
+  #tab-ai .ai-layout{min-height:calc(100vh - 92px)!important;}
+  #tab-ai .ai-shell{min-width:720px!important;}
+}
+@media(max-width:1200px) and (min-width:901px){
+  #tab-ai .ai-layout{
+    grid-template-columns:minmax(250px,280px) minmax(520px,1fr) minmax(240px,280px)!important;
+    padding:18px 20px 26px!important;
+  }
+}
+@media(max-width:900px) and (min-width:701px){
+  #tab-ai .ai-layout{
+    grid-template-columns:minmax(220px,260px) minmax(0,1fr)!important;
+    grid-template-rows:auto minmax(0,1fr) auto auto!important;
+    padding:16px!important;
+  }
+  #tab-ai .model-info{grid-column:1!important;grid-row:1!important;}
+  #tab-ai .ai-local-memory-card{grid-column:1!important;grid-row:2!important;}
+  #tab-ai .ai-shell{grid-column:2!important;grid-row:1 / span 2!important;}
+  #tab-ai .chat-stats{grid-column:1 / -1!important;grid-row:3!important;max-height:250px!important;}
+}
+@media(max-width:700px){
+  #tab-ai .ai-layout{display:flex!important;flex-direction:column!important;padding:12px!important;overflow:auto!important;}
+  #tab-ai .model-info{order:1!important;max-height:280px!important;}
+  #tab-ai .ai-shell{order:2!important;min-height:560px!important;padding:0!important;}
+  #tab-ai .ai-local-memory-card{order:3!important;max-height:360px!important;}
+  #tab-ai .chat-stats{order:4!important;max-height:280px!important;}
+}
+
+/* 5.40.8: Type Rush typing area wraps onto new visual rows instead of running off-screen. */
+.type-input{
+  display:block!important;
+  width:100%!important;
+  min-height:96px!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  resize:vertical!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+  line-height:1.45!important;
+}
+
+/* 5.40.11: Educational cabinet hover gets a bright-blue breathing glow with a smooth 2-second settle. */
+@keyframes wbEduCabGlowSettle{
+  0%{
+    text-shadow:0 0 0 rgba(35,143,255,0);
+  }
+  24%{
+    text-shadow:0 0 18px rgba(35,143,255,.60),0 0 34px rgba(35,143,255,.30);
+  }
+  100%{
+    text-shadow:0 0 8px rgba(35,143,255,.36),0 0 18px rgba(35,143,255,.16);
+  }
+}
+#tab-edu .edu-cab:hover{
+  background:#2b2d31!important;
+  border-color:#1fb6ff!important;
+  color:#238fff!important;
+  transform:none!important;
+}
+#tab-edu .edu-cab:hover .edu-cab-art,
+#tab-edu .edu-cab:hover .edu-cab-title,
+#tab-edu .edu-cab:hover .edu-cab-meta{
+  color:#238fff!important;
+  opacity:1!important;
+  animation:wbEduCabGlowSettle 2s ease-out both;
+  text-shadow:0 0 8px rgba(35,143,255,.36),0 0 18px rgba(35,143,255,.16);
+}
+#tab-edu .edu-cab:hover .edu-cab-art{
+  opacity:.98!important;
+}
+#tab-edu .edu-cab:hover .edu-cab-title{
+  font-size:30px!important;
+  line-height:1.05!important;
+  font-weight:800!important;
+}
+#tab-edu .edu-cab:hover .edu-cab-meta{
+  font-size:18px!important;
+  line-height:1.15!important;
+  font-weight:700!important;
+  letter-spacing:.055em!important;
+}

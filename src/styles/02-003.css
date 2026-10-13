@@ -1,0 +1,20 @@
+
+/* 5.33.4 — Start-tab new-user visual experience. Lightweight, CSS-only, no external assets. */
+#tab-start{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(circle at 50% 18%,rgba(95,212,199,.08),transparent 34%),linear-gradient(180deg,#080c12 0%,#070a10 100%)}
+#tab-start::before{content:"";position:absolute;inset:-20%;z-index:-2;opacity:.55;background:linear-gradient(rgba(95,212,199,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(224,164,88,.045) 1px,transparent 1px);background-size:48px 48px;transform:perspective(700px) rotateX(58deg) translateY(10%);transform-origin:center bottom;animation:wbStartGrid 18s linear infinite}
+#tab-start::after{content:"";position:absolute;width:42vw;height:42vw;max-width:520px;max-height:520px;min-width:240px;min-height:240px;right:-12vw;top:-14vw;z-index:-1;border-radius:50%;background:radial-gradient(circle,rgba(95,212,199,.14) 0%,rgba(95,212,199,.035) 32%,transparent 70%);filter:blur(5px);animation:wbStartOrb 9s ease-in-out infinite alternate}
+#tab-start .start-wrap{position:relative}
+#tab-start .start-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(12,20,28,.94),rgba(17,25,31,.84));box-shadow:0 18px 60px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.025)}
+#tab-start .start-hero::before{content:"";position:absolute;inset:-30%;background:conic-gradient(from 0deg,transparent 0deg,rgba(95,212,199,.08) 45deg,transparent 90deg,rgba(224,164,88,.07) 180deg,transparent 225deg);animation:wbStartSpin 20s linear infinite;pointer-events:none}
+#tab-start .start-hero::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:2px;background:linear-gradient(90deg,transparent,rgba(95,212,199,.7),rgba(224,164,88,.55),transparent);box-shadow:0 0 18px rgba(95,212,199,.25);animation:wbStartScan 4.8s ease-in-out infinite}
+#tab-start .start-hero>*{position:relative;z-index:1}
+body.start-new-user #tab-start .start-hero{animation:wbStartWelcome 1.4s cubic-bezier(.2,.75,.2,1) both}
+body.start-new-user #tab-start .start-card{animation:wbStartCards .8s cubic-bezier(.2,.75,.2,1) both;animation-delay:calc(var(--start-card-index,0) * 90ms + 250ms)}
+body.start-new-user #tab-start .start-card:nth-child(1){--start-card-index:0}body.start-new-user #tab-start .start-card:nth-child(2){--start-card-index:1}body.start-new-user #tab-start .start-card:nth-child(3){--start-card-index:2}body.start-new-user #tab-start .start-card:nth-child(4){--start-card-index:3}body.start-new-user #tab-start .start-card:nth-child(5){--start-card-index:4}body.start-new-user #tab-start .start-card:nth-child(6){--start-card-index:5}body.start-new-user #tab-start .start-card:nth-child(7){--start-card-index:6}
+@keyframes wbStartGrid{from{background-position:0 0,0 0}to{background-position:0 48px,48px 0}}
+@keyframes wbStartOrb{from{transform:translate3d(-5%,4%,0) scale(.92)}to{transform:translate3d(5%,10%,0) scale(1.08)}}
+@keyframes wbStartSpin{to{transform:rotate(360deg)}}
+@keyframes wbStartScan{0%,100%{transform:translateX(-18%);opacity:.2}50%{transform:translateX(18%);opacity:.9}}
+@keyframes wbStartWelcome{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes wbStartCards{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#tab-start::before,#tab-start::after,#tab-start .start-hero::before,#tab-start .start-hero::after,body.start-new-user #tab-start .start-hero,body.start-new-user #tab-start .start-card{animation:none!important}}

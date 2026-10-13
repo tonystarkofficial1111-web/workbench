@@ -1,0 +1,282 @@
+[
+ {
+  "id": "first_game",
+  "icon": "🎮",
+  "name": "First Steps",
+  "desc": "Play your first arcade game",
+  "test": "function(s){ return s.gamesPlayed >= 1; }",
+  "progress": "function(s){ return Math.min(1, s.gamesPlayed/1); }"
+ },
+ {
+  "id": "five_games",
+  "icon": "🎯",
+  "name": "Getting Warm",
+  "desc": "Play 5 arcade games",
+  "test": "function(s){ return s.gamesPlayed >= 5; }",
+  "progress": "function(s){ return Math.min(1, s.gamesPlayed/5); }"
+ },
+ {
+  "id": "twenty_games",
+  "icon": "🔥",
+  "name": "Arcade Regular",
+  "desc": "Play 20 arcade games",
+  "test": "function(s){ return s.gamesPlayed >= 20; }",
+  "progress": "function(s){ return Math.min(1, s.gamesPlayed/20); }"
+ },
+ {
+  "id": "fifty_games",
+  "icon": "💎",
+  "name": "Arcade Legend",
+  "desc": "Play 50 arcade games",
+  "test": "function(s){ return s.gamesPlayed >= 50; }",
+  "progress": "function(s){ return Math.min(1, s.gamesPlayed/50); }"
+ },
+ {
+  "id": "all_games",
+  "icon": "🎪",
+  "name": "Sampling the Menu",
+  "desc": "Play all 33 different cabinets",
+  "test": "function(s){ return s.gamesPlayedByType && Object.keys(s.gamesPlayedByType).length>=33; }",
+  "progress": "function(s){ return Math.min(1,(s.gamesPlayedByType?Object.keys(s.gamesPlayedByType).length:0)/33); }"
+ },
+ {
+  "id": "time_1min",
+  "icon": "⏱️",
+  "name": "Settled In",
+  "desc": "Spend 1 minute in the arcade",
+  "test": "function(s){ return s.secondsOnPage >= 60; }",
+  "progress": "function(s){ return Math.min(1, s.secondsOnPage/60); }"
+ },
+ {
+  "id": "time_10min",
+  "icon": "📚",
+  "name": "Bookworm",
+  "desc": "Spend 10 minutes in the arcade",
+  "test": "function(s){ return s.secondsOnPage >= 600; }",
+  "progress": "function(s){ return Math.min(1, s.secondsOnPage/600); }"
+ },
+ {
+  "id": "time_1hr",
+  "icon": "🧘",
+  "name": "Dedicated",
+  "desc": "Spend 1 hour in the arcade",
+  "test": "function(s){ return s.secondsOnPage >= 3600; }",
+  "progress": "function(s){ return Math.min(1, s.secondsOnPage/3600); }"
+ },
+ {
+  "id": "time_5hr",
+  "icon": "🪑",
+  "name": "Marathon Runner",
+  "desc": "Spend 5 hours in the arcade",
+  "test": "function(s){ return s.secondsOnPage >= 18000; }",
+  "progress": "function(s){ return Math.min(1, s.secondsOnPage/18000); }"
+ },
+ {
+  "id": "first_win",
+  "icon": "🏆",
+  "name": "First Victory",
+  "desc": "Win your first game",
+  "test": "function(s){ return s.totalWins >= 1; }",
+  "progress": "function(s){ return Math.min(1, s.totalWins/1); }"
+ },
+ {
+  "id": "ten_wins",
+  "icon": "🥇",
+  "name": "Champion",
+  "desc": "Win 10 games total",
+  "test": "function(s){ return s.totalWins >= 10; }",
+  "progress": "function(s){ return Math.min(1, s.totalWins/10); }"
+ },
+ {
+  "id": "twentyfive_wins",
+  "icon": "👑",
+  "name": "Arcade King",
+  "desc": "Win 25 games total",
+  "test": "function(s){ return s.totalWins >= 25; }",
+  "progress": "function(s){ return Math.min(1, s.totalWins/25); }"
+ },
+ {
+  "id": "score_100",
+  "icon": "💯",
+  "name": "Centurion",
+  "desc": "Score 100+ points in a single game",
+  "test": "function(s){ return s.bestSingleScore >= 100; }",
+  "progress": "function(s){ return Math.min(1, s.bestSingleScore/100); }"
+ },
+ {
+  "id": "score_500",
+  "icon": "🌟",
+  "name": "High Roller",
+  "desc": "Score 500+ points in a single game",
+  "test": "function(s){ return s.bestSingleScore >= 500; }",
+  "progress": "function(s){ return Math.min(1, s.bestSingleScore/500); }"
+ },
+ {
+  "id": "score_1000",
+  "icon": "⚡",
+  "name": "Score Master",
+  "desc": "Score 1000+ points in a single game",
+  "test": "function(s){ return s.bestSingleScore >= 1000; }",
+  "progress": "function(s){ return Math.min(1, s.bestSingleScore/1000); }"
+ },
+ {
+  "id": "breaker_clear",
+  "icon": "🧱",
+  "name": "Wall Breaker",
+  "desc": "Clear all bricks in Neon Breaker",
+  "test": "function(s){ return s.specialAchievements && s.specialAchievements.breakerClear; }",
+  "progress": "function(s){ return (s.specialAchievements && s.specialAchievements.breakerClear) ? 1 : 0; }"
+ },
+ {
+  "id": "snake_20",
+  "icon": "🐍",
+  "name": "Long Snake",
+  "desc": "Reach length 20 in Circuit Snake",
+  "test": "function(s){ return s.specialAchievements && s.specialAchievements.snake20; }",
+  "progress": "function(s){ return (s.specialAchievements && s.specialAchievements.snake20) ? 1 : 0; }"
+ },
+ {
+  "id": "pong_shutout",
+  "icon": "🏓",
+  "name": "Flawless Victory",
+  "desc": "Win Neon Pong 7-0",
+  "test": "function(s){ return s.specialAchievements && s.specialAchievements.pongShutout; }",
+  "progress": "function(s){ return (s.specialAchievements && s.specialAchievements.pongShutout) ? 1 : 0; }"
+ },
+ {
+  "id": "profile_pic",
+  "icon": "📷",
+  "name": "Picture Perfect",
+  "desc": "Upload a profile picture",
+  "test": "function(s){ return !!s.avatar; }",
+  "progress": "function(s){ return s.avatar ? 1 : 0; }"
+ },
+ {
+  "id": "named",
+  "icon": "✏️",
+  "name": "Identity",
+  "desc": "Set a custom display name",
+  "test": "function(s){ return s.name && s.name !== 'Guest'; }",
+  "progress": "function(s){ return (s.name && s.name !== 'Guest') ? 1 : 0; }"
+ },
+ {
+  "id": "themed",
+  "icon": "🎨",
+  "name": "Stylist",
+  "desc": "Change your color theme",
+  "test": "function(s){ return s.theme && s.theme !== 'default'; }",
+  "progress": "function(s){ return (s.theme && s.theme !== 'default') ? 1 : 0; }"
+ },
+ {
+  "id": "zombie_survivor",
+  "icon": "🧟",
+  "name": "Zombie Survivor",
+  "desc": "Survive 60 seconds in Bot Defense",
+  "test": "function(s){ return s.specialAchievements && s.specialAchievements.zombieSurvivor; }",
+  "progress": "function(s){ return (s.specialAchievements && s.specialAchievements.zombieSurvivor) ? 1 : 0; }"
+ },
+ {
+  "id": "zombie_slayer",
+  "icon": "💀",
+  "name": "Zombie Slayer",
+  "desc": "Kill 50 zombies in one game",
+  "test": "function(s){ return s.specialAchievements && s.specialAchievements.zombieSlayer; }",
+  "progress": "function(s){ return (s.specialAchievements && s.specialAchievements.zombieSlayer) ? 1 : 0; }"
+ },
+ {
+  "id": "zombie_master",
+  "icon": "⚔️",
+  "name": "Zombie Master",
+  "desc": "Survive 120 seconds in Bot Defense",
+  "test": "function(s){ return s.specialAchievements && s.specialAchievements.zombieMaster; }",
+  "progress": "function(s){ return (s.specialAchievements && s.specialAchievements.zombieMaster) ? 1 : 0; }"
+ },
+ {
+  "id": "time_2hr",
+  "icon": "🌙",
+  "name": "Night Owl",
+  "desc": "Spend 2 hours in the arcade",
+  "test": "function(s){ return s.secondsOnPage >= 7200; }",
+  "progress": "function(s){ return Math.min(1, s.secondsOnPage/7200); }"
+ },
+ {
+  "id": "time_10hr",
+  "icon": "🏰",
+  "name": "Castle Dweller",
+  "desc": "Spend 10 hours in the arcade",
+  "test": "function(s){ return s.secondsOnPage >= 36000; }",
+  "progress": "function(s){ return Math.min(1, s.secondsOnPage/36000); }"
+ },
+ {
+  "id": "score_2000",
+  "icon": "💫",
+  "name": "Score God",
+  "desc": "Score 2000+ points in a single game",
+  "test": "function(s){ return s.bestSingleScore >= 2000; }",
+  "progress": "function(s){ return Math.min(1, s.bestSingleScore/2000); }"
+ },
+ {
+  "id": "fifty_wins",
+  "icon": "💎",
+  "name": "Unstoppable",
+  "desc": "Win 50 games total",
+  "test": "function(s){ return s.totalWins >= 50; }",
+  "progress": "function(s){ return Math.min(1, s.totalWins/50); }"
+ },
+ {
+  "id": "all_games_9",
+  "icon": "🎰",
+  "name": "Full House",
+  "desc": "Play all 33 different cabinets",
+  "test": "function(s){ return s.gamesPlayedByType && Object.keys(s.gamesPlayedByType).length>=33; }",
+  "progress": "function(s){ return Math.min(1,(s.gamesPlayedByType?Object.keys(s.gamesPlayedByType).length:0)/33); }"
+ },
+ {
+  "id": "half_achievements",
+  "icon": "🏅",
+  "name": "Completionist",
+  "desc": "Unlock half of all achievements",
+  "test": "function(s){ return s.unlockedCount >= Math.ceil(wbAchievements.length/2); }",
+  "progress": "function(s){ return Math.min(1, s.unlockedCount/Math.ceil(wbAchievements.length/2)); }"
+ },
+ {
+  "id": "all_achievements",
+  "icon": "💎",
+  "name": "Perfectionist",
+  "desc": "Unlock all achievements",
+  "test": "function(s){ return s.unlockedCount >= wbAchievements.length - 1; }",
+  "progress": "function(s){ return Math.min(1, s.unlockedCount/(wbAchievements.length-1)); }"
+ },
+ {
+  "id": "proto_trio",
+  "icon": "🧪",
+  "name": "Prototype Tester",
+  "desc": "Play all 3 prototype games",
+  "test": "function(s){ return ['protoReaction','protoTapRush','protoAimTrainer'].every(function(k){ return s.gamesPlayedByType&&s.gamesPlayedByType[k]; }); }",
+  "progress": "function(s){ var n=['protoReaction','protoTapRush','protoAimTrainer'].filter(function(k){return s.gamesPlayedByType&&s.gamesPlayedByType[k];}).length; return n/3; }"
+ },
+ {
+  "id": "first_favorite",
+  "icon": "⭐",
+  "name": "Curator",
+  "desc": "Favorite your first cabinet",
+  "test": "function(s){ return !!(s.favorites&&s.favorites.length); }",
+  "progress": "function(s){ return (s.favorites&&s.favorites.length)?1:0; }"
+ },
+ {
+  "id": "coin_50",
+  "icon": "🪙",
+  "name": "Coin Collector",
+  "desc": "Earn 50 coins total",
+  "test": "function(s){ return (s.coins||0)>=50; }",
+  "progress": "function(s){ return Math.min(1,(s.coins||0)/50); }"
+ },
+ {
+  "id": "searcher",
+  "icon": "🔍",
+  "name": "Seeker",
+  "desc": "Use the arcade search bar",
+  "test": "function(s){ return !!s.usedSearch; }",
+  "progress": "function(s){ return s.usedSearch?1:0; }"
+ }
+]

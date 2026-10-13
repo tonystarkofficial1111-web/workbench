@@ -1,0 +1,98 @@
+
+/* 5.35.0 visual polish — preserve existing features, tune presentation only. */
+/* START: deeper layered environment behind the welcome surface. */
+#tab-start{background:
+  radial-gradient(circle at 50% 12%,rgba(95,212,199,.16),transparent 24%),
+  radial-gradient(circle at 12% 78%,rgba(90,138,255,.13),transparent 28%),
+  radial-gradient(circle at 88% 72%,rgba(176,112,255,.12),transparent 27%),
+  linear-gradient(135deg,#05080d 0%,#09131b 48%,#080910 100%)!important;
+}
+#tab-start::before{opacity:1!important;z-index:-3!important;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(95,212,199,.11),transparent 19%),
+    radial-gradient(circle at 20% 24%,rgba(90,138,255,.13),transparent 18%),
+    radial-gradient(circle at 80% 76%,rgba(176,112,255,.10),transparent 22%),
+    repeating-linear-gradient(125deg,transparent 0 34px,rgba(95,212,199,.035) 35px,transparent 36px 70px),
+    linear-gradient(125deg,transparent 0 46%,rgba(95,212,199,.07) 49%,transparent 52%);
+  animation:wbStartDepth35 15s ease-in-out infinite alternate!important;
+}
+#tab-start::after{opacity:1!important;z-index:-2!important;
+  background:
+    radial-gradient(circle at 14% 30%,rgba(255,255,255,.13) 0 1px,transparent 2px),
+    radial-gradient(circle at 33% 70%,rgba(255,255,255,.09) 0 1px,transparent 2px),
+    radial-gradient(circle at 66% 22%,rgba(255,255,255,.11) 0 1px,transparent 2px),
+    radial-gradient(circle at 86% 48%,rgba(255,255,255,.10) 0 1px,transparent 2px),
+    repeating-linear-gradient(0deg,transparent 0 8px,rgba(255,255,255,.012) 9px),
+    repeating-linear-gradient(90deg,transparent 0 78px,rgba(95,212,199,.035) 79px 80px);
+  background-size:auto,auto,auto,auto,100% 100%,100% 100%;
+  animation:wbStartField35 18s linear infinite!important;
+}
+#tab-start .start-wrap::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;
+  background:radial-gradient(ellipse at 50% 32%,transparent 0 23%,rgba(95,212,199,.035) 24%,transparent 24.5%),
+             radial-gradient(ellipse at 50% 32%,transparent 0 35%,rgba(90,138,255,.028) 35.5%,transparent 36%),
+             radial-gradient(ellipse at 50% 32%,transparent 0 47%,rgba(176,112,255,.025) 47.5%,transparent 48%);
+  transform:perspective(800px) rotateX(58deg) translateY(12%);transform-origin:center top;opacity:.9;
+}
+@keyframes wbStartDepth35{from{transform:scale(1) translate3d(0,0,0)}to{transform:scale(1.075) translate3d(-1%,1%,0)}}
+@keyframes wbStartField35{from{background-position:0 0,0 0,0 0,0 0,0 0,0 0}to{background-position:22px -18px,-18px 14px,28px 12px,-16px 24px,0 16px,78px 0}}
+#tab-start .start-hero > div:first-child{color:#75d8ff!important;animation:starkFullPower35 5.2s steps(1,end) infinite!important;text-shadow:0 0 12px rgba(90,190,255,.42),0 0 30px rgba(90,190,255,.24)}
+@keyframes starkFullPower35{
+  0%,16%,100%{opacity:1;text-shadow:0 0 9px rgba(90,190,255,.62),0 0 22px rgba(90,190,255,.38),0 0 42px rgba(90,190,255,.18)}
+  17%,39%{opacity:0;text-shadow:none}
+  40%,48%{opacity:.58;text-shadow:0 0 10px rgba(90,190,255,.30)}
+  49%,72%{opacity:1;text-shadow:0 0 9px rgba(90,190,255,.62),0 0 22px rgba(90,190,255,.38),0 0 42px rgba(90,190,255,.18)}
+  73%,86%{opacity:0;text-shadow:none}
+  87%,95%{opacity:.48;text-shadow:0 0 9px rgba(90,190,255,.26)}
+}
+/* EDUCATIONAL: reduce visual crowding without removing tools. */
+.edu-workspace{background:radial-gradient(circle at 50% 0%,rgba(95,212,199,.10),transparent 30%),linear-gradient(180deg,#0b151b,#090e13 72%,#070a0e)!important}
+.edu-hero{padding:18px 20px;box-shadow:0 14px 42px rgba(0,0,0,.22)}
+.edu-work-tabs{overflow-x:auto;flex-wrap:nowrap;padding:2px 1px 7px;scrollbar-width:thin;position:sticky;top:0;z-index:20;background:linear-gradient(180deg,rgba(9,14,19,.98),rgba(9,14,19,.88),transparent);backdrop-filter:blur(8px)}
+.edu-work-tab{flex:0 0 auto;white-space:nowrap;padding:8px 11px;font-size:11px;border-radius:9px}
+.edu-work-panel{padding-top:2px}.notes-layout aside,.notes-layout article,.coding-layout,.math-card,.study-builder,.cad-grid,.student-dashboard{box-shadow:0 10px 28px rgba(0,0,0,.16)}
+.study-note-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:4px}.note-tool-card{padding:10px;border:1px solid var(--line);border-radius:9px;background:rgba(15,22,29,.72)}.note-tool-card h4{margin:0 0 7px;font-size:11px;color:var(--cyan);letter-spacing:.04em}.note-tool-card input,.note-tool-card textarea{width:100%;box-sizing:border-box;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px}.note-tool-card textarea{min-height:72px;resize:vertical}.note-tool-card strong{display:block;margin-top:6px;color:var(--cyan);font-size:11px}.note-tool-row{display:flex;gap:6px}.note-tool-row input{min-width:0}.note-tool-row button{white-space:nowrap;padding:7px 9px}
+.learning-lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.learning-lab-card{display:flex;align-items:center;gap:14px;text-align:left;padding:18px;border:2px solid var(--line);border-radius:13px;background:linear-gradient(145deg,rgba(14,22,30,.92),rgba(8,12,17,.9));color:var(--text);cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.learning-lab-card:hover{transform:translateY(-2px);border-color:var(--cyan);box-shadow:0 12px 30px rgba(0,0,0,.24),0 0 22px rgba(95,212,199,.08)}.learning-lab-card>span{font-size:30px;width:42px;text-align:center}.learning-lab-card h3{margin:0 0 4px;font-size:15px}.learning-lab-card p{margin:0;color:var(--muted);font-size:11px;line-height:1.45}
+/* ARCADE logos: larger while preserving positions. */
+.arcade-platform-wall{height:235px!important}.arcade-logo.logo-rog{width:220px!important;height:104px!important;top:18px!important}.arcade-logo.logo-xbox{width:200px!important;height:200px!important;right:5%!important;bottom:-12px!important}.arcade-logo.logo-nintendo{width:230px!important;height:80px!important;left:3%!important;top:105px!important}
+/* BLOCK WORLD: always has a direct route back to the Workbench Arcade. */
+#block-world-back{position:fixed;top:58px;left:14px;z-index:10050;padding:9px 13px;border:2px solid var(--cyan);border-radius:9px;background:rgba(7,12,17,.90);color:var(--text);font:700 12px 'Space Grotesk',sans-serif;box-shadow:0 0 24px rgba(95,212,199,.12);cursor:pointer;display:none}
+#tab-world.active #block-world-back{display:block}
+/* DEVELOPER: restore diagonal bottom-right motion of both grid layers. */
+#tab-dev::before{animation:wbDevGrid35 13s linear infinite!important}
+@keyframes wbDevGrid35{from{background-position:0 0,0 0,0 0,0 0}to{background-position:0 0,0 0,95px 70px,95px 70px}}
+/* ASSISTANT: remove the strobing words and give the workspace breathing room. */
+#tab-ai::after{content:""!important;animation:none!important;background:none!important}
+#tab-ai::before{content:""!important;animation:aiGridShift35 20s linear infinite!important;background:repeating-linear-gradient(90deg,transparent 0 92px,rgba(95,212,199,.025) 93px 94px),repeating-linear-gradient(0deg,transparent 0 72px,rgba(176,112,255,.022) 73px 74px),radial-gradient(circle at 50% 42%,rgba(95,212,199,.05),transparent 40%)!important}
+@keyframes aiGridShift35{from{background-position:0 0,0 0,0 0}to{background-position:92px 72px,92px 72px,0 0}}
+.ai-layout{display:grid!important;grid-template-columns:minmax(260px,300px) minmax(560px,1fr) minmax(220px,260px);grid-template-rows:minmax(190px,auto) minmax(0,1fr);gap:18px;padding:22px 26px 28px;max-width:1500px;align-items:stretch!important}
+.ai-local-memory-card{grid-column:1;grid-row:1;min-width:0;max-width:none;width:auto;box-sizing:border-box;padding:16px;border-radius:14px;min-height:190px;max-height:none;display:flex;flex-direction:column}
+.ai-local-memory-card #assistant-memory-list{min-height:34px;max-height:92px;overflow:auto}
+.model-info{grid-column:1;grid-row:2;width:auto;max-width:none;min-width:0;box-sizing:border-box;overflow:auto}
+.ai-shell{grid-column:2;grid-row:1 / span 2;min-width:0;max-width:none;box-sizing:border-box;padding:4px 8px}
+.chat-stats{grid-column:3;grid-row:1 / span 2;width:auto;min-width:0;box-sizing:border-box;overflow:auto}
+.ai-shell .ai-settings{padding:12px 0 8px}.ai-shell .field select{width:100%;box-sizing:border-box}.ai-shell #brain-hint{line-height:1.55}.ai-shell #chat-log{min-height:0}
+.ai-settings .field:first-child>span{color:#ff3f4f!important;font-weight:800;letter-spacing:.10em;text-shadow:0 0 8px rgba(255,50,65,.48);animation:brainRedPulse35 4.8s steps(1,end) infinite}
+@keyframes brainRedPulse35{0%,18%,100%{opacity:1;text-shadow:0 0 8px rgba(255,50,65,.55),0 0 18px rgba(255,50,65,.25)}19%,42%{opacity:0;text-shadow:none}43%,49%{opacity:.48;text-shadow:0 0 8px rgba(255,50,65,.22)}50%,72%{opacity:1;text-shadow:0 0 8px rgba(255,50,65,.55),0 0 18px rgba(255,50,65,.25)}73%,88%{opacity:0;text-shadow:none}89%,96%{opacity:.5}}
+#version-badge .vb-line1,#version-badge .vb-line2{animation:starkBadgeDim35 5.2s steps(1,end) infinite}
+@keyframes starkBadgeDim35{0%,16%,100%{opacity:1;text-shadow:0 0 7px rgba(90,190,255,.42),0 0 16px rgba(90,190,255,.20)}17%,39%{opacity:0;text-shadow:none}40%,48%{opacity:.48;text-shadow:0 0 6px rgba(90,190,255,.20)}49%,72%{opacity:1;text-shadow:0 0 7px rgba(90,190,255,.42),0 0 16px rgba(90,190,255,.20)}73%,87%{opacity:0;text-shadow:none}88%,96%{opacity:.5;text-shadow:0 0 6px rgba(90,190,255,.18)}}
+@media(max-width:1050px){.ai-layout{grid-template-columns:minmax(230px,1fr) minmax(0,1.7fr);grid-template-rows:auto auto}.ai-local-memory-card{grid-column:1;grid-row:1}.model-info{grid-column:1;grid-row:2}.ai-shell{grid-column:2;grid-row:1 / span 2}.chat-stats{grid-column:1 / -1;grid-row:3;max-height:230px}.study-note-tools{grid-template-columns:1fr}.learning-lab-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.ai-layout{display:flex!important;flex-direction:column;padding:14px}.ai-local-memory-card,.model-info,.ai-shell,.chat-stats{width:100%;max-width:none;min-width:0}.ai-local-memory-card{order:1}.model-info{order:2;max-height:360px}.ai-shell{order:3}.chat-stats{order:4;max-height:260px}.learning-lab-grid{grid-template-columns:1fr}.study-note-tools{grid-template-columns:1fr}.arcade-logo.logo-xbox{width:150px!important;height:150px!important}.arcade-logo.logo-rog{width:180px!important;height:86px!important}.arcade-logo.logo-nintendo{width:190px!important;height:66px!important}}
+@media(prefers-reduced-motion:reduce){#tab-start::before,#tab-start::after,#tab-start .start-hero > div:first-child,#tab-dev::before,#tab-ai::before,#version-badge .vb-line1,#version-badge .vb-line2,.ai-settings .field:first-child>span{animation:none!important}}
+/* ---------- 5.37.0: Cabinet UI + stronger visual redesign ---------- */
+:root{--wb-bg:#070a0e;--wb-surface:#0d1218;--wb-surface-2:#111820;--wb-border:#202b36;--wb-soft:#151d26;--wb-cyan:#67e3d0;--wb-amber:#f0b35e;--wb-purple:#a98bff}
+body{background:var(--wb-bg)!important;color:#eef3f5!important}
+.topbar{height:62px!important;padding:0 18px!important;background:rgba(7,10,14,.96)!important;border-bottom:1px solid #1b252f!important;box-shadow:0 8px 30px rgba(0,0,0,.22)!important}
+.topbar .brand{font-size:15px!important;letter-spacing:.12em!important}.tabbtn{border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#81909d!important;padding:20px 13px 18px!important;font-size:11px!important;font-weight:700!important;letter-spacing:.08em!important;text-transform:uppercase!important}.tabbtn:hover{color:#e9f0f3!important;background:rgba(255,255,255,.025)!important}.tabbtn.active{color:#f2c37a!important;border-bottom-color:#f2c37a!important;background:transparent!important;box-shadow:none!important}
+.tab{background:#080c11!important}.tab>div{max-width:1280px;margin-inline:auto}
+/* Start: calm dashboard instead of a cinematic panel stack */
+#tab-start{background:linear-gradient(180deg,#080c11,#070a0e)!important}#tab-start::before,#tab-start::after,#tab-start .start-wrap::after{display:none!important}#tab-start .start-wrap{padding:26px 28px 50px!important}#tab-start .start-hero{min-height:230px!important;border:1px solid #24313d!important;border-radius:20px!important;background:linear-gradient(135deg,#101922,#0b1117)!important;box-shadow:none!important}#tab-start .start-hero::before,#tab-start .start-hero::after{display:none!important}#tab-start .start-hero h2{font-size:38px!important;letter-spacing:-.04em!important;text-shadow:none!important}#tab-start .start-card{border:1px solid #202c37!important;border-radius:16px!important;background:#0d131a!important;box-shadow:none!important;backdrop-filter:none!important}#tab-start .start-card:hover{transform:translateY(-2px)!important;border-color:#344653!important;box-shadow:0 12px 30px rgba(0,0,0,.2)!important}
+/* Educational: a literal cabinet wall */
+#tab-edu{background:linear-gradient(180deg,#091015,#070b10)!important}#tab-edu .edu-workspace{max-width:none!important;padding:24px 28px 60px!important;background:transparent!important}.edu-hero{max-width:1180px;margin:0 auto 18px!important;padding:22px 24px!important;border:1px solid #263540!important;border-radius:18px!important;background:#0d141b!important;box-shadow:none!important}.edu-hero h2{font-size:34px!important;letter-spacing:-.035em!important}.edu-hero p{max-width:680px}.edu-status{padding:8px 10px;border:1px solid #263540;border-radius:999px;background:#101920;color:#7bdacb!important}
+.edu-cabinet-wall{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.edu-cab{position:relative;min-height:145px;padding:15px 14px 13px;border:1px solid #273540;border-radius:16px;background:linear-gradient(160deg,#111a22,#0b1016);color:#edf3f5;text-align:left;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.025);transition:transform .16s ease,border-color .16s ease,background .16s ease}.edu-cab::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#67e3d0,#f0b35e);opacity:.7}.edu-cab::after{content:"";position:absolute;inset:12px 12px auto auto;width:44px;height:44px;border:1px solid rgba(103,227,208,.12);border-radius:10px;transform:rotate(12deg)}.edu-cab:hover{transform:translateY(-4px);border-color:#49606d;background:linear-gradient(160deg,#14202a,#0d141b)}.edu-cab:focus-visible{outline:2px solid #67e3d0;outline-offset:2px}.edu-cab-art{font-size:30px;line-height:1;margin-bottom:auto;filter:saturate(.9)}.edu-cab-title{font-size:14px;font-weight:800;letter-spacing:.01em}.edu-cab-meta{margin-top:5px;font:700 8px/1 'Space Grotesk',sans-serif;letter-spacing:.16em;color:#738390}.edu-cab-lab::before{background:linear-gradient(90deg,#a98bff,#67e3d0)}.edu-cab-lab .edu-cab-meta{color:#a99ac9}.edu-cabinet-hint{max-width:1180px;margin:12px auto 14px;padding:9px 12px;display:flex;align-items:center;gap:14px;border-top:1px solid #1d2933;border-bottom:1px solid #1d2933;color:#667582;font:700 8px/1.2 'Space Grotesk',sans-serif;letter-spacing:.14em}.edu-cabinet-hint b{color:#aab5bc;font-size:10px;letter-spacing:.04em}.edu-cabinet-hint span:last-child{margin-left:auto}.edu-work-tabs{display:none!important}.edu-work-panel{max-width:1180px!important;margin:16px auto 0!important;padding:0!important;background:transparent!important}.edu-work-panel.active{display:block!important}.edu-work-panel>div{border-color:#25323d!important;border-radius:16px!important;background:#0b1117!important;box-shadow:none!important}.notes-layout aside,.notes-layout article,.coding-layout,.math-card,.study-builder,.cad-grid,.student-dashboard{background:#0b1117!important;border:1px solid #25323d!important;box-shadow:none!important}.notes-layout input,.notes-layout textarea,.coding-layout textarea,.math-card input,.math-card select,.study-builder input,.student-dashboard textarea{border:1px solid #273540!important;background:#101820!important}.math-card:hover,.dash-card:hover,.note-tool-card:hover{transform:none!important;box-shadow:none!important;border-color:#354651!important}
+/* Other pages: one consistent system instead of separate visual themes */
+#tab-videos,#tab-data,#tab-arcade,#tab-ai,#tab-dev{background:#080c11!important}#tab-videos .vid-wrap,#tab-data .data-wrap,#tab-arcade .arcade-wrap{padding:24px 28px 50px!important}#tab-videos .media-choice,#tab-videos .media-tool-card,#tab-data .data-card,#tab-arcade .arcade-head,#tab-arcade .arcade-layout,#tab-dev .dev-wrap,#tab-ai .ai-layout{border:1px solid #24313b!important;box-shadow:none!important;background:#0d141b!important;border-radius:16px!important}#tab-videos .media-choice:hover{transform:translateY(-2px)!important;border-color:#3b5960!important}
+#tab-arcade .arcade-head{padding:20px!important;margin-bottom:12px!important}#tab-arcade .arcade-head h2{font-size:28px!important}#tab-arcade .arcade-subtabs{margin-top:14px!important}.arcade-subtabs .subtab{border:1px solid #263540!important;background:#0a1016!important;border-radius:10px!important;box-shadow:none!important}.arcade-subtabs .subtab.active{background:#152029!important;border-color:#4b6570!important;color:#f0c17a!important}.arcade-platform-wall{opacity:.22!important;filter:grayscale(1)!important;transform:scale(.85)!important;transform-origin:top center}.arcade-race-sweep{opacity:.35!important}
+#tab-data .data-card{padding:16px!important}#tab-data .data-card:hover{transform:none!important}#tab-dev .dev-wrap,#tab-ai .ai-layout{backdrop-filter:none!important}#tab-dev .dev-panel h2{font-size:28px!important;text-shadow:none!important}
+@media(max-width:1100px){.edu-cabinet-wall{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:820px){.edu-cabinet-wall{grid-template-columns:repeat(2,minmax(0,1fr))}.edu-hero{align-items:flex-start;flex-direction:column}.edu-cabinet-hint{flex-wrap:wrap}.edu-cabinet-hint span:last-child{margin-left:0}.topbar{overflow-x:auto}.tabbtn{flex:0 0 auto}}
+@media(max-width:520px){#tab-start .start-wrap,#tab-edu .edu-workspace,#tab-videos .vid-wrap,#tab-data .data-wrap,#tab-arcade .arcade-wrap{padding:16px 12px 36px!important}.edu-cabinet-wall{grid-template-columns:1fr 1fr;gap:8px}.edu-cab{min-height:128px;padding:12px}.edu-cab-art{font-size:25px}.edu-cab-title{font-size:12px}.edu-cab-meta{font-size:7px}.edu-hero{padding:18px!important}.edu-hero h2{font-size:28px!important}}

@@ -1,0 +1,54 @@
+/* Styles the original app injected from JavaScript at runtime (collected here so they ship in the bundle). */
+
+/* --- Performance monitor (5.57.0) --- */
+#wb-perf-hud{position:fixed;left:8px;bottom:8px;z-index:99990;pointer-events:none;display:none;font:600 11px/1.3 ui-monospace,Consolas,monospace;background:rgba(8,12,18,.78);color:#dfe8ee;border:1px solid rgba(95,212,199,.35);border-radius:7px;padding:5px 8px;white-space:nowrap}
+#wb-perf-hud.on{display:block}#wb-perf-hud b.g{color:#6ee7a0}#wb-perf-hud b.a{color:#ffc247}#wb-perf-hud b.r{color:#ff6b6b}
+#wb-perf-note{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:99991;pointer-events:none;background:rgba(8,12,18,.9);color:#eef3f5;border:1px solid rgba(255,194,71,.5);border-radius:8px;padding:7px 12px;font:600 12px/1.3 system-ui,sans-serif;display:none}
+html.wb-lite body::before,html.wb-lite body::after,html.wb-lite .tab::before,html.wb-lite .tab::after,html.wb-lite #tab-ai::after,html.wb-lite #tab-dev::before{animation:none!important}
+html.wb-lite *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* --- Assistant memory lock prompt (5.57.0) --- */
+#wb-memlock{position:fixed;inset:0;z-index:2147483600;background:rgba(3,6,10,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+#wb-memlock .wb-memlock-card{background:#111821;color:#eef3f5;border:1px solid rgba(95,212,255,.4);border-radius:12px;padding:22px;max-width:340px;width:100%;box-sizing:border-box;text-align:center;font-family:inherit}
+#wb-memlock h3{margin:0 0 8px;font-size:18px}#wb-memlock p{margin:0 0 14px;font-size:13px;line-height:1.5;color:#aab6bf}
+#wb-memlock input{width:100%;box-sizing:border-box;font-size:18px;padding:11px 12px;border-radius:8px;border:1px solid rgba(95,212,255,.35);background:#0a1017;color:#eef3f5;text-align:center;letter-spacing:.2em}
+#wb-memlock .wb-memlock-err{min-height:18px;margin:8px 0 4px;font-size:12px;color:#e0a3a3}
+#wb-memlock .wb-memlock-row{display:flex;gap:8px;justify-content:center}#wb-memlock .wb-memlock-row button{flex:1;padding:10px 12px}
+
+/* --- 5.19.0 injected CSS (educational cabinets, labs, overlay shell) --- */
+.edu-cab-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; }
+.edu-cab{ position:relative; background:var(--panel,#151924); border:2px solid var(--line,#2a3142); border-radius:14px; min-height:210px; cursor:pointer; overflow:hidden; transition:transform .15s, border-color .15s, box-shadow .15s; display:flex; }
+.edu-cab:hover{ transform:translateY(-3px); border-color:var(--cat-accent,var(--amber)); box-shadow:0 10px 26px rgba(0,0,0,.45); }
+.edu-cab .ec-glow{ position:absolute; inset:0; background:radial-gradient(circle at 50% 28%, color-mix(in srgb,var(--cat-accent,var(--amber)) 22%, transparent), transparent 70%); opacity:0; transition:opacity .2s; pointer-events:none; }
+.edu-cab:hover .ec-glow{ opacity:1; }
+.edu-cab .ec-body{ position:relative; z-index:1; padding:18px 16px; display:flex; flex-direction:column; width:100%; }
+.edu-cab .ec-icon{ font-size:30px; margin-bottom:6px; }
+.edu-cab .ec-title{ font-family:"Space Grotesk",sans-serif; font-size:15px; font-weight:700; color:var(--text,#e8e8e8); }
+.edu-cab .ec-sub{ font-size:11px; color:var(--muted,#8a93a6); margin-top:2px; }
+.edu-cab .ec-tap{ margin-top:auto; padding-top:10px; font-size:10px; letter-spacing:.12em; color:var(--cat-accent,var(--amber)); font-weight:700; }
+.edu-cab .ec-desc{ position:absolute; left:0; right:0; bottom:0; z-index:2; background:color-mix(in srgb,#0b0e16 90%, transparent); padding:12px 14px; font-size:11px; line-height:1.5; color:var(--text,#e8e8e8); transform:translateY(101%); transition:transform .22s; border-top:2px solid var(--cat-accent,var(--amber)); }
+.edu-cab:hover .ec-desc{ transform:translateY(0); }
+.edu-cab .ec-wip{ position:absolute; top:10px; right:10px; z-index:3; font-size:9px; font-weight:700; letter-spacing:.08em; padding:3px 7px; border-radius:5px; background:color-mix(in srgb,var(--amber) 22%, transparent); color:var(--amber); }
+.subtab.cursive{ font-family:"Brush Script MT","Segoe Script","Lucida Handwriting",cursive; font-size:17px; font-style:italic; }
+.car-guys-mode .ac-slot:not(.is-car){ display:none !important; }
+.car-guys-mode .arcade-category:not(.has-car){ display:none !important; }
+.g519-shell{ width:min(880px,94vw); max-height:92vh; overflow:auto; background:#0b0e16; border:2px solid var(--line,#2a3142); border-radius:18px; padding:22px; box-sizing:border-box; }
+.g519-shell h3{ margin:0 0 4px; font-family:"Space Grotesk",sans-serif; }
+.g519-sub{ font-size:12px; color:var(--muted,#8a93a6); margin:0 0 16px; }
+.g519-foot{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+.tr-box{ display:flex; flex-direction:column; gap:12px; }
+.tr-phrase{ font-family:monospace; font-size:20px; line-height:1.8; letter-spacing:.5px; background:#0f1320; border:1px solid var(--line); border-radius:10px; padding:16px; min-height:90px; word-break:break-word; }
+.tr-phrase .c{ color:#5b6478; } .tr-phrase .c.ok{ color:#7ee0b8; } .tr-phrase .c.bad{ color:#ff6b6b; border-bottom:2px solid #ff6b6b; } .tr-phrase .c.cur{ background:rgba(255,255,255,.12); border-radius:3px; } .tr-phrase .c.sp{ display:inline-block; width:.5em; }
+.py-box{ display:flex; flex-direction:column; gap:10px; }
+.py-hint{ font-size:11px; color:var(--muted); margin:0; }
+.py-code{ width:100%; font-family:monospace; font-size:13px; background:#0f1320; color:#cfe3ff; border:1px solid var(--line); border-radius:10px; padding:12px; box-sizing:border-box; resize:vertical; }
+.py-canvas{ background:#000; border:1px solid var(--line); border-radius:10px; width:100%; max-width:400px; height:auto; display:block; margin:0 auto; }
+.py-help{ font-size:11px; color:var(--amber); margin:0; min-height:16px; }
+.g519-canvas{ background:#070a10; border:1px solid var(--line); border-radius:10px; width:100%; max-width:800px; height:auto; display:block; margin:0 auto; }
+.g519-hud{ display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--muted); margin-bottom:8px; }
+.g519-hud b{ color:var(--text); }
+.g519-btnrow{ display:flex; gap:10px; justify-content:center; margin:10px 0; }
+.wm-quick{ border-top:1px dashed var(--line); margin-top:14px; padding-top:14px; }
+.wm-quick h4{ margin:0 0 4px; font-size:13px; }
+.wm-quick p{ font-size:11px; color:var(--muted); margin:0 0 10px; }
+.wm-quick input{ width:100%; box-sizing:border-box; margin-bottom:8px; }

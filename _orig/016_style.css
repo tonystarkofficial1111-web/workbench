@@ -1,0 +1,44 @@
+
+/* 5.40.18: Educational cabinet selection (new inner background, glowing top-right lettering, circling bright-blue ring). */
+@property --eduAng{syntax:'<angle>';initial-value:0deg;inherits:false}
+#tab-edu .edu-cab.edu-selected,#tab-edu .edu-cab.edu-selected:hover{
+  overflow:visible!important;
+  border-color:#1fb6ff!important;
+  background:
+    radial-gradient(130% 100% at 100% 0%,rgba(31,182,255,.22),transparent 58%),
+    linear-gradient(rgba(31,182,255,.06) 1px,transparent 1px) 0 0/20px 20px,
+    linear-gradient(90deg,rgba(31,182,255,.06) 1px,transparent 1px) 0 0/20px 20px,
+    #101c27!important;
+}
+#tab-edu .edu-cab.edu-selected:before{background:#1fb6ff!important;transform:none!important;border-radius:6px 6px 0 0!important;}
+#tab-edu .edu-cab.edu-selected .edu-cab-title{color:#ffffff!important;}
+#tab-edu .edu-cab.edu-selected .edu-cab-meta{color:#8fd6ff!important;}
+#tab-edu .edu-cab.edu-selected .edu-cab-art,#tab-edu .edu-cab.edu-selected:hover .edu-cab-art{
+  color:#3fc2ff!important;opacity:.9!important;
+  font-size:clamp(26px,4.4vw,64px)!important;
+  animation:wbEduArtBreathe 2.6s ease-in-out infinite!important;
+}
+#tab-edu .edu-cab.edu-selected .edu-logo-ti{font-size:clamp(26px,4vw,52px)!important;}
+#tab-edu .edu-cab.edu-selected::after{
+  content:""!important;position:absolute!important;inset:-7px!important;width:auto!important;height:auto!important;transform:none!important;border:0!important;box-sizing:border-box!important;border-radius:13px;padding:2px;pointer-events:none;z-index:3;
+  background:conic-gradient(from var(--eduAng),rgba(31,182,255,0) 0deg,rgba(31,182,255,0) 190deg,#1fb6ff 330deg,rgba(31,182,255,0) 360deg),linear-gradient(rgba(31,182,255,.30),rgba(31,182,255,.30));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude;
+  filter:drop-shadow(0 0 5px rgba(31,182,255,.65));
+  animation:wbEduRingSpin 1.8s linear infinite;
+}
+/* 5.40.18: resting cabinets get dark, readable lettering on the light card (white titles were nearly invisible). */
+#tab-edu .edu-cab:not(:hover):not(.edu-selected) .edu-cab-title{color:#14161c!important}
+#tab-edu .edu-cab:not(:hover):not(.edu-selected) .edu-cab-meta{color:#586070!important}
+#tab-edu .edu-cab:not(:hover):not(.edu-selected) .edu-cab-art{color:#14161c!important;opacity:.09!important}
+@keyframes wbEduRingSpin{to{--eduAng:360deg}}
+@keyframes wbEduArtBreathe{
+  0%,100%{text-shadow:0 0 6px rgba(31,182,255,.35),0 0 14px rgba(31,182,255,.15)}
+  50%{text-shadow:0 0 14px rgba(31,182,255,.90),0 0 30px rgba(31,182,255,.50)}
+}
+@media (prefers-reduced-motion:reduce){#tab-edu .edu-cab.edu-selected::after,#tab-edu .edu-cab.edu-selected .edu-cab-art{animation:none!important}}
+/* 5.40.18: Type Rush phrase is grouped by word so whole words wrap to the next line and never run off the right edge. */
+.tr-phrase .w{display:inline-block;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.tr-phrase{font-size:clamp(15px,2.4vw,21px)!important;overflow-x:hidden!important}
+.tr-run-wrap{min-width:0!important}
+@media (max-width:700px){.tr-run-wrap{grid-template-columns:minmax(0,1fr)!important}.tr-sidebar{max-height:130px;overflow:auto}}

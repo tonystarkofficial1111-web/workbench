@@ -1,0 +1,68 @@
+
+/* 5.33.8 visual refinement */
+#tab-start{overflow:hidden}
+#tab-start .start-wrap{height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:140px;scrollbar-width:thin;scrollbar-color:rgba(95,212,199,.5) transparent}
+#tab-start .start-wrap::-webkit-scrollbar{width:8px}#tab-start .start-wrap::-webkit-scrollbar-thumb{background:rgba(95,212,199,.45);border-radius:99px}
+#tab-start::before{opacity:1;background:radial-gradient(circle at 50% 20%,rgba(95,212,199,.16),transparent 28%),radial-gradient(circle at 10% 80%,rgba(176,112,255,.12),transparent 28%),radial-gradient(circle at 90% 70%,rgba(224,164,88,.12),transparent 28%),linear-gradient(125deg,transparent 0 40%,rgba(95,212,199,.08) 48%,transparent 54%);animation:wbStartDepth 14s ease-in-out infinite alternate}
+#tab-start::after{opacity:.9}
+#tab-start .start-hero{background:linear-gradient(135deg,rgba(10,19,28,.88),rgba(14,30,37,.78) 48%,rgba(23,17,37,.76));border-color:rgba(95,212,199,.22);box-shadow:0 26px 100px rgba(0,0,0,.48),0 0 50px rgba(95,212,199,.06),inset 0 1px 0 rgba(255,255,255,.08)}
+#tab-start .start-hero > div:first-child{color:#8bd8ff!important;animation:starkFullPower 4.2s steps(1,end) infinite}
+@keyframes starkFullPower{0%,8%,100%{opacity:1;text-shadow:0 0 7px rgba(90,190,255,.45),0 0 18px rgba(90,190,255,.28),0 0 32px rgba(90,190,255,.12)}9%,48%{opacity:.18;text-shadow:none}49%,55%{opacity:.62;text-shadow:0 0 8px rgba(90,190,255,.3)}56%,92%{opacity:1;text-shadow:0 0 7px rgba(90,190,255,.45),0 0 18px rgba(90,190,255,.28),0 0 32px rgba(90,190,255,.12)}93%,99%{opacity:.15;text-shadow:none}}
+
+/* Actual supplied platform logo artwork */
+.arcade-platform-wall{top:0;height:210px;opacity:.9}
+.arcade-logo{border:0!important;background:none!important;box-shadow:none!important;display:block;min-width:0;height:auto;padding:0;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(0,0,0,.35));mix-blend-mode:screen}
+.arcade-logo img{display:block}
+.arcade-logo.logo-rog{width:190px;height:90px;left:50%;top:-2px;transform:translateX(-50%) rotate(var(--logo-rot,0deg));object-fit:contain;filter:drop-shadow(0 0 16px rgba(255,35,55,.22))}
+.arcade-logo.logo-playstation{width:92px;height:118px;right:5%;top:18px;transform:rotate(var(--logo-rot,0deg));filter:brightness(0) invert(1) drop-shadow(0 0 12px rgba(180,190,255,.18));}
+.arcade-logo.logo-xbox{width:100px;height:100px;right:8%;bottom:0;transform:rotate(var(--logo-rot,0deg));filter:drop-shadow(0 0 15px rgba(100,255,130,.18));}
+.arcade-logo.logo-nintendo{width:180px;height:62px;left:4%;top:82px;transform:rotate(var(--logo-rot,0deg));filter:drop-shadow(0 0 14px rgba(255,70,90,.16));}
+.arcade-logo.logo-retro{width:150px;height:58px;left:8%;bottom:4px;display:grid;place-items:center;color:#c9a8ff;font:900 12px/1.05 'Space Grotesk',sans-serif;letter-spacing:.16em;text-align:center;transform:rotate(var(--logo-rot,0deg));filter:drop-shadow(0 0 16px rgba(176,112,255,.25));}
+.arcade-logo.logo-retro::before{content:"";position:absolute;inset:0;border:1px solid rgba(176,112,255,.32);border-radius:12px;box-shadow:inset 0 0 20px rgba(176,112,255,.08)}
+.arcade-logo.logo-retro span{position:relative;z-index:1}.arcade-logo.logo-retro b{color:#7fe5ff}
+
+/* Full-height saturated Assistant data streams; center remains clean. */
+#tab-ai::before,#tab-ai::after{width:38%;height:180%;top:-40%;font-weight:700;line-height:1.55;letter-spacing:.16em;white-space:pre-wrap;mask-image:linear-gradient(180deg,transparent 0%,#000 8%,#000 92%,transparent 100%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 8%,#000 92%,transparent 100%)}
+#tab-ai::before{left:1%;font-size:10px;color:rgba(95,212,199,.34);content:"01001010 01100101 01110100 01100001  10110101 00101110 11001001 01010011\A01101110 00110010 10011010 11100100  11001010 01001101 01101001 00110101\A01011101 10101010 01100110 10010101  00110110 11010001 01001111 10100100\A11100010 01011010 00101101 11001010  01010111 01100101 10011010 01100011\A00111010 10101001 01010110 11000101  11100100 01101011 00110101 10010010\A11001010 01001101 01101001 00110101  01110010 11000011 01010110 01101010\A10101100 00110011 11001001 01010010  01101101 11100010 10010101 01010110\A00110101 10011010 01100101 11000100  01011010 00110111 10101010 01100011";animation:wbBinaryFull 8.5s linear infinite}
+#tab-ai::after{right:1%;left:auto;font-size:11px;color:rgba(176,112,255,.33);content:"TOKENS   MEMORY   VRAM   RAM   CACHE   CONTEXT   LATENCY\APROMPT   OUTPUT   WEIGHTS   INFERENCE   MODEL   KERNEL\ABATCH   TENSOR   THROUGHPUT   MEMORY   CACHE   TOKENS   VRAM\ARAM   CONTEXT   CACHE   LATENCY   INFERENCE   WEIGHTS\AKERNEL   MODEL   PROMPT   OUTPUT   TENSOR   VRAM   RAM\AMEMORY   CACHE   TOKENS   THROUGHPUT   CONTEXT   LATENCY\AWEIGHTS   INFERENCE   MODEL   KERNEL   BATCH   TENSOR";animation:wbRuntimeFull 9.2s linear infinite}
+@keyframes wbBinaryFull{from{transform:translateY(35%)}to{transform:translateY(-35%)}}
+@keyframes wbRuntimeFull{from{transform:translateY(35%)}to{transform:translateY(-35%)}}
+
+/* Version badge is now an interactive control. */
+#version-badge{pointer-events:auto;cursor:pointer;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;user-select:none}
+#version-badge:hover{transform:translateY(-2px);border-color:var(--cyan);box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 20px rgba(95,212,199,.10)}
+#screensaver-menu{position:absolute;right:0;bottom:calc(100% + 10px);width:260px;padding:14px;background:rgba(12,17,24,.97);border:2px solid var(--cyan);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 30px rgba(95,212,199,.10);opacity:0;visibility:hidden;transform:translateY(12px) scale(.97);transform-origin:bottom right;transition:opacity .22s ease,transform .22s ease,visibility .22s ease;z-index:100000}
+#version-badge.menu-open #screensaver-menu{opacity:1;visibility:visible;transform:none}
+.ss-menu-title{font:800 13px 'Space Grotesk',sans-serif;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.ss-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--muted)}
+.ss-row input{accent-color:var(--cyan);width:18px;height:18px}.ss-row select{background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:600 11px 'Inter',sans-serif}
+/* 5.40.17: screensaver clip chooser. The selected box breathes (dims) and an outer ring circles it indefinitely. */
+@property --ssAng{syntax:'<angle>';initial-value:0deg;inherits:false}
+#screensaver-menu{width:290px}
+.ss-clip-wrap{padding:9px 0 2px;border-top:1px solid rgba(255,255,255,.06)}
+.ss-clip-label{font-size:10px;color:var(--muted);margin-bottom:7px;letter-spacing:.04em}
+.ss-clip-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 6px 10px}
+.ss-clip{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:54px;padding:9px 6px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:9px;font:700 11px 'Inter',sans-serif;cursor:pointer;text-align:center;transition:border-color .22s ease,transform .22s ease}
+.ss-clip em{font-style:normal;font-weight:500;font-size:9px;color:var(--muted)}
+.ss-clip span,.ss-clip em{position:relative;z-index:1}
+.ss-clip::before{content:"";position:absolute;inset:0;background:#0b1018;opacity:0;border-radius:inherit;pointer-events:none}
+.ss-clip:hover{border-color:rgba(255,255,255,.55)}
+.ss-clip.selected{border-color:#fff}
+.ss-clip.selected::before{animation:ssBoxDim 2.4s ease-in-out infinite}
+.ss-offline{margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)}
+ .ss-download{width:100%;padding:8px 9px;font-size:10px;border:1px solid var(--cyan);background:rgba(95,212,199,.08);color:var(--text);border-radius:7px;cursor:pointer}
+ .ss-download:hover{background:rgba(95,212,199,.16)}
+ .ss-download:disabled{opacity:.55;cursor:default}
+ .ss-download-status{margin-top:6px;font-size:9px;line-height:1.35;color:var(--muted)}
+.ss-clip.selected::after{content:"";position:absolute;inset:-7px;border-radius:15px;padding:2px;pointer-events:none;
+  background:conic-gradient(from var(--ssAng),rgba(255,255,255,0) 0deg,rgba(255,255,255,0) 190deg,rgba(255,255,255,.95) 330deg,rgba(255,255,255,0) 360deg),linear-gradient(rgba(255,255,255,.28),rgba(255,255,255,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude;
+  animation:ssRingSpin 1.8s linear infinite}
+.ss-clip.armed span{font-size:10px}
+@keyframes ssBoxDim{0%,100%{opacity:0}50%{opacity:.55}}
+@keyframes ssRingSpin{to{--ssAng:360deg}}
+@media (prefers-reduced-motion:reduce){.ss-clip.selected::before{animation:none;opacity:.25}.ss-clip.selected::after{animation:none}}
+.ss-menu-note{font-size:9px;line-height:1.45;color:var(--muted);margin-top:8px}
+
+/* Slightly richer Start-page background while keeping the content readable. */
+#tab-start .start-wrap::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 18% 35%,rgba(90,138,255,.07),transparent 22%),radial-gradient(circle at 82% 55%,rgba(176,112,255,.06),transparent 24%);z-index:-1}

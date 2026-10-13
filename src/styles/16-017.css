@@ -1,0 +1,54 @@
+
+/* 5.40.19: Type Rush redesign. Black surfaces, light-grey letters, bright-blue accents, circling title ring, and a finger guide. */
+@property --trAng{syntax:'<angle>';initial-value:0deg;inherits:false}
+.tr-shell{--cyan:#1fb6ff;--green:#1fb6ff;background:#000!important;border-color:#23262d!important}
+.tr-shell h3{margin:0 0 12px!important;padding:6px 2px 2px!important}
+.tr-title-ring{position:relative;display:inline-block;padding:5px 18px;border-radius:12px;line-height:1.2}
+.tr-title-text{color:#1fb6ff;font-weight:800;letter-spacing:.02em;text-shadow:0 0 10px rgba(31,182,255,.55)}
+.tr-title-ring::after{content:"";position:absolute;inset:-2px;border-radius:14px;padding:2px;pointer-events:none;
+  background:conic-gradient(from var(--trAng),rgba(31,182,255,0) 0deg,rgba(31,182,255,0) 190deg,#1fb6ff 330deg,rgba(31,182,255,0) 360deg),linear-gradient(rgba(31,182,255,.28),rgba(31,182,255,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude;
+  filter:drop-shadow(0 0 5px rgba(31,182,255,.65));animation:trRingSpin 1.8s linear infinite}
+@keyframes trRingSpin{to{--trAng:360deg}}
+.tr-shell .g519-sub{color:#aeb4bf}
+.tr-shell .type-rush-hero{background:#000!important;border:1px solid #20242b!important}
+.tr-shell .type-rush-hero h4{color:#d5d9e0}
+.tr-shell .type-rush-hero p{color:#9aa1ad}
+.tr-shell .trh-kicker{color:#1fb6ff!important}
+.tr-shell .tr-live-badge{color:#1fb6ff!important;background:rgba(31,182,255,.10)!important}
+.tr-shell .tr-sidebar,.tr-shell .tr-main,.tr-shell .tr-overall,.tr-shell .tr-phrase,.tr-shell .type-input{background:#000!important;border-color:#23262d!important}
+.tr-shell .tr-sidebar-head{color:#1fb6ff!important;border-bottom-color:#23262d!important}
+.tr-shell .tr-hist-item{background:#000!important;border-color:#23262d!important}
+.tr-shell .tr-hist-text{color:#c4c9d1!important}
+.tr-shell .tr-hist-stats{color:#9aa1ad!important}
+.tr-shell .tr-hist-stats b,.tr-shell .tr-overall b,.tr-shell .type-stats b{color:#1fb6ff!important}
+.tr-shell .tr-overall,.tr-shell .type-stats{color:#aeb4bf!important}
+.tr-shell .type-stats{margin:0 0 10px!important}
+.tr-shell .tr-phrase .c{color:#c4c9d1!important}
+.tr-shell .tr-phrase .c.ok{color:#1fb6ff!important}
+.tr-shell .tr-phrase .c.bad{color:#ff6b6b!important;border-bottom:2px solid #ff6b6b}
+.tr-shell .tr-phrase .c.cur{background:rgba(31,182,255,.22)!important;box-shadow:0 0 0 1px rgba(31,182,255,.55) inset}
+.tr-shell .type-input{color:#e6e9ee!important}
+.tr-shell .type-input:focus{border-color:#1fb6ff!important;box-shadow:0 0 0 2px rgba(31,182,255,.18)!important}
+.tr-shell .type-btn.ghost:hover{border-color:#1fb6ff!important;color:#1fb6ff!important}
+/* finger guide (5.40.20): quiet line-art hands resting on the keyboard; only the active finger and target key glow blue */
+.tr-guide{margin:10px 0;padding:8px 8px 4px;background:#000;border:1px solid #1c1f25;border-radius:12px}
+.tr-guide[hidden]{display:none!important}
+.tr-guide-label{text-align:center;font-size:12px;color:#8f96a3;min-height:18px;margin-bottom:2px}
+.tr-guide-label b{color:#1fb6ff;font-weight:700}
+.tr-guide svg{display:block;width:100%;max-width:440px;height:auto;margin:0 auto}
+.tr-guide .kb rect{fill:none;stroke:#23262d;stroke-width:1}
+.tr-guide .kb text{fill:#5d636e;font:500 11px Inter,system-ui,sans-serif;text-anchor:middle}
+.tr-guide .kb .bump{fill:#5d636e;stroke:none}
+.tr-guide .k.next rect{fill:rgba(31,182,255,.92);stroke:#8ddcff}
+.tr-guide .k.next text{fill:#00121c;font-weight:700}
+.tr-guide .k.next{animation:trKeyPulse 1.4s ease-in-out infinite}
+@keyframes trKeyPulse{0%,100%{filter:drop-shadow(0 0 4px rgba(31,182,255,.55))}50%{filter:drop-shadow(0 0 11px rgba(31,182,255,1))}}
+.tr-guide .hand path.fg{fill:rgba(255,255,255,.015);stroke:#3b404a;stroke-width:1.4;transition:d .18s ease-out,stroke .15s,fill .15s}
+.tr-guide .hand path.fg.on{fill:rgba(31,182,255,.16);stroke:#1fb6ff;stroke-width:2;filter:drop-shadow(0 0 5px rgba(31,182,255,.7))}
+.tr-guide .hand path.edge{fill:none;stroke:url(#trHandFade);stroke-width:1.4}
+.tr-guide .hand path.pfill{fill:rgba(255,255,255,.02);stroke:none;transition:d .2s ease-out}
+.tr-guide .hand path.edge{transition:d .2s ease-out}
+.tr-guide .hand path.fg{transition:d .2s ease-out,stroke .15s,fill .15s}
+@media (prefers-reduced-motion:reduce){.tr-title-ring::after,.tr-guide .k.next{animation:none}.tr-guide .hand path{transition:none!important}}

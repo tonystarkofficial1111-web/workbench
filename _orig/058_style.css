@@ -1,0 +1,6 @@
+
+/* 5.53.1: every page scrolls when its content is taller than the screen */
+.tab,#tab-start{overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#tab-world{overflow:hidden!important}
+#ac-overlay{overflow-y:auto!important;align-items:flex-start!important}
+#ac-overlay>*{margin-top:auto;margin-bottom:auto}

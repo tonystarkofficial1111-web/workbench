@@ -1,0 +1,7 @@
+
+#bw-touch{position:absolute;left:0;right:0;bottom:36%;z-index:5;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 16px;box-sizing:border-box}
+#bw-joy{position:relative;width:104px;height:104px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);pointer-events:auto;touch-action:none}
+#bw-joy i{position:absolute;left:34px;top:34px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.55)}
+#bw-tbtns{display:grid;grid-template-columns:repeat(2,52px);gap:8px;pointer-events:auto}
+#bw-tbtns button{height:52px;font-size:20px;touch-action:none}
+#bw-place-bar{display:none;gap:6px}
