@@ -30,7 +30,7 @@ rep("window.__wbQuality = {", "quality.hooks = {", "quality hooks");
 rep("window.__workbenchDay = legacyDay;", "window.__workbenchDay = legacyDay; worldBridge.day.set(legacyDay);", "day");
 rep("window.__workbenchWorld = world;", "window.__workbenchWorld = world; worldBridge.blockCount = function(){ return world.size; }; worldBridge.exportBundle = downloadSave; worldBridge.importData = loadSaveData;", "world export");
 
-// The User / Saves tab ("Export world" / "Import worldâ€¦") is React and already calls worldBridge.exportBundle / importData.
+// The User / Saves tab ("Export world" / "Import world…") is React and already calls worldBridge.exportBundle / importData.
 // The original engine ALSO attached its own listeners to those two elements, which here made every click run twice
 // (two downloads, the file imported twice) and wrote its status text into a React-owned node. Drop the engine's copy.
 {
