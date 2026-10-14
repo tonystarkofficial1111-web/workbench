@@ -3,6 +3,7 @@ import type * as THREE_NS from "three";
 import { MB } from "../../world/infinite/mb";
 import { buildF1Car, makeLink, EYE_POS } from "./car";
 import type { F1Env } from "./env";
+import { GEAR_MAX } from "./consts";
 
 type T3 = typeof THREE_NS;
 
@@ -44,7 +45,23 @@ export function createCockpit(T: T3, kit: any, env: F1Env, f: { level: number })
     for (let i = 0; i < 3; i++) bm.cyl(cols[i + 3]!, 0.0085, 0.0085, 0.014, (i - 1) * 0.05, -0.048, -0.022, 10, Math.PI / 2, 0, 0, { jit: 0, mat: "lamp" });
     for (const s of [-1, 1]) for (let k = 0; k < 3; k++) bm.cyl(cols[(k * 2 + (s > 0 ? 1 : 0)) % 6]!, 0.0085, 0.0085, 0.016, s * 0.135, 0.04 - k * 0.034, -0.04, 8, Math.PI / 2, 0, 0, { jit: 0, mat: "lamp" });
     wheelRot.add(bm.build(kit, false));
+    // 5.63.0 detail: two rotary dials with their pointer, small thumb switches and a carbon trim plate
+    const dm = new MB(T, 72); dm.ao = { y0: -1, h: 1, k: 0 }; dm.jitter = 0;
+    for (const s of [-1, 1]) {
+      dm.cyl(0x2a2e35, 0.014, 0.014, 0.018, s * 0.072, -0.052, -0.022, 8, Math.PI / 2, 0, 0, { jit: 0, mat: "metal" });
+      dm.box(0xe9e9ee, 0.003, 0.012, 0.004, s * 0.072, -0.046, -0.032, 0, 0, s * 0.6, { jit: 0, noAO: true });
+      dm.box(0x0e0f12, 0.012, 0.02, 0.012, s * 0.1, 0.052, -0.024, 0, 0, 0, { jit: 0 });
+    }
+    dm.box(0x23272e, 0.13, 0.012, 0.006, 0, -0.068, -0.018, 0, 0, 0, { jit: 0 });
+    wheelRot.add(dm.build({ ...kit, lit: kit.cf }, false));
   }
+  // shift paddles behind the grips: they flick when you change gear (right = up with Y, left = down with U)
+  const paddles = [-1, 1].map((s) => {
+    const pm = new T.Mesh(new T.BoxGeometry(0.05, 0.075, 0.008), new T.MeshStandardMaterial({ color: 0x1d2025, roughness: 0.45, metalness: 0.2 }));
+    pm.position.set(s * 0.108, 0.01, 0.022); pm.rotation.y = s * 0.25; wheelRot.add(pm);
+    return { mesh: pm, s, kick: 0 };
+  });
+  let lastGear = 1;
   // screen: its own canvas, redrawn about 30 times a second
   const sc = document.createElement("canvas"); sc.width = 256; sc.height = 128;
   const sg = sc.getContext("2d")!;
@@ -98,12 +115,12 @@ export function createCockpit(T: T3, kit: any, env: F1Env, f: { level: number })
   function drawScreen(p: any, now: number, extra: any) {
     if (now - lastScreen < 33) return; lastScreen = now;
     const g = sg; g.fillStyle = "#02060a"; g.fillRect(0, 0, 256, 128);
-    const rpm = p.rpm || 0, hot = rpm >= 0.9 && p.gear < 8;
+    const rpm = p.rpm || 0, hot = rpm >= 0.9 && p.gear < GEAR_MAX.length;
     g.fillStyle = "rgba(95,212,199,.07)"; for (let y = 0; y < 128; y += 4) g.fillRect(0, y, 256, 1);
     g.textBaseline = "alphabetic";
     g.fillStyle = "#7f8b99"; g.font = labelFont; g.textAlign = "left"; g.fillText("MPH", 10, 22);
     g.fillStyle = "#e6edf3"; g.font = "800 30px 'Space Grotesk', Inter, Arial, sans-serif"; g.fillText(String(Math.round(p.speed)), 10, 54);
-    g.textAlign = "center"; g.fillStyle = hot ? ((Math.floor(now / 120) % 2) ? "#ffb000" : "#ff5a00") : "#ffffff"; g.font = "900 92px 'Space Grotesk', Inter, Arial, sans-serif"; g.fillText(String(p.gear), 140, 90);
+    g.textAlign = "center"; g.fillStyle = hot ? ((Math.floor(now / 120) % 2) ? "#ffb000" : "#ff5a00") : "#ffffff"; g.font = (p.gear >= 10 ? "900 70px" : "900 92px") + " 'Space Grotesk', Inter, Arial, sans-serif"; g.fillText(String(p.gear), 132, 90);
     g.textAlign = "right"; g.fillStyle = "#39ff88"; g.font = labelFont; g.fillText("ERS " + (extra.ers ?? 100) + "%", 246, 22);
     g.fillStyle = "#9fb0c0"; g.fillText(extra.lap || "", 246, 44);
     g.fillStyle = extra.deltaNeg ? "#37e0c8" : "#ff6b6b"; g.fillText(extra.delta || "", 246, 66);
@@ -130,7 +147,9 @@ export function createCockpit(T: T3, kit: any, env: F1Env, f: { level: number })
     spin += (p.speed || 0) * dt * 0.7;
     car.setSuspension(p.wheel || [0, 0, 0, 0], steer);
     for (const w of car.wheels) w.rotation.x = spin;
-    wheelRot.rotation.z = -steer * 1.15;
+    wheelRot.rotation.z = steer * 1.15;                 // seen from the seat (looking along +z) a positive turn about z is clockwise: right is right
+    if (p.gear !== lastGear) { const up = p.gear > lastGear; paddles.forEach((q) => { if ((q.s < 0) === up) q.kick = 1; }); lastGear = p.gear; }
+    paddles.forEach((q) => { q.kick = Math.max(0, q.kick - dt * 7); q.mesh.position.z = 0.022 - q.kick * 0.012; });
     // arms: wrists follow the grips as the wheel turns
     wheelRoot.updateMatrix(); wm.copy(wheelRoot.matrix);
     wheelRot.updateMatrix();

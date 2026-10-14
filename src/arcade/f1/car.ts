@@ -69,7 +69,25 @@ export interface F1Car {
  * on their wishbones and pushrods. Every big piece is its own mesh, so a crash can tear it off. The same model is the rivals' car, the player's car
  * in the replays and (seen from the driver's seat) the cockpit.
  */
-export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf2f2f4, opts: { helmet?: number } = {}): F1Car {
+/** 3 x 5 pixel digits, each pixel a small box: the race number on the nose stays in the blocky style. */
+const DIGITS: Record<number, string> = {
+  0: "111101101101111", 1: "010110010010111", 2: "111001111100111", 3: "111001111001111", 4: "101101111001001",
+  5: "111100111001111", 6: "111100111101111", 7: "111001001001001", 8: "111101111101111", 9: "111101111001111",
+};
+/** Lays a number flat on a surface at height y, centred on z0, reading from the driver's seat (the car faces +z). */
+function blockDigit(m: MB, num: number, color: number, y: number, z0: number, px: number) {
+  const s = String(num), w = s.length * 4 - 1;
+  for (let c = 0; c < s.length; c++) {
+    const rows = DIGITS[+s[c]!] || DIGITS[0]!;
+    for (let r = 0; r < 5; r++) for (let k = 0; k < 3; k++) {
+      if (rows[r * 3 + k] !== "1") continue;
+      const col = c * 4 + k;
+      m.box(color, px * 0.92, 0.008, px * 0.92, -(col - (w - 1) / 2) * px, y, z0 + (2 - r) * px, 0, 0, 0, { jit: 0, noAO: true });
+    }
+  }
+}
+
+export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf2f2f4, opts: { helmet?: number; number?: number } = {}): F1Car {
   const col = hex(color), DK = 0x14161a, CF = 0x1d2025, CF2 = 0x2a2e35, SV = 0xbfc4ca, WH = 0xf2f2f4;
   const group = new T.Group(), parts: Record<string, any> = {};
   let seed = 10;
@@ -88,6 +106,8 @@ export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf
   m.box(col, 0.58, 0.3, 0.18, 0, 0.4, -0.62);
   m.box(DK, 0.44, 0.05, 1.1, 0, 0.215, 0.0);
   m.box(col, 0.44, 0.05, 0.5, 0, 0.625, 0.78, -0.1, 0, 0);                        // the cowl in front of the wheel
+  blockDigit(m, opts.number ?? 1, WH, 0.575, 1.3, 0.034);                          // 5.63.0: the race number on the scuttle, made of little blocks
+  for (const s of [-1, 1]) m.box(accent, 0.035, 0.008, 0.95, s * 0.2, 0.574, 1.0, 0, 0, 0, { jit: 0, noAO: true });
   part("tub", m, "paint");
 
   m = mk();                                                                                     // padded rim, scuttle top, dash
@@ -96,12 +116,27 @@ export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf
   part("rim", m, "cf");
 
   m = mk(); taper(m, col, 0.06, 0.27, 1.05, 2.95, 0.34); m.box(DK, 0.5, 0.2, 0.04, 0, 0.5, 2.96); m.box(CF, 0.16, 0.02, 0.5, 0, 0.5, 2.2);
+  // 5.63.0 detail: camera pods either side of the nose and the pitot tube at its tip
+  for (const s of [-1, 1]) { m.box(DK, 0.06, 0.06, 0.16, s * 0.15, 0.44, 1.95); m.box(0x101114, 0.03, 0.03, 0.02, s * 0.15, 0.44, 2.035, 0, 0, 0, { jit: 0 }); }
+  m.box(SV, 0.012, 0.012, 0.3, 0, 0.36, 3.08, 0, 0, 0, { jit: 0 });
   part("nose", m, "paint");
 
   m = mk();                                                                                     // front wing (carbon + paint + end plates)
   m.box(CF, 2.0, 0.05, 0.5, 0, 0.12, 2.75); m.box(col, 2.0, 0.04, 0.22, 0, 0.19, 2.72); m.box(CF, 1.5, 0.03, 0.2, 0, 0.26, 2.62);
-  for (const s of [-1, 1]) m.box(accent, 0.04, 0.24, 0.55, s * 1.0, 0.2, 2.75);
+  for (const s of [-1, 1]) {
+    m.box(accent, 0.04, 0.24, 0.55, s * 1.0, 0.2, 2.75);
+    // 5.63.0 detail: stepped upper flaps that rise toward the end plates, a canard and the little footplate of each end plate
+    for (let k = 0; k < 3; k++) m.box(k % 2 ? col : CF, 0.32, 0.025, 0.14, s * (0.52 + k * 0.16), 0.3 + k * 0.035, 2.56 + k * 0.04, -0.25, 0, 0);
+    m.box(CF, 0.12, 0.02, 0.18, s * 1.08, 0.3, 2.7); m.box(DK, 0.06, 0.03, 0.62, s * 0.98, 0.1, 2.75);
+  }
   part("frontWing", m, "cf");
+
+  m = mk();                                                                                     // 5.63.0 detail: bargeboards and the floor edge vanes beside the sidepods
+  for (const s of [-1, 1]) {
+    for (let k = 0; k < 4; k++) m.box(k % 2 ? CF2 : CF, 0.02, 0.22 - k * 0.03, 0.34, s * (0.42 + k * 0.05), 0.3, 0.95 - k * 0.1, 0, s * 0.18, 0);
+    for (let k = 0; k < 5; k++) m.box(CF2, 0.015, 0.07, 0.22, s * 0.79, 0.19, -0.6 - k * 0.28, 0, s * 0.25, 0);
+  }
+  part("aero", m, "cf");
 
   m = mk();                                                                                     // sidepods
   for (const s of [-1, 1]) { m.box(col, 0.46, 0.34, 1.55, s * 0.62, 0.36, -0.15); m.box(DK, 0.4, 0.18, 0.05, s * 0.62, 0.46, 0.62); m.box(accent, 0.02, 0.06, 0.9, s * 0.855, 0.36, -0.2, 0, 0, 0, { jit: 0 }); }
@@ -113,7 +148,12 @@ export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf
 
   m = mk();                                                                                     // rear wing
   m.box(DK, 1.28, 0.05, 0.46, 0, 0.98, -2.2); m.box(col, 1.28, 0.04, 0.26, 0, 1.12, -2.28); m.box(DK, 0.07, 0.6, 0.1, 0, 0.72, -2.1);
-  for (const s of [-1, 1]) m.box(accent, 0.04, 0.5, 0.62, s * 0.66, 1.0, -2.22);
+  for (const s of [-1, 1]) {
+    m.box(accent, 0.04, 0.5, 0.62, s * 0.66, 1.0, -2.22);
+    for (let k = 0; k < 4; k++) m.box(DK, 0.045, 0.02, 0.5, s * 0.66, 0.8 + k * 0.09, -2.22, 0, 0, 0, { jit: 0 });   // 5.63.0: louvres on the end plates
+  }
+  m.box(DK, 1.0, 0.04, 0.22, 0, 0.62, -2.3, 0.3, 0, 0);                                        // beam wing under the main plane
+  m.box(0xff2a2a, 0.12, 0.05, 0.03, 0, 0.62, -2.42, 0, 0, 0, { mat: "lamp", jit: 0 });          // the rain light on the beam
   part("rearWing", m, "cf");
 
   m = mk();                                                                                     // halo
@@ -170,7 +210,7 @@ export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf
       const w = F1_WHEELS[i]!, sx = Math.sign(w.x), front = i < 2, ib = front ? inb[0]! : inb[1]!, root = wheelRoots[i];
       const up = comp[i] || 0;
       root.position.set(w.x, w.y + up, w.z);
-      root.rotation.y = front ? steer * 0.32 * (sx > 0 ? 1 : 1) : 0;
+      root.rotation.y = front ? -steer * 0.32 : 0;                          // the car faces +z, so its right is -x: steering right turns the wheels toward -x
       const hx = w.x - sx * (w.s * 0.2), hy = w.y + up, hz = w.z;           // the upright, just inside the tyre
       const L = links[i]!;
       L[0].set(v(ib.upF, sx), A.set(hx, hy + 0.2, hz + 0.06));

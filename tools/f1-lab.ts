@@ -45,11 +45,11 @@ const autopilot = (max = 80, margin = 0.55) => driver(`
   let k=0; for(let i=0;i<=8;i++){ k=Math.max(k,Math.abs(P.at(pl.lapDist+0.004*i).kap)); }
   const target=Math.min(${max}, Math.sqrt(${margin}*108/Math.max(k,1e-4))/(0.0015*P.total));
   set('KeyW',pl.speed<target-1); set('KeyS',pl.speed>target+6);
-  const now=performance.now(); if(now-a.last>260){ if(pl.rpm>=0.9&&pl.gear<8){ tap('KeyY'); a.last=now; } else if(pl.rpm<0.42&&pl.gear>1){ tap('KeyU'); a.last=now; } }
+  const now=performance.now(); if(now-a.last>260){ if(pl.rpm>=0.9&&pl.gear<10){ tap('KeyY'); a.last=now; } else if(pl.rpm<0.42&&pl.gear>1){ tap('KeyU'); a.last=now; } }
   const s=-(pl.lat||0)*0.7-(pl.vy||0)*0.5; set('KeyA',s<-0.25); set('KeyD',s>0.25);`);
 const intoTheBarrier = (mph: number) => driver(`
   set('KeyW',true); set('KeyA',pl.speed>=${mph}||Math.abs(pl.lat||0)>0.3);
-  const now=performance.now(); if(now-a.last>260&&pl.rpm>=0.9&&pl.gear<8){ tap('KeyY'); a.last=now; }`);
+  const now=performance.now(); if(now-a.last>260&&pl.rpm>=0.9&&pl.gear<10){ tap('KeyY'); a.last=now; }`);
 const read = (js: string) => p.eval(js);
 
 try {

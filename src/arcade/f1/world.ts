@@ -349,8 +349,103 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
       props.pop();
     }
   }
+  // ------------------------------------------------------------------------------------------------ 5.63.0 trackside detail (all blocky)
+  // where each bend starts: the place to brake. Boards count down to it, the tarmac carries the rubber of everyone who braked there.
+  const entries: Array<{ i: number; side: number }> = [];
+  for (let i = 0; i < n; i++) {
+    if (corner(i) > 0.6 && corner((i - 1 + n) % n) <= 0.6 && !underBridge(i)) {
+      if (entries.length && i - entries[entries.length - 1]!.i < 40) continue;
+      let pk = i; for (let k = i; k < i + 40; k++) if (Math.abs(kap(k)) > Math.abs(kap(pk))) pk = k;
+      entries.push({ i, side: kap(pk) > 0 ? -1 : 1 });
+    }
+  }
+  const step = path.total / n;
+  if (f.props > 0) {
+    for (const e of entries) {
+      // braking boards 3 / 2 / 1 on the outside verge (one, two or three black blocks on white)
+      for (let b = 3; b >= 1; b--) {
+        const i = (e.i - Math.round((b * 11) / step) + n * 4) % n;
+        if (underBridge(i) || corner(i) > 0.4) continue;
+        const s = path.at(i / n), d = e.side * (SHOULDER - 0.6);
+        props.push(s.x + s.rx * d, s.y, s.z + s.rz * d, Math.atan2(s.fx, s.fz));
+        props.box(0x6d737b, 0.12, 1.25, 0.12, 0, 0.62, 0);
+        props.box(0xf2f2f4, 0.9, 0.62, 0.08, 0, 1.25, 0.05);
+        for (let k = 0; k < b; k++) props.box(0x15171b, 0.16, 0.36, 0.09, (k - (b - 1) / 2) * 0.24, 1.25, 0.06, 0, 0, 0, { jit: 0 });
+        props.pop();
+      }
+    }
+    // marshal posts behind the fence: a hut, a marshal in orange and a flag on a pole
+    const FLAG = [0xffd400, 0x2ea05a, 0x2a5ac8];
+    for (let k = 0; k < 7; k++) {
+      const u = (k + 0.37) / 7, s0 = path.at(u), side = s0.kap > 0 ? -1 : 1;
+      const r = place(props, u, side * (WALL_D + 3.2), side, 4, -1.5, 1.5, 2.5, () => {
+        props.box(0xdfe3e7, 2.0, 2.1, 1.8, 0, 1.05, 1.0); props.box(0xd2262d, 2.2, 0.18, 2.0, 0, 2.18, 1.0); props.box(0x1a2a3a, 1.2, 0.5, 0.05, 0, 1.4, 0.08);
+        props.box(0xff7a1a, 0.42, 0.62, 0.3, 1.5, 0.95, 0.2); props.box(0x1b1d22, 0.4, 0.62, 0.28, 1.5, 0.31, 0.2); props.box(0xe8c39e, 0.28, 0.28, 0.28, 1.5, 1.42, 0.2);
+        props.box(0xf2f2f4, 0.3, 0.12, 0.3, 1.5, 1.6, 0.2);
+        props.bar(0x9aa0a8, 0.05, 2.4, 0.05, 1.85, 0, 0.0); props.box(FLAG[k % FLAG.length]!, 0.55, 0.36, 0.03, 2.13, 2.15, 0.0);
+      });
+      void r;
+    }
+    // TV camera towers on the outside of the biggest bends: scaffold, a platform, the camera and its operator
+    for (const e of entries.filter((_, j) => j % 2 === 0).slice(0, 4)) {
+      const u = ((e.i + 10) % n) / n;
+      place(props, u, e.side * (WALL_D + 5.5), e.side, 4, -1.6, 1.6, 3.2, () => {
+        for (const x of [-1, 1]) for (const z of [0.3, 2.3]) props.bar(0x8d9299, 0.1, 5.2, 0.1, x, 0, z);
+        for (const y of [1.6, 3.2]) { props.box(0x8d9299, 2.1, 0.07, 0.07, 0, y, 0.3); props.box(0x8d9299, 2.1, 0.07, 0.07, 0, y, 2.3); }
+        props.box(0x6d737b, 2.4, 0.15, 2.4, 0, 5.25, 1.3); props.box(0xd2262d, 2.4, 0.12, 0.08, 0, 5.4, 0.1);
+        props.box(0x1b1d22, 0.45, 0.4, 0.75, 0.2, 5.75, 0.9); props.box(0x101114, 0.24, 0.24, 0.3, 0.2, 5.78, 0.42); props.box(0x55606c, 0.5, 0.07, 0.4, 0.2, 5.98, 1.0);
+        props.box(0x2a5ac8, 0.42, 0.6, 0.3, -0.55, 5.65, 1.3); props.box(0xe8c39e, 0.28, 0.28, 0.28, -0.55, 6.1, 1.3); props.box(0x101114, 0.32, 0.12, 0.32, -0.55, 6.28, 1.3);
+      });
+    }
+    // a sponsor footbridge over the longest straight: legs outside the barriers, a deck with a banner on both faces
+    let best = -1, bestLen = 0, run = 0;
+    for (let i = 0; i < n * 2; i++) {
+      const j = i % n;
+      if (corner(j) < 0.15 && !underBridge(j)) { run++; if (run > bestLen && circ(j / n, 0) > 0.12) { bestLen = run; best = (j - Math.floor(run / 2) + n) % n; } } else run = 0;
+    }
+    if (best >= 0 && bestLen * step > 80 && !(cr && (circ(best / n, cr[0]) < 0.08 || circ(best / n, cr[1]) < 0.08))) {
+      const s = path.at(best / n), hw = WALL_D + 1.6;
+      let ok = true;
+      for (const sd of [-1, 1]) { path.nearest(s.x + s.rx * sd * hw, s.z + s.rz * sd * hw, ptmp); if (ptmp.d < hw - 1.0) ok = false; }   // another stretch of track runs closer than this one
+      if (ok) {
+        props.push(s.x, s.y, s.z, Math.atan2(s.fx, s.fz));
+        for (const sd of [-1, 1]) { props.box(0x59606a, 1.2, 7.4, 1.2, sd * hw, 3.7, 0); props.box(0x2c313a, 1.6, 0.4, 1.6, sd * hw, 0.2, 0); for (let k = 0; k < 6; k++) props.box(0x8d9299, 1.0, 0.1, 0.3, sd * (hw - 0.9), 0.6 + k * 1.15, 0.9); }
+        props.box(0x2c313a, hw * 2 + 1.2, 1.0, 2.4, 0, 7.3, 0);
+        props.box(0xe9ecef, hw * 2 + 1.2, 0.2, 2.6, 0, 7.9, 0);
+        for (const z of [-1.25, 1.25]) { props.box(0xd2262d, hw * 2 - 2, 1.0, 0.08, 0, 6.6, z); props.box(0xf2f2f4, hw * 2 - 4, 0.35, 0.09, 0, 6.6, z); for (let k = 0; k < 8; k++) props.box(0x9aa0a8, 0.06, 0.9, 0.06, -hw + 1 + k * (hw * 2 - 2) / 7, 8.4, z); props.box(0x9aa0a8, hw * 2, 0.06, 0.06, 0, 8.85, z); }
+        props.pop();
+        placed.push({ x: s.x, z: s.z, r: 4 });
+      }
+    }
+  }
   group.add(props.build(kit, sh));
   group.add(lampMB.build(kit, false));
+  // rubber laid down in the braking zones: two dark lines that fade in towards each bend
+  if (entries.length) {
+    const brakeZone = (k: number) => { for (const e of entries) { const back = (e.i - k + n) % n; if (back <= 45 / step) return 1 - back / (45 / step); } return 0; };
+    const zoneOf = new Float32Array(n); for (let i = 0; i < n; i++) zoneOf[i] = brakeZone(i);
+    // multiply blending darkens the tarmac by the vertex colour, so the marks fade in smoothly (white = no mark)
+    const tm = own(new T.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, blending: T.MultiplyBlending, premultipliedAlpha: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5 }));
+    for (const off of [-0.85, 0.85]) {
+      const g = ribbon(T, path, {
+        d0: () => off - 0.17, d1: () => off + 0.17, y0: () => 0.03, y1: () => 0.03, skip: (k) => zoneOf[k % n]! < 0.05,
+        c0: (i) => { const z = 1 - zoneOf[i]! * 0.5; return [z, z, z]; },
+      });
+      const m = new T.Mesh(own(g), tm); m.renderOrder = 1; group.add(m);
+    }
+  }
+  // a blocky airship circling high above the circuit, towing a banner
+  let blimp: any = null, blimpA = env.seed;
+  if (f.props >= 1) {
+    const bm = new MB(T, 95); bm.ao = { y0: -3, h: 6, k: 0.15 }; bm.jitter = 0.02;
+    const seg = [[3, 3], [5, 4.4], [6.6, 5.4], [7, 5.8], [7, 5.8], [6.6, 5.4], [5.4, 4.6], [3.6, 3.2], [2, 2]];
+    seg.forEach((q, k) => bm.box(k === 3 || k === 4 ? 0xd2262d : 0xe9ecef, q[0]!, q[1]!, 3.2, 0, 0, (k - 4) * 3.1));
+    for (const sx of [-1, 1]) bm.box(0x2a5ac8, 0.3, 3.2, 3.2, sx * 1.8, 1.4, -13); bm.box(0x2a5ac8, 4.2, 0.3, 3.2, 0, 1.6, -13);
+    bm.box(0x2c313a, 1.8, 1.2, 4.2, 0, -3.3, 1); bm.box(0x1a2a3a, 1.9, 0.5, 3.6, 0, -3.1, 1.2);
+    blimp = bm.build(kit, false); blimp.traverse((o: any) => { o.castShadow = false; });
+    group.add(blimp);
+  }
+  const cxB = (path.minX + path.maxX) / 2, czB = (path.minZ + path.maxZ) / 2, rB = Math.max(path.maxX - path.minX, path.maxZ - path.minZ) * 0.42 + 40;
 
   if (f.props > 0) {
     // sponsor boards in front of the walls (invented brands); the picture reads left to right when seen from the road
@@ -449,7 +544,14 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
 
   return {
     group, sky, sunDir: sky.sunDir, groundY,
-    update(dt: number, cam: any) { clouds.update(dt, cam); },
+    update(dt: number, cam: any) {
+      clouds.update(dt, cam);
+      if (blimp) {
+        blimpA += dt * 0.025;
+        blimp.position.set(cxB + Math.cos(blimpA) * rB, 95 + Math.sin(blimpA * 3) * 3, czB + Math.sin(blimpA) * rB);
+        blimp.rotation.set(0, -blimpA, 0);                     // nose along the circle (the model faces +z)
+      }
+    },
     breakBarrier(side: number, u0: number, u1: number) {
       const k0 = Math.floor(u0 * n), k1 = Math.ceil(u1 * n);
       for (const b of breakables[String(side)] || []) {

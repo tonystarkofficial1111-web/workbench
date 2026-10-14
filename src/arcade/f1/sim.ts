@@ -111,7 +111,7 @@ export class F1Sim {
     if (i.pit) p.speed = 0;
     else {
       if (i.ac && !cut) {
-        const acc = (0.62 - 0.045 * p.gear) * i.grip * (this.zone === 2 ? 0.55 : 1);
+        const acc = (0.62 - 0.036 * p.gear) * i.grip * (this.zone === 2 ? 0.55 : 1);   // spread over ten gears: 10th pulls like 8th used to
         if (p.speed < gm) p.speed = Math.min(gm, p.speed + acc * dk);
       } else if (i.br) p.speed -= 1.0 * (1 - 0.25 * i.wear) * dk;
       else p.speed -= (cut ? 0.2 : 0.15) * dk;

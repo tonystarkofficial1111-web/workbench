@@ -12,7 +12,7 @@ export const WALL_D = 14.6;
 export const CAR_HALF = 0.95;
 /** The game's steering "lane" unit in metres (the old 2D feed and the rivals still use lanes). */
 export const LANE_W = 4.6;
-/** Top speed (mph) of each of the eight gears. */
-export const GEAR_MAX = [12, 24, 36, 50, 64, 80, 97, 115];
+/** Top speed (mph) of each of the ten gears (5.63.0; it was eight up to 5.62). Same 115 mph top speed, closer ratios. */
+export const GEAR_MAX = [10, 20, 31, 42, 53, 65, 77, 89, 102, 115];
 /** Lap fraction covered per mph per 60th of a second (F1_PROGRESS_PER_MPH_FRAME in the game). */
 export const PROGRESS = 0.000025;
