@@ -30,7 +30,7 @@ rep("window.__wbQuality = {", "quality.hooks = {", "quality hooks");
 rep("window.__workbenchDay = legacyDay;", "window.__workbenchDay = legacyDay; worldBridge.day.set(legacyDay);", "day");
 rep("window.__workbenchWorld = world;", "window.__workbenchWorld = world; worldBridge.blockCount = function(){ return world.size; }; worldBridge.exportBundle = downloadSave; worldBridge.importData = loadSaveData;", "world export");
 
-// The User / Saves tab ("Export world" / "Import world…") is React and already calls worldBridge.exportBundle / importData.
+// The User / Saves tab ("Export world" / "Import worldâ€¦") is React and already calls worldBridge.exportBundle / importData.
 // The original engine ALSO attached its own listeners to those two elements, which here made every click run twice
 // (two downloads, the file imported twice) and wrote its status text into a React-owned node. Drop the engine's copy.
 {
@@ -50,6 +50,86 @@ rep(
   "coin save",
 );
 
+/* ------------------------------------------------------------------------------------------------------------------
+   Infinite-mode extension hooks (src/world/infinite/*).
+   The engine above stays the original's logic. Everything new for the Infinite world (jungle island, water, sky, weather, models,
+   names and halos...) lives in separate modules that are handed an "env" of engine internals at the very end of initWorld().
+   The patches below are the only places the original text is touched for that; each one is a no-op unless the Infinite world runs.
+   ------------------------------------------------------------------------------------------------------------------ */
+
+// Camera tilt: the pitch has to be changeable (Z / X in the Infinite world).
+rep("const camPitch = THREE.MathUtils.degToRad(58);", "let camPitch = THREE.MathUtils.degToRad(58);", "camPitch");
+// A bigger island needs more zoom range.
+rep(
+  "camDistance = Math.max(10, Math.min(95, camDistance + e.deltaY*0.03));",
+  "camDistance = Math.max(10, Math.min(wbInf.on ? 150 : 95, camDistance + e.deltaY*0.03));",
+  "zoom range",
+);
+// The 5.58 effects switch Shaders on by themselves the first time Infinite starts; the extension can veto that (saved Graphics choice).
+rep("if(!shadersOn)setShaders(true)}wasInf=on", "if(!shadersOn&&wbGfxAutoShaders())setShaders(true)}wasInf=on", "auto shaders");
+// Chopped trees go through one function so the extension can play a falling animation (default: vanish at once, as before).
+rep("scene.remove(nearestTree.group);", "wbTreeDown(nearestTree, unit);", "tree down (helpers)");
+rep(/scene\.remove\(treeRef\.group\);(\s*trees\.splice\(treeIdx, 1\);)/, "wbTreeDown(treeRef, legacyPlayer);$1", "tree down (king)");
+// Click-to-move raycasts the ground blocks; the Infinite island is one merged mesh, so that goes through a hook too.
+rep(
+  /(\/\/ Move to ground \(only within reachable territories\)\s*var blockList = Array\.from\(world\.values\(\)\);\s*var bHits = )ray\.intersectObjects\(blockList\);/,
+  "$1wbGroundHits(ray, blockList);",
+  "ground hits",
+);
+// Defaults for the three hook functions (the extension replaces them while the Infinite world is running).
+rep(
+  "/* ===== 5.56.0 Infinite: boss nights, defenses with crews, weather and blood moons ===== */\n(function(){",
+  `function wbTreeDown(t, by){ scene.remove(t.group); }
+function wbGroundHits(ray, list){ return ray.intersectObjects(list); }
+function wbGfxAutoShaders(){ return true; }
+var __wbIife = {};
+/* ===== 5.56.0 Infinite: boss nights, defenses with crews, weather and blood moons ===== */
+(function(){`,
+  "iife start",
+);
+{
+  // Hand the 5.56 closure's internals (defense meshes, weather state, placement checks) to the extension, right before it closes.
+  const end = s.lastIndexOf("\n})();");
+  if (end < 0) throw new Error("world conversion: end of the 5.56 closure not found");
+  const reg = `
+__wbIife.MESH = MESH; __wbIife.wx = wx; __wbIife.defs = defs; __wbIife.boss = boss; __wbIife.pf = pf; __wbIife.say = say;
+__wbIife.DEF_R = DEF_R; __wbIife.WL = WL; __wbIife.WT = WT; __wbIife.TR = TR; __wbIife.FPB = FPB; __wbIife.getS = function(){ return S; };
+__wbIife.getValid = function(){ return { validDef: validDef, validBuilding: validBuilding }; };
+__wbIife.setValid = function(a, b){ if(a) validDef = a; if(b) validBuilding = b; };
+__wbIife.getPlacing = function(){ return placing; };
+__wbIife.getGhost = function(){ return ghost; };
+__wbIife.FLAME_MAT = FLAME_MAT; __wbIife.CORE_MAT = CORE_MAT; __wbIife.GLOW_MAT = GLOW_MAT; __wbIife.HALO_MAT = HALO_MAT; __wbIife.glowGeo = glowGeo;`;
+  s = s.slice(0, end) + reg + s.slice(end);
+}
+
+// Engine internals the extension may read (ENV_READ), read and re-bind (ENV_BIND), or hold by reference (ENV_CONST).
+const ENV_CONST = [
+  "scene", "camera", "renderer", "canvas", "world", "trees", "worldFog", "hemi", "sunLight", "sunMesh", "moonMesh", "stars", "camTarget",
+  "LEGACY_TERRITORIES", "LEGACY_COSTS", "LEGACY_EQUIP_COSTS", "DAY_LENGTH", "LEGACY_MAP_SIZE", "VILLAGER_NAMES", "TREE_GROW_TIME",
+];
+const ENV_READ = [
+  "shadersOn", "legacyDay", "legacyDayTimer", "legacyMode", "legacyFactions", "legacyPlayer", "legacyBuildings", "legacyOreNodes", "wbInf", "wbFx",
+  "followKing", "currentMode", "wbFast", "wbFast10", "navLand", "NAV_N", "legacyAgents", "WB_Z_START",
+];
+const ENV_BIND = [
+  "simTime", "camDistance", "camYaw", "camPitch", "legacyWaterMesh", "WB_ISLAND_R", "WB_GRASS_R",
+  "getGroundHeight", "showWorldWarning", "updateHealthBar", "spawnShards", "navDirty", "navEnsure", "landOpen", "seaOpen", "updateLegacyHUD",
+  "makeNameTag", "setShaders", "applyShadowFlags", "wbInfSpawn", "makeTree", "makeSoldier", "makeCastle", "createBuilding", "animRig",
+  "addArmorVisual", "addShieldVisual", "addSpearVisual", "addCrossbowVisual", "upgradeSwordVisual", "initLegacyMode", "wbInfStop",
+  "wbBuildInfiniteTerrain", "updateSky", "killLegacyUnit", "openArmoryMenu", "grantIronUpgrade", "makeSiegeUnit", "updateSoldierMovement",
+  "wbTreeDown", "wbGroundHits", "wbGfxAutoShaders", "damageLegacyTarget", "updateLegacy", "selectVillager", "wbInfClearZ",
+];
+const envCode = `
+function __wbBuildEnv(){
+  var env = { THREE: THREE, iife: __wbIife };
+${ENV_CONST.map((n) => `  env.${n} = ${n};`).join("\n")}
+${ENV_READ.map((n) => `  Object.defineProperty(env, ${JSON.stringify(n)}, { get: function(){ return ${n}; }, enumerable: true });`).join("\n")}
+${ENV_BIND.map((n) => `  Object.defineProperty(env, ${JSON.stringify(n)}, { get: function(){ return ${n}; }, set: function(v){ ${n} = v; }, enumerable: true });`).join("\n")}
+  return env;
+}
+try{ installInfinite(__wbBuildEnv()); }catch(e){ console.error('Infinite extension failed to start', e); }
+`;
+
 const header = `// @ts-nocheck
 // Block World engine (three.js). Generated by tools/convert-world.ts from the original app's world module; logic verbatim.
 import * as THREE from "three";
@@ -58,6 +138,7 @@ import { quality } from "../core/perf";
 import { worldBridge, assistantBridge } from "../core/bridge";
 import { getMemories, restoreMemories } from "../features/memory";
 import { APP_VERSION } from "../version";
+import { installInfinite } from "./infinite";
 
 let started = false;
 /** Boots the world. Call once, after the Block World markup (canvas, HUD, hotbar...) is in the document. */
@@ -65,5 +146,5 @@ export function initWorld() {
   if (started) return;
   started = true;
 `;
-writeFileSync(join(root, "src/world/engine.ts"), header + s + "\n}\n");
+writeFileSync(join(root, "src/world/engine.ts"), header + s + envCode + "\n}\n");
 console.log("world engine written", s.length);

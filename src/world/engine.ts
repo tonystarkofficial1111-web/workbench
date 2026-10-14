@@ -6,6 +6,7 @@ import { quality } from "../core/perf";
 import { worldBridge, assistantBridge } from "../core/bridge";
 import { getMemories, restoreMemories } from "../features/memory";
 import { APP_VERSION } from "../version";
+import { installInfinite } from "./infinite";
 
 let started = false;
 /** Boots the world. Call once, after the Block World markup (canvas, HUD, hotbar...) is in the document. */
@@ -654,7 +655,7 @@ resizeGame();
 // An angled, top-down "kingdom" view you pan, rotate and zoom instead of walking around.
 const camTarget = new THREE.Vector3(WORLD_SIZE/2, 0, WORLD_SIZE/2);
 let camYaw = Math.PI/4;
-const camPitch = THREE.MathUtils.degToRad(58);
+let camPitch = THREE.MathUtils.degToRad(58);
 let camDistance = 30;
 
 function updateCamera(dt){
@@ -898,7 +899,7 @@ window.addEventListener('keyup', function(e){ keys[e.code] = false; });
 canvas.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 canvas.addEventListener('wheel', function(e){
   e.preventDefault();
-  camDistance = Math.max(10, Math.min(95, camDistance + e.deltaY*0.03));
+  camDistance = Math.max(10, Math.min(wbInf.on ? 150 : 95, camDistance + e.deltaY*0.03));
 }, { passive:false });
 
 function screenRay(evt){
@@ -1497,7 +1498,7 @@ for(i=rec.length-1;i>=0;i--){f=rec[i];f.t+=dt;u=f.u;k=Math.max(0,1-f.t/.22);if(!
 u.bowStock.position.z=.1-.1*k;u.bowLimb.position.z=.15-.1*k;u.bowString.position.z=.22-.13*k;if(k===0)rec.splice(i,1)}
 for(i=kick.length-1;i>=0;i--){f=kick[i];f.t+=dt;k=Math.max(0,1-f.t/.35);if(f.u.group)f.u.group.scale.set(1+.06*k,1-.09*k,1+.06*k);if(k===0)kick.splice(i,1)}
 shake*=Math.pow(.015,dt);
-try{var on=!!wbInf.on;if(on&&!wasInf&&!auto){auto=true;if(!shadersOn)setShaders(true)}wasInf=on}catch(e){}
+try{var on=!!wbInf.on;if(on&&!wasInf&&!auto){auto=true;if(!shadersOn&&wbGfxAutoShaders())setShaders(true)}wasInf=on}catch(e){}
 motes(dt);
 if(shadersOn){sv.copy(sunMesh.position).project(camera);var W=post.clientWidth,H=post.clientHeight,vis=sv.z<1?Math.max(0,1-Math.max(Math.abs(sv.x),Math.abs(sv.y))*.55):0;
 glowEl.style.left=(sv.x*.5+.5)*W+'px';glowEl.style.top=(-sv.y*.5+.5)*H+'px';glowEl.style.opacity=(Math.min(1,lastDf*4)*vis*(.6+gold*.4)).toFixed(3)}}
@@ -2562,7 +2563,7 @@ function updatePlayerFactionAI(faction, dt, simTime){
             faction.wood += 3;
             unit.health = Math.min(unit.maxHealth, unit.health + 5);
             updateHealthBar(unit);
-            scene.remove(nearestTree.group);
+            wbTreeDown(nearestTree, unit);
             var idx2 = trees.indexOf(nearestTree);
             if(idx2 !== -1) trees.splice(idx2, 1);
             unit.state = 'idle';
@@ -3164,7 +3165,7 @@ function handleLegacyClick(e){
   
   // Move to ground (only within reachable territories)
   var blockList = Array.from(world.values());
-  var bHits = ray.intersectObjects(blockList);
+  var bHits = wbGroundHits(ray, blockList);
   if(bHits.length){
     var groundTerritory = territoryAtPoint(bHits[0].point.x, bHits[0].point.z);
     var playerFaction4 = legacyFactions.find(function(f){ return f.isPlayer; });
@@ -3255,7 +3256,7 @@ function updateLegacy_base(dt, simTime){
             legacyPlayer.health = Math.min(legacyPlayer.maxHealth, legacyPlayer.health + 5);
             updateHealthBar(legacyPlayer);
           }
-          scene.remove(treeRef.group);
+          wbTreeDown(treeRef, legacyPlayer);
           trees.splice(treeIdx, 1);
           legacyPlayer.gatherTarget = null;
           legacyPlayer.state = 'idle';
@@ -3537,7 +3538,7 @@ function updateFactionAI(faction, dt, simTime){
             faction.wood += 3;
             unit.health = Math.min(unit.maxHealth, unit.health + 5);
             updateHealthBar(unit);
-            scene.remove(nearestTree.group);
+            wbTreeDown(nearestTree, unit);
             var idx = trees.indexOf(nearestTree);
             if(idx !== -1) trees.splice(idx, 1);
             unit.state = 'idle';
@@ -4330,6 +4331,10 @@ var _wbCLE = checkLegacyEnd; checkLegacyEnd = function(){            // no other
 };
 var _wbUH = updateLegacyHUD; updateLegacyHUD = function(){ _wbUH(); if(wbInf.on){ var ev = document.getElementById('legacy-enemies-val'); if(ev) ev.textContent = wbInf.z.length; } };
 
+function wbTreeDown(t, by){ scene.remove(t.group); }
+function wbGroundHits(ray, list){ return ray.intersectObjects(list); }
+function wbGfxAutoShaders(){ return true; }
+var __wbIife = {};
 /* ===== 5.56.0 Infinite: boss nights, defenses with crews, weather and blood moons ===== */
 (function(){
 var DEF_COST = { wall:15, tower:60, torch:10, trap:20 };
@@ -5248,6 +5253,103 @@ setInterval(function(){
   claim.style.display = show ? 'block' : 'none';
   if(show) claim.textContent = '\ud83c\udf81 Claim rare blocks: ' + b.gold + ' Gold, ' + b.diamond + ' Diamond';
 }, 500);
+__wbIife.MESH = MESH; __wbIife.wx = wx; __wbIife.defs = defs; __wbIife.boss = boss; __wbIife.pf = pf; __wbIife.say = say;
+__wbIife.DEF_R = DEF_R; __wbIife.WL = WL; __wbIife.WT = WT; __wbIife.TR = TR; __wbIife.FPB = FPB; __wbIife.getS = function(){ return S; };
+__wbIife.getValid = function(){ return { validDef: validDef, validBuilding: validBuilding }; };
+__wbIife.setValid = function(a, b){ if(a) validDef = a; if(b) validBuilding = b; };
+__wbIife.getPlacing = function(){ return placing; };
+__wbIife.getGhost = function(){ return ghost; };
+__wbIife.FLAME_MAT = FLAME_MAT; __wbIife.CORE_MAT = CORE_MAT; __wbIife.GLOW_MAT = GLOW_MAT; __wbIife.HALO_MAT = HALO_MAT; __wbIife.glowGeo = glowGeo;
 })();
+
+function __wbBuildEnv(){
+  var env = { THREE: THREE, iife: __wbIife };
+  env.scene = scene;
+  env.camera = camera;
+  env.renderer = renderer;
+  env.canvas = canvas;
+  env.world = world;
+  env.trees = trees;
+  env.worldFog = worldFog;
+  env.hemi = hemi;
+  env.sunLight = sunLight;
+  env.sunMesh = sunMesh;
+  env.moonMesh = moonMesh;
+  env.stars = stars;
+  env.camTarget = camTarget;
+  env.LEGACY_TERRITORIES = LEGACY_TERRITORIES;
+  env.LEGACY_COSTS = LEGACY_COSTS;
+  env.LEGACY_EQUIP_COSTS = LEGACY_EQUIP_COSTS;
+  env.DAY_LENGTH = DAY_LENGTH;
+  env.LEGACY_MAP_SIZE = LEGACY_MAP_SIZE;
+  env.VILLAGER_NAMES = VILLAGER_NAMES;
+  env.TREE_GROW_TIME = TREE_GROW_TIME;
+  Object.defineProperty(env, "shadersOn", { get: function(){ return shadersOn; }, enumerable: true });
+  Object.defineProperty(env, "legacyDay", { get: function(){ return legacyDay; }, enumerable: true });
+  Object.defineProperty(env, "legacyDayTimer", { get: function(){ return legacyDayTimer; }, enumerable: true });
+  Object.defineProperty(env, "legacyMode", { get: function(){ return legacyMode; }, enumerable: true });
+  Object.defineProperty(env, "legacyFactions", { get: function(){ return legacyFactions; }, enumerable: true });
+  Object.defineProperty(env, "legacyPlayer", { get: function(){ return legacyPlayer; }, enumerable: true });
+  Object.defineProperty(env, "legacyBuildings", { get: function(){ return legacyBuildings; }, enumerable: true });
+  Object.defineProperty(env, "legacyOreNodes", { get: function(){ return legacyOreNodes; }, enumerable: true });
+  Object.defineProperty(env, "wbInf", { get: function(){ return wbInf; }, enumerable: true });
+  Object.defineProperty(env, "wbFx", { get: function(){ return wbFx; }, enumerable: true });
+  Object.defineProperty(env, "followKing", { get: function(){ return followKing; }, enumerable: true });
+  Object.defineProperty(env, "currentMode", { get: function(){ return currentMode; }, enumerable: true });
+  Object.defineProperty(env, "wbFast", { get: function(){ return wbFast; }, enumerable: true });
+  Object.defineProperty(env, "wbFast10", { get: function(){ return wbFast10; }, enumerable: true });
+  Object.defineProperty(env, "navLand", { get: function(){ return navLand; }, enumerable: true });
+  Object.defineProperty(env, "NAV_N", { get: function(){ return NAV_N; }, enumerable: true });
+  Object.defineProperty(env, "legacyAgents", { get: function(){ return legacyAgents; }, enumerable: true });
+  Object.defineProperty(env, "WB_Z_START", { get: function(){ return WB_Z_START; }, enumerable: true });
+  Object.defineProperty(env, "simTime", { get: function(){ return simTime; }, set: function(v){ simTime = v; }, enumerable: true });
+  Object.defineProperty(env, "camDistance", { get: function(){ return camDistance; }, set: function(v){ camDistance = v; }, enumerable: true });
+  Object.defineProperty(env, "camYaw", { get: function(){ return camYaw; }, set: function(v){ camYaw = v; }, enumerable: true });
+  Object.defineProperty(env, "camPitch", { get: function(){ return camPitch; }, set: function(v){ camPitch = v; }, enumerable: true });
+  Object.defineProperty(env, "legacyWaterMesh", { get: function(){ return legacyWaterMesh; }, set: function(v){ legacyWaterMesh = v; }, enumerable: true });
+  Object.defineProperty(env, "WB_ISLAND_R", { get: function(){ return WB_ISLAND_R; }, set: function(v){ WB_ISLAND_R = v; }, enumerable: true });
+  Object.defineProperty(env, "WB_GRASS_R", { get: function(){ return WB_GRASS_R; }, set: function(v){ WB_GRASS_R = v; }, enumerable: true });
+  Object.defineProperty(env, "getGroundHeight", { get: function(){ return getGroundHeight; }, set: function(v){ getGroundHeight = v; }, enumerable: true });
+  Object.defineProperty(env, "showWorldWarning", { get: function(){ return showWorldWarning; }, set: function(v){ showWorldWarning = v; }, enumerable: true });
+  Object.defineProperty(env, "updateHealthBar", { get: function(){ return updateHealthBar; }, set: function(v){ updateHealthBar = v; }, enumerable: true });
+  Object.defineProperty(env, "spawnShards", { get: function(){ return spawnShards; }, set: function(v){ spawnShards = v; }, enumerable: true });
+  Object.defineProperty(env, "navDirty", { get: function(){ return navDirty; }, set: function(v){ navDirty = v; }, enumerable: true });
+  Object.defineProperty(env, "navEnsure", { get: function(){ return navEnsure; }, set: function(v){ navEnsure = v; }, enumerable: true });
+  Object.defineProperty(env, "landOpen", { get: function(){ return landOpen; }, set: function(v){ landOpen = v; }, enumerable: true });
+  Object.defineProperty(env, "seaOpen", { get: function(){ return seaOpen; }, set: function(v){ seaOpen = v; }, enumerable: true });
+  Object.defineProperty(env, "updateLegacyHUD", { get: function(){ return updateLegacyHUD; }, set: function(v){ updateLegacyHUD = v; }, enumerable: true });
+  Object.defineProperty(env, "makeNameTag", { get: function(){ return makeNameTag; }, set: function(v){ makeNameTag = v; }, enumerable: true });
+  Object.defineProperty(env, "setShaders", { get: function(){ return setShaders; }, set: function(v){ setShaders = v; }, enumerable: true });
+  Object.defineProperty(env, "applyShadowFlags", { get: function(){ return applyShadowFlags; }, set: function(v){ applyShadowFlags = v; }, enumerable: true });
+  Object.defineProperty(env, "wbInfSpawn", { get: function(){ return wbInfSpawn; }, set: function(v){ wbInfSpawn = v; }, enumerable: true });
+  Object.defineProperty(env, "makeTree", { get: function(){ return makeTree; }, set: function(v){ makeTree = v; }, enumerable: true });
+  Object.defineProperty(env, "makeSoldier", { get: function(){ return makeSoldier; }, set: function(v){ makeSoldier = v; }, enumerable: true });
+  Object.defineProperty(env, "makeCastle", { get: function(){ return makeCastle; }, set: function(v){ makeCastle = v; }, enumerable: true });
+  Object.defineProperty(env, "createBuilding", { get: function(){ return createBuilding; }, set: function(v){ createBuilding = v; }, enumerable: true });
+  Object.defineProperty(env, "animRig", { get: function(){ return animRig; }, set: function(v){ animRig = v; }, enumerable: true });
+  Object.defineProperty(env, "addArmorVisual", { get: function(){ return addArmorVisual; }, set: function(v){ addArmorVisual = v; }, enumerable: true });
+  Object.defineProperty(env, "addShieldVisual", { get: function(){ return addShieldVisual; }, set: function(v){ addShieldVisual = v; }, enumerable: true });
+  Object.defineProperty(env, "addSpearVisual", { get: function(){ return addSpearVisual; }, set: function(v){ addSpearVisual = v; }, enumerable: true });
+  Object.defineProperty(env, "addCrossbowVisual", { get: function(){ return addCrossbowVisual; }, set: function(v){ addCrossbowVisual = v; }, enumerable: true });
+  Object.defineProperty(env, "upgradeSwordVisual", { get: function(){ return upgradeSwordVisual; }, set: function(v){ upgradeSwordVisual = v; }, enumerable: true });
+  Object.defineProperty(env, "initLegacyMode", { get: function(){ return initLegacyMode; }, set: function(v){ initLegacyMode = v; }, enumerable: true });
+  Object.defineProperty(env, "wbInfStop", { get: function(){ return wbInfStop; }, set: function(v){ wbInfStop = v; }, enumerable: true });
+  Object.defineProperty(env, "wbBuildInfiniteTerrain", { get: function(){ return wbBuildInfiniteTerrain; }, set: function(v){ wbBuildInfiniteTerrain = v; }, enumerable: true });
+  Object.defineProperty(env, "updateSky", { get: function(){ return updateSky; }, set: function(v){ updateSky = v; }, enumerable: true });
+  Object.defineProperty(env, "killLegacyUnit", { get: function(){ return killLegacyUnit; }, set: function(v){ killLegacyUnit = v; }, enumerable: true });
+  Object.defineProperty(env, "openArmoryMenu", { get: function(){ return openArmoryMenu; }, set: function(v){ openArmoryMenu = v; }, enumerable: true });
+  Object.defineProperty(env, "grantIronUpgrade", { get: function(){ return grantIronUpgrade; }, set: function(v){ grantIronUpgrade = v; }, enumerable: true });
+  Object.defineProperty(env, "makeSiegeUnit", { get: function(){ return makeSiegeUnit; }, set: function(v){ makeSiegeUnit = v; }, enumerable: true });
+  Object.defineProperty(env, "updateSoldierMovement", { get: function(){ return updateSoldierMovement; }, set: function(v){ updateSoldierMovement = v; }, enumerable: true });
+  Object.defineProperty(env, "wbTreeDown", { get: function(){ return wbTreeDown; }, set: function(v){ wbTreeDown = v; }, enumerable: true });
+  Object.defineProperty(env, "wbGroundHits", { get: function(){ return wbGroundHits; }, set: function(v){ wbGroundHits = v; }, enumerable: true });
+  Object.defineProperty(env, "wbGfxAutoShaders", { get: function(){ return wbGfxAutoShaders; }, set: function(v){ wbGfxAutoShaders = v; }, enumerable: true });
+  Object.defineProperty(env, "damageLegacyTarget", { get: function(){ return damageLegacyTarget; }, set: function(v){ damageLegacyTarget = v; }, enumerable: true });
+  Object.defineProperty(env, "updateLegacy", { get: function(){ return updateLegacy; }, set: function(v){ updateLegacy = v; }, enumerable: true });
+  Object.defineProperty(env, "selectVillager", { get: function(){ return selectVillager; }, set: function(v){ selectVillager = v; }, enumerable: true });
+  Object.defineProperty(env, "wbInfClearZ", { get: function(){ return wbInfClearZ; }, set: function(v){ wbInfClearZ = v; }, enumerable: true });
+  return env;
+}
+try{ installInfinite(__wbBuildEnv()); }catch(e){ console.error('Infinite extension failed to start', e); }
 
 }

@@ -105,6 +105,8 @@ const result = await Bun.build({
   define: {
     "process.env.NODE_ENV": JSON.stringify(watchMode ? "development" : "production"),
     __WB_VERSION__: JSON.stringify(version),
+    // debug handle (window.__wbInf) for the Infinite-world extension: dev builds and --dbg only
+    __WB_DBG__: JSON.stringify(debugHooks || watchMode),
   },
   loader: ({
     ".woff2": "dataurl",

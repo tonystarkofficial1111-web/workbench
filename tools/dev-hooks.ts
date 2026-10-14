@@ -5,7 +5,7 @@
 export const MARK = "window.__workbenchVillagers = villagers;";
 export const HOOK =
   MARK +
-  "window.__dbg={pf:function(){return legacyFactions.find(function(f){return f.isPlayer})},get lp(){return legacyPlayer},get inf(){return wbInf},get mode(){return currentMode},get legacy(){return legacyMode},get day(){return legacyDay},get sim(){return simTime},setSim:function(v){simTime=v},get blds(){return legacyBuildings}};";
+  "window.__dbg={pf:function(){return legacyFactions.find(function(f){return f.isPlayer})},get lp(){return legacyPlayer},get inf(){return wbInf},get mode(){return currentMode},get legacy(){return legacyMode},get day(){return legacyDay},get sim(){return simTime},setSim:function(v){simTime=v},get blds(){return legacyBuildings},setDay:function(v){legacyDay=v},get timer(){return legacyDayTimer},setTimer:function(v){legacyDayTimer=v},get agents(){return legacyAgents}};";
 
 // The placement code (ghost preview, defenses) lives in its own closure, so it gets its own hook.
 // (a regex, because the --dev bundle re-formats the engine source)

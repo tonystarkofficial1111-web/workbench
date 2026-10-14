@@ -5,6 +5,8 @@ import { WORLD_MARKUP } from "../world/markup";
 import { initWorld } from "../world/engine";
 import { initRecorder } from "../world/recorder";
 import { worldUi } from "./ArcadeTab";
+import { worldBridge } from "../core/bridge";
+import { InfiniteGuide } from "../components/InfiniteGuide";
 
 /**
  * Block World tab. The markup is handed to the engine as plain DOM (the three.js engine owns it, like the
@@ -15,6 +17,7 @@ export function WorldTab() {
   const pick = useValue(worldUi.modeSelect);
   const ref = useRef<HTMLElement>(null);
   const [instr, setInstr] = useState<string | null>(null);
+  const [guide, setGuide] = useState(false);
 
   useEffect(() => {
     const root = ref.current!;
@@ -36,6 +39,7 @@ export function WorldTab() {
         return;
       }
       if (t.closest("#bw-instr-btn")) {
+        if (worldBridge.mode.get() === "infinite") { setGuide(true); setInstr(""); return; }   // the Infinite world has its own guide
         const L = document.getElementById("legacy-hud")?.classList.contains("show");
         const h = document.getElementById(L ? "legacy-hint" : "game-hint");
         setInstr(h ? h.textContent || "" : "");
@@ -68,12 +72,16 @@ export function WorldTab() {
   return (
     <>
       <section id="tab-world" ref={ref} className={"tab" + (tab === "tab-world" ? " active" : "")} dangerouslySetInnerHTML={{ __html: WORLD_MARKUP }} />
-      <div id="bw-instr" style={{ display: instr === null ? "none" : "flex" }} onClick={(e) => { if (e.target === e.currentTarget) setInstr(null); }}>
-        <div className="c">
-          <h3>Instructions</h3>
-          <div className="b">{instr}</div>
-          <p style={{ textAlign: "right", margin: "12px 0 0" }}><button type="button" className="x" onClick={() => setInstr(null)}>Close</button></p>
-        </div>
+      <div id="bw-instr" style={{ display: instr === null ? "none" : "flex" }} onClick={(e) => { if (e.target === e.currentTarget) { setInstr(null); setGuide(false); } }}>
+        {guide ? (
+          <InfiniteGuide onClose={() => { setInstr(null); setGuide(false); }} />
+        ) : (
+          <div className="c">
+            <h3>Instructions</h3>
+            <div className="b">{instr}</div>
+            <p style={{ textAlign: "right", margin: "12px 0 0" }}><button type="button" className="x" onClick={() => setInstr(null)}>Close</button></p>
+          </div>
+        )}
       </div>
     </>
   );

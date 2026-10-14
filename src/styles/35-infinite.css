@@ -1,0 +1,21 @@
+/* Infinite world additions (port-only; the original app has none of this) */
+#bw-gfx-btn{padding:8px 14px;font-size:12px;background:var(--panel-2);color:var(--text);border:2px solid var(--line);border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
+#bw-gfx-btn:hover{border-color:var(--amber)}
+#bw-gfx-btn[data-level="2"]{background:var(--cyan);color:#0b1a18;border-color:var(--cyan)}
+#bw-gfx-btn[data-level="0"]{background:rgba(120,170,120,.25)}
+
+/* Infinite world guide (Instructions) */
+#bw-instr .c.guide{max-width:min(660px,94vw);width:min(660px,94vw)}
+.wbg-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.wbg-tab{padding:6px 12px;border-radius:999px;border:2px solid var(--line);background:var(--panel-2);color:var(--text);font:600 12px 'Inter',sans-serif;cursor:pointer}
+.wbg-tab:hover{border-color:var(--amber)}
+.wbg-tab.on{background:var(--amber);color:#1c1408;border-color:var(--amber)}
+.wbg-lead{margin:0 0 10px;padding:9px 12px;border-radius:8px;background:rgba(224,164,88,.12);border:1px solid rgba(224,164,88,.35);font-size:13.5px;line-height:1.5}
+.wbg-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wbg-list li{display:grid;gap:2px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:13px;line-height:1.5}
+.wbg-list li b{color:var(--amber);font-size:12.5px}
+.wbg-list li span{color:var(--text)}
+.wbg-foot{display:flex;gap:8px;justify-content:flex-end;margin:14px 0 0}
+.wbg-foot .x{padding:7px 16px;border-radius:8px;border:2px solid var(--line);background:var(--panel-2);color:var(--text);font:600 12px 'Inter',sans-serif;cursor:pointer}
+.wbg-foot .x:disabled{opacity:.4;cursor:default}
+.wbg-foot .x:not(:disabled):hover{border-color:var(--amber)}

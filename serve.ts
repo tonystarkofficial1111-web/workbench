@@ -9,8 +9,9 @@ import { hasHooks, injectHooks } from "./tools/dev-hooks";
 const root = import.meta.dir;
 mkdirSync(root + "/_orig/data", { recursive: true });
 
+const PORT = Number(process.env.PORT) || 5173;
 Bun.serve({
-  port: 5173,
+  port: PORT,
   maxRequestBodySize: 1 << 28,
   async fetch(req) {
     const u = new URL(req.url);
@@ -31,4 +32,4 @@ Bun.serve({
     return new Response(Bun.file(root + "/" + file), { headers });
   },
 });
-console.log("serving on 5173");
+console.log("serving on " + PORT);

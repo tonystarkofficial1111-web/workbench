@@ -63,3 +63,31 @@ defense buttons place and charge wood, 1x / 10x speed, Shaders, Follow the King,
 picker, the Workshop / Market / Armory menus, and the classic Save / Load / Command mode / Buildings controls.
 Still the original's behaviour: Legacy and the classic sandbox start with Shaders off (Infinite switches them on by itself); the classic
 hotbar is dimmed and not clickable in Command mode (`#hotbar.dim{pointer-events:none}`) and only works after switching to Build mode.
+
+## Infinite world overhaul (session 3)
+Requested: stunning graphics for the Infinite mode only, with a low setting for Chromebooks; moving water; a map about twice as big (still an island,
+now a jungle); sunsets and mornings, realistic weather with wind that moves the flags; more detailed buildings; trees that fall; caves with
+paths; zombies that look like zombies and walk differently; armoured, named villagers with a halo in the Armory; a clearer Instructions page.
+(The Legacy mode and the classic sandbox must stay as they were.)
+- **Where**: `src/world/infinite/*` (see the README table). `engine.ts` is still generated and never edited by hand: `tools/convert-world.ts`
+  makes a handful of small patches (camera pitch, zoom limit, tree-fall and ground-pick hooks, the Shaders auto-switch) and hands the engine's
+  closure bindings to `installInfinite(env)` as getters / setters (`ENV_READ`, `ENV_BIND`, `ENV_CONST`) and the 5.56 closure's internals as `env.iife`.
+- **Rule for every wrapper**: act only when `ctx.isInf()` (the Infinite world is running or starting), otherwise call the original. Checked by driving
+  Legacy after Infinite (original castle and boxes, no Infinite state left behind) and Infinite twice in a row (no leaked models or animations).
+- **Island**: radius 56 (was 26), grass radius 42. The ground is one flat layer rendered as merged meshes; the engine still sees one tiny `Block`
+  per land cell so `getGroundHeight`, the nav grid and placement keep working. Land is y = 1 (camera minimum zoom is 10, so the camera never sinks under it).
+  Trees keep the engine's tree contract (invisible pick proxies); chopped trees go through `wbTreeDown` for the fall animation.
+- **Models**: `mb.ts` merges primitives into a few vertex-coloured meshes per model. Buildings are built when `createBuilding` runs (the placement preview
+  and the building placed from it get the same variant); the Armory / Market / Workshop menus open from the new models because every model mesh is a
+  *direct* child of `building.mesh` (the engine's click test only looks at those). Defenses replace `iife.MESH.*` and keep the contracts the 5.56 code relies
+  on (`userData.guard` / `flame` / `halo` / `glow`, the tower deck at y = 4, wall `WL` x `WT`, trap `scale.y`); walls, torches and traps share geometry between copies.
+  The castle keeps `castle.pickables`, `hbSprite` and `group`, and is registered as a walking obstacle (r = 3) so zombies queue outside its walls.
+- **Moving parts** (`anim.ts`): flags turn to point downwind and wave in the cloth shader, smoke drifts with the wind, weather vanes point into it, windmill sails
+  and the cap follow it, lamps (windows, lanterns, forge) are dim by day and bright at night and in storms. Items belong to an owner and are dropped when it leaves the scene.
+- **Graphics levels** (`gfx.ts`): tiers, pixel ratio, shadows, water / sky quality, foliage amount, particles. The engine's Shaders button and the Developer-options
+  performance monitor are kept in step with it. `applyShadowFlags` is wrapped so ground, plants, water and sky never cast shadows.
+- **Not changed on purpose**: docks cannot be built on the Infinite island ("No coastline for a dock!"), exactly as in the original (the coast lies outside the
+  territory radius the dock code searches); the original's Instructions text for the other modes; the zombie rules (spawn times, wave sizes, boss every 10th).
+- **How it was checked**: headless Chrome over CDP (`tools/cdp.ts`) with the `--dev` build and the test hooks: every build / defense button placed through real mouse-style
+  events, the three menus clicked on the new models, Graphics High -> Medium -> Low -> High with triangle counts per model, wind in two directions, sunrise / sunset /
+  night, a zombie night against walls, towers, torches and traps, dawn crumbling, Legacy and a second Infinite run.

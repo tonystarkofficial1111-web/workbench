@@ -13,6 +13,8 @@ export const worldBridge = {
   blockCount: (() => 0) as () => number,
   /** Highest legacy/infinite "day" reached, shown on the User/Saves tab. */
   day: new Value<number>(1),
+  /** Which Block World game is running: the Instructions dialog shows a guide that fits it. */
+  mode: new Value<"classic" | "legacy" | "infinite">("classic"),
 };
 
 export const assistantBridge = {

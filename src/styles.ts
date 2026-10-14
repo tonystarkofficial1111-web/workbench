@@ -34,3 +34,4 @@ import "./styles/31-058.css";
 import "./styles/32-059.css";
 import "./styles/33-060.css";
 import "./styles/34-062.css";
+import "./styles/35-infinite.css";
