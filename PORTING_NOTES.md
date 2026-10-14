@@ -161,3 +161,27 @@ Requested: the day/night banner only inside the Infinite world; every export / s
 - **How it was checked** (headless Chrome, `--dev` build): chooser from Export progress, Back up… and the in-game Save; both export paths (container with a 2 KB video, plain JSON, Block World
   file) and what they contain (no Block World keys, no foreign keys); a restore after wiping the data (notes, shop, video library back, Block World untouched); old Full Backup, old progress,
   old Complete Save, new Block World file and a junk file through the import buttons; Escape / Cancel; phone width (390 px) and desktop layouts.
+
+## Car games 3D (session 7, version 5.63.0)
+Requested: the F1 controls were inverted; two more gears (ten); more detail but still blocky; Drift King and Rally in 3D (Drift King on night docks with a
+Skyline or a 2021 Mustang 5.0 and maps of rising difficulty; Rally like the F1 Cockpit but off-road with two rally cars and a choice of map); Take Your Time with
+~10 s 3D fast-forward clips like the crash scenes (a mechanic fitting piston rings with the tools and so on). Asked first: steering and touch buttons were
+the inverted ones; clips plus 3D drives; four maps each; in parts, one HTML at the end.
+- **F1 "inverted"**: the car moved the right way (checked by projecting the road ahead on screen while holding A / D) but the wheel and the front tyres turned the
+  opposite way, because the car model faces +z and its right is -x. Fixed in `car.ts` (`root.rotation.y = -steer`) and `cockpit.ts` (`wheelRot.rotation.z = +steer`).
+- **Ten gears**: `GEAR_MAX` lives in `src/arcade/f1/consts.ts` and the game's copy is now `F1_GEAR_MAX.slice()` (converter patch); acceleration per gear `0.62 - 0.036 * gear`.
+- **Shared 3D layer** (`src/arcade/car3d`): the physics is a bicycle model with the tyre curve `sin(1.4 atan(B a))` (peaks near 12 degrees and settles at ~80%, which
+  is what lets a car slide and be held). Two things were needed to make it playable: the driven tyres keep at least ~half their side grip while spinning (otherwise
+  full throttle in first gear is an endless donut), and a drift assist that only acts past ~45 degrees of body slip. Particles are cubes in one instanced mesh with a
+  per-instance alpha attribute (patched into the shader with `onBeforeCompile`) and they thin out near the camera; rotating transparent cubes read as shards, so
+  smoke and dust stay axis-aligned (voxel clouds).
+- **Tracks**: both games reuse `TrackPath` from the F1 code with scale 1 (metres). Rally densifies its control points (Catmull-Rom every ~7 m) so a crest can be sharp
+  enough to jump; take-off happens in `Vehicle` when the ground falls away faster than gravity. Walls are lateral limits per path sample (Drift King, from the quay edge;
+  Rally, the stage edge where trees / rocks stand); cameras are clamped inside them.
+- **Bugs found while testing**: the global `button:not(.ghost)` rule beat the menu cards (raised specificity), instanced rally trees floated (the variant was built at
+  the origin's ground height), canyon walls stood inside the drivable edge, metal looked black without an environment map (PMREM: room / sky / night).
+- **Take Your Time**: the game logic (timing bars, points, stages) is untouched; converter patches route `assemblyVisual`, `animateAssembly` and the shift stages to
+  `createThinkers3D`. Clips are functions of time over keyframed tracks; the mechanic's hands, hips and look point are keyed and IK bends the elbows and knees.
+- **How it was checked** (headless Chrome, `--dev`): steering projection test; F1 laps on Circle / Technical / Complex; Drift King on all four courses with an autopilot
+  (drift chains, wall hits, result screen, profile score, save, graphics switch, closing the overlay cleans up); Rally on all four stages (pace notes, rivals, jumps,
+  damage, cockpit / bonnet / chase framing, result, save, close); Take Your Time end to end with every clip filmed at several times, hit and miss variants, both hill stages.

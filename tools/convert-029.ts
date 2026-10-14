@@ -121,6 +121,15 @@ rep(
   }
   function launchRallyStage2D(){`,
 );
+// 5.63.0: the Car Garage cards describe the new 3D games
+rep(
+  `<h3>🛞 Drift King</h3><p>Take the car through the drift challenge and build your style score.</p>`,
+  `<h3>🛞 Drift King</h3><p>3D night docks: drift a Nissan Skyline GT-R or a Ford Mustang GT 5.0 through four courses, each harder than the last.</p>`,
+);
+rep(
+  `<h3>🌲 Rally Race</h3><p>Drive a timed rally stage over changing grip and stay on the course.</p>`,
+  `<h3>🌲 Rally Race</h3><p>3D off-road racing from the driver\\'s seat: two rally cars, four stages, three rival crews and pace notes.</p>`,
+);
 // 5.63.0: Take Your Time shows each assembly step as a ~10 s fast-forward 3D clip (src/arcade/thinkers) and drives the hill in 3D.
 // The timing checks, points and stages are unchanged; without WebGL the old flat pictures are used.
 rep(

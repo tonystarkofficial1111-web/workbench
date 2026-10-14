@@ -1,4 +1,4 @@
-# Workbench 5.62.0 — React + TypeScript rewrite
+# Workbench 5.63.0 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -88,6 +88,20 @@ The screensaver's IndexedDB cache is not saved: it only holds the app's own embe
 
 The Infinite day / night banner (`#wb-inf-hud`) shows only while `wbInfHudVisible()` is true: Infinite is running, the Block World tab is open and the mode picker is closed
 (the tick applies it every step; a 100 ms watcher hides it while the tick is stopped).
+
+## Car games in 3D: Drift King, Rally, Take Your Time
+
+All three live outside the generated `legacy029.ts`; `tools/convert-029.ts` routes `launchDrift`, `launchRallyStage` and the Take Your Time
+visuals to them when WebGL is available (`webglOk()`), and keeps the old 2D versions as the fallback.
+
+| Module | What |
+|---|---|
+| `src/arcade/car3d/` | shared: `stage.ts` (canvas, loop, resize, graphics level `wb-car3d-gfx`, keys, touch pad, PMREM reflections), `vehicle.ts` (two-axle car physics: slip angles, peaked tyre curve, weight transfer, traction circle, handbrake, automatic gearbox, drift assist, springs, crests and jumps), `models.ts` (blocky Skyline R34, Mustang GT 2021, Impreza and GR Yaris rally cars with a cockpit, hatch, pickup), `fx.ts` (voxel particles with per-particle fade, tyre marks), `audio.ts` (generated engine / tyres / impacts), `tex.ts`, `ui.ts` |
+| `src/arcade/drift/` | Drift King: `maps.ts` (four night-dock courses), `world.ts` (quay, water, barriers / containers / tyre walls, lamps, cranes, ship, city), `game.ts` (menu, chains and multiplier, clipping zones, walls and sea, medals, best scores `wb-drift-v1`) |
+| `src/arcade/rally/` | Rally: `maps.ts` (four stages, dense path with crests and jumps), `world.ts` (terrain following the road, ruts, verges, stage edge, forest / canyon / alpine / jungle scenery, crowds, chevrons, rivers, weather, physics ground), `game.ts` (three rival crews on a speed profile, pace notes, cockpit / bonnet / chase cameras, damage, results `wb-rally-v1`) |
+| `src/arcade/thinkers/` | Take Your Time: `rig.ts` (blocky mechanic with two-bone IK), `props.ts` (piston, rings, pliers, compressor, cutaway block with crank, head, camshaft, caps, chain, tools, hoist, project car), `workshop.ts` (room and the four ~10 s clips with fumble variants), `hill.ts` (3D tarmac hill for the shift stages), `index.ts` (API the game calls: `ready`, `play`, `drive`, `shift`, `finish`) |
+
+Dev / dbg builds expose `window.__dk3`, `window.__rl3` and `window.__ct3` (state, keys, `begin()`, `finish()`, `pick(car, map)`, `setCam(k)`, `workshop.skip()`).
 
 ## F1 Cockpit: the 3D seat, the driving rules and the crash scenes
 

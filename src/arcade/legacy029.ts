@@ -68,9 +68,9 @@ function wbPlayAgain(o, fn, score){
         '<div class="car-hub-choice" id="car-thinking-choice"><span class="hub-tag">THINKERS</span><h3>🧠 Take Your Time</h3><p>Build the car from the workbench, test the powertrain uphill, then prove the build downhill against an AI.</p></div>'+
       '</div>'+
       '<div class="thinking-panel" id="car-skill-panel"><button class="car-hub-back" id="car-skill-back">← Back</button><div class="car-hub-choices">'+
-        '<div class="car-hub-choice" id="car-drift-choice"><span class="hub-tag">DRIFT</span><h3>🛞 Drift King</h3><p>Take the car through the drift challenge and build your style score.</p></div>'+
+        '<div class="car-hub-choice" id="car-drift-choice"><span class="hub-tag">DRIFT</span><h3>🛞 Drift King</h3><p>3D night docks: drift a Nissan Skyline GT-R or a Ford Mustang GT 5.0 through four courses, each harder than the last.</p></div>'+
         '<div class="car-hub-choice" id="car-f1-choice"><span class="hub-tag">F1 COCKPIT</span><h3>🏎️ F1 Cockpit</h3><p>Practice throttle, brake, steering, and rear-aero systems in the cockpit.</p></div>'+
-        '<div class="car-hub-choice" id="car-rally-choice"><span class="hub-tag">RALLY</span><h3>🌲 Rally Race</h3><p>Drive a timed rally stage over changing grip and stay on the course.</p></div>'+
+        '<div class="car-hub-choice" id="car-rally-choice"><span class="hub-tag">RALLY</span><h3>🌲 Rally Race</h3><p>3D off-road racing from the driver\'s seat: two rally cars, four stages, three rival crews and pace notes.</p></div>'+
       '</div></div>'+
       '<div class="thinking-panel" id="car-thinking-panel"><button class="car-hub-back" id="car-thinking-back">← Back</button><div class="thinking-card" id="car-build-start"><span class="hub-tag">9,000 POINT MASTER CHALLENGE</span><h3>🔧 Build, Climb & Race</h3><p>One long engineering challenge. Assemble the engine with one-take timing checks, climb the hill with correct shifts, then race downhill against an AI while shifting at the right moment.</p><div class="car-score-preview"><b>ENGINE 3,000</b><b>UPHILL 3,000</b><b>DOWNHILL 3,000</b></div><button class="type-btn" id="car-thinking-start" style="margin-top:14px">START ENGINEERING CHALLENGE</button></div></div>'+
     '</div>';
