@@ -96,3 +96,25 @@ paths; zombies that look like zombies and walk differently; armoured, named vill
 - **How it was checked**: headless Chrome over CDP (`tools/cdp.ts`) with the `--dev` build and the test hooks: every build / defense button placed through real mouse-style
   events, the three menus clicked on the new models, Graphics High -> Medium -> Low -> High with triangle counts per model, wind in two directions, sunrise / sunset /
   night, a zombie night against walls, towers, torches and traps, dawn crumbling, Legacy and a second Infinite run.
+
+## F1 Cockpit 3D feed (session 4, version 5.60.0)
+Requested: the F1 game's graphics should look 3D instead of flat, with light shaders on the balanced side, a Graphics button like the Block World's,
+blocky (never round) trees, the telemetry and the maps kept, and the change written into the changelog with date and version.
+- **Where**: `src/arcade/f1/*` (see the README table). The game stays in the generated `legacy029.ts`; `tools/convert-029.ts` now makes seven small patches with a
+  `rep()` helper that fails the build if an anchor is missing or ambiguous: the Graphics button in the controls line, creating the view after the 2D canvas is found,
+  renaming the old renderer to `f1RenderScene2D` (kept as the fallback; nothing was deleted), the new `f1RenderScene` / `f1Render3D` glue, the cockpit lens flare following
+  the real sun position, the track hook in `genTrack`, and the cleanup. Never edit `legacy029.ts` by hand.
+- **Hybrid on purpose**: the WebGL canvas is under the 2D canvas; the 2D one keeps the cockpit (halo, wheel, mirrors), minimap, glare and HUD. The camera is placed from
+  `player.lapDist` / `lane` / `steer` / `speed`, rivals from `aiCars[i].dist`, so every prompt, delta and sector still comes from the original logic. The cockpit overlay expects the
+  horizon at 40% of the picture, so the camera uses a view offset instead of tilting.
+- **Same lap fractions**: `TrackPath` samples the game's 96 points with a Catmull-Rom spline (8 samples per point), so index fraction u means the same place as in the game.
+  Checked on all four circuits: 30 of the 32 TURN corners sit on a bend that turns the same way in 3D; the other 2 (Curvy Ring) sit on an almost straight inflection in the
+  game's own path too. The figure-eight is rotated a quarter lap (`fixPoints`) so the start line is on a straight instead of under its own bridge.
+- **Tight bends**: the Complex circuit has bends of 3.5 m radius and the Curvy Ring 1.3 m, against a 13 m wide road, which would fold the road. `TrackPath.relax` eases only
+  those samples to at least ~8-12 m (the Complex path moves by 3 m at most, the Curvy Ring by 13 m at its sharpest notch) and `ribbon()` clamps every strip on the inside of a bend.
+- **Cleanup bug found on the way**: the shell's Close button is bound to its own `close` closure, so the cockpit's `o.close` override (key listeners, audio, loop) never ran from it.
+  After visiting the F1 Cockpit, W / A / S / D / Y / U / P / T stayed captured by the page and the loop kept running. The converter now also calls `o.close()` from the button, and the
+  3D view disposes itself if its canvas has left the page. The other car games use the same pattern and were not touched.
+- **How it was checked**: headless Chrome over CDP (`tools/cdp.ts`, GPU WebGL) with the `--dev` build: an autopilot that steers on the TURN prompts drove a full lap of each circuit at
+  Low / Balanced / High; draw calls and triangles per level (about 33 / 77 / 83 calls and 37k / 120k / 240k triangles); Graphics cycling with stable geometry counts; layout at four window
+  sizes; restart, close and reopen three times; a lost WebGL context mid-race and a refused context (both fall back to the 2D feed and the game keeps running).

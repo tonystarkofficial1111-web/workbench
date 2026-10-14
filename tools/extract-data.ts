@@ -14,8 +14,12 @@ mkdirSync(join(root, "src/assets"), { recursive: true });
   const start = s.indexOf("const CHANGELOG = [");
   const end = s.indexOf("\n];", start);
   const arr = new Function("return " + s.slice(start + "const CHANGELOG = ".length, end + 2))();
-  writeFileSync(join(root, "src/data/changelog.json"), JSON.stringify(arr));
-  console.log("changelog entries:", arr.length);
+  // entries written after the original release (the port's own versions, 5.60.0 and later) are kept on top; the rule checker forbids a shorter changelog
+  const file = join(root, "src/data/changelog.json");
+  let extra: Array<{ v: string }> = [];
+  try { const old = JSON.parse(readFileSync(file, "utf8")) as Array<{ v: string }>; const known = new Set(arr.map((e: { v: string }) => e.v)); extra = old.filter((e) => !known.has(e.v)); } catch { /* first run */ }
+  writeFileSync(file, JSON.stringify([...extra, ...arr]));
+  console.log("changelog entries:", arr.length, "+", extra.length, "newer");
 }
 
 // 2. Arcade cover art + long descriptions (script 037)

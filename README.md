@@ -1,4 +1,4 @@
-# Workbench 5.59.4 — React + TypeScript rewrite
+# Workbench 5.60.0 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -69,6 +69,30 @@ default on Chromebooks and slow machines) and *Low* (fewer pixels, plain shapes,
 `bun run build.ts --dev` and `PORT=5191 bun run serve.ts` give `/new-dbg` (state hooks: `window.__dbg`, `__dbg2`, and `__wbInf` for the Infinite
 context) and `/harness.js`. `tools/cdp.ts` starts headless Chrome over the DevTools protocol (GPU WebGL, screenshots, evals), which is how the
 screenshots and the placement / mode-switch checks were made.
+
+## F1 Cockpit: the 3D live feed
+
+Since 5.60.0 the cockpit's live feed is a three.js scene (`src/arcade/f1/`). The game itself is still the generated `legacy029.ts`: it owns the
+state (lap position, speed, steering, rivals, TURN prompts), the 2D cockpit overlay, the minimap and every telemetry panel. A WebGL canvas sits
+right under the game's 2D canvas, which is now transparent, and `tools/convert-029.ts` adds the few hooks that connect them (it renames the old
+renderer to `f1RenderScene2D`, which stays as the automatic fallback when WebGL is missing or lost).
+
+| Module | What |
+|---|---|
+| `view.ts` | renderer, camera rig (eye on the player's lap position, lane, steering, brake dive, cornering roll, shake), rivals, sun shadow that follows the camera, Graphics button, fallback |
+| `path.ts` | the circuit as a smooth 3D path through the game's own track points (same lap fractions, so the prompts line up), nearest-point lookup, bridge for the figure-eight, easing of bends tighter than the road |
+| `world.ts` | road, kerbs, run-off, terrain, barriers, fences, bridge deck, start line and grid, gantry, pit building, grandstands, tyre walls, sponsor boards, blocky instanced trees, mountains |
+| `env.ts` | one look per circuit: Midday (Circle), Golden hour (Technical Loop), Cool morning (Complex), Sunset (Curvy Ring); the sun azimuth is also what the 2D cockpit uses for its lighting |
+| `sky.ts`, `car.ts`, `tex.ts`, `post.ts`, `gfx.ts` | shader sky dome and boxy clouds, rival car model, procedural pictures, the full-screen pass (speed blur, vignette, grade, ACES), graphics levels |
+
+**Graphics button** (next to Restart; saved as `wb-f1-gfx`): *Low* (fewer pixels, no shadows or post pass, fewer trees, for Chromebooks), *Balanced*
+(the default: 4x multisampling, sun shadows, post pass, stands and boards), *High* (sharper, bigger shadows, crowds, more trees, a little glow).
+The first run starts on Balanced, or on Low on a Chromebook / 4 cores or fewer / 4 GB or less, like the Infinite world's first-run default.
+Changing the level rebuilds the scenery in about 0.1 s without touching the race.
+The cockpit's Close button now also runs the cockpit's own cleanup (loop, keys, sound, WebGL context); before, only the shell was closed.
+
+For tests: a `--dev` or `--dbg` build exposes `window.__f1View` (`.last.player`, `.last.aiCars`, `.turns`, `.dbg()` with the renderer, scene, camera and path).
+
 ## Access codes
 
 The Developer gate, Assistant gate and Assistant-memory lock compare against a **salted, iterated SHA-256 digest** (`src/core/gate.ts`);
