@@ -36,7 +36,7 @@ export const mix = (a: number, b: number, t: number) => {
 // ------------------------------------------------------------------------------------------------------------------ masonry
 /** Courses of single stone blocks on a flat face (x from -w/2, bottom at y0, standing out `z` from the wall). The wall behind it is the mortar. */
 export function stoneFace(mb: MB, rnd: Rng, w: number, h: number, o: { x0?: number; y0?: number; z?: number; bw?: number; bh?: number; tier?: number; cols?: number[]; gap?: number } = {}) {
-  const x0 = o.x0 ?? -w / 2, y0 = o.y0 ?? 0, z = o.z ?? 0.007, bw = o.bw ?? 0.42, bh = o.bh ?? 0.21, gap = o.gap ?? 0.03, cols = o.cols ?? PAL.stone;
+  const x0 = o.x0 ?? -w / 2, y0 = o.y0 ?? 0, z = o.z ?? 0.009, bw = o.bw ?? 0.42, bh = o.bh ?? 0.21, gap = o.gap ?? 0.03, cols = o.cols ?? PAL.stone;
   const rows = Math.max(1, Math.round(h / bh)), rh = h / rows;
   for (let r = 0; r < rows; r++) {
     let x = x0 - (r % 2 ? bw * 0.5 : 0) - rnd.range(0, bw * 0.25);
@@ -58,7 +58,7 @@ export function stoneBox(mb: MB, rnd: Rng, w: number, h: number, d: number, x: n
   for (let i = 0; i < 4; i++) {
     if (!(faces & (1 << i))) continue;
     mb.push(0, 0, 0, i * PI / 2);
-    stoneFace(mb, rnd, i % 2 ? d : w, h, { z: (i % 2 ? w : d) / 2 + 0.006, tier: o.tier ?? 1, cols: o.cols, bw: o.bw, bh: o.bh });
+    stoneFace(mb, rnd, i % 2 ? d : w, h, { z: (i % 2 ? w : d) / 2 + 0.009, tier: o.tier ?? 1, cols: o.cols, bw: o.bw, bh: o.bh });
     mb.pop();
   }
   mb.pop();

@@ -10,6 +10,8 @@ const root = import.meta.dir;
 mkdirSync(root + "/_orig/data", { recursive: true });
 
 const PORT = Number(process.env.PORT) || 5173;
+// WB_DIST=<file> serves another build than dist/Workbench.html (see WB_OUT in build.ts)
+const DIST = process.env.WB_DIST ? process.env.WB_DIST : root + "/dist/Workbench.html";
 Bun.serve({
   port: PORT,
   maxRequestBodySize: 1 << 28,
@@ -22,14 +24,14 @@ Bun.serve({
       return new Response("ok");
     }
     if (p === "/harness.js") return new Response(Bun.file(root + "/tools/dev-harness.js"), { headers: { "content-type": "text/javascript", "cache-control": "no-store" } });
-    const file = p.startsWith("/orig") ? "_orig/original.html" : "dist/Workbench.html";
+    const file = p.startsWith("/orig") ? root + "/_orig/original.html" : DIST;
     const headers = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
     if (p.endsWith("-dbg")) {
-      const text = await Bun.file(root + "/" + file).text();
+      const text = await Bun.file(file).text();
       if (!hasHooks(text)) return new Response("debug markers not found (build the port with --dev)", { status: 500 });
       return new Response(injectHooks(text), { headers });
     }
-    return new Response(Bun.file(root + "/" + file), { headers });
+    return new Response(Bun.file(file), { headers });
   },
 });
 console.log("serving on " + PORT);

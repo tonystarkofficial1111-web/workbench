@@ -55,7 +55,7 @@ export function installDefenses(ctx: Ctx) {
     for (const k of [-0.82, 0, 0.82]) {
       mb.bar(PAL.stone[0], 0.52, 0.34, WT * 0.9, k, H + 0.12, 0, 0, { jit: 0.06 });
       mb.box(PAL.stoneL, 0.58, 0.06, WT + 0.06, k, H + 0.49, 0, 0, 0, 0, { tier: 1 });
-      for (const sg of [-1, 1]) mb.quad(PAL.stone[3], 0.46, 0.3, k, H + 0.3, sg * (WT * 0.45 + 0.004), 0, sg > 0 ? 0 : PI, 0, { tier: 1, jit: 0.1 });
+      for (const sg of [-1, 1]) mb.quad(PAL.stone[3], 0.46, 0.3, k, H + 0.3, sg * (WT * 0.45 + 0.008), 0, sg > 0 ? 0 : PI, 0, { tier: 1, jit: 0.1 });
     }
     for (const sg of [-1, 1]) { // arrow loops on both faces
       mb.push(0, 0, sg * (WT / 2 + 0.006), sg > 0 ? 0 : PI);

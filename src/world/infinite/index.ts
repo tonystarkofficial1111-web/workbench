@@ -329,6 +329,11 @@ export function installInfinite(env: Env) {
     if (env.wbInf.starting && ctx.island) {
       const w = env.legacyWaterMesh; // the default sea plane stays for now; the water module replaces it
       env.camDistance = 74; env.camPitch = (58 * Math.PI) / 180;
+      // nothing is ever closer than ten units to the camera here, so a farther near plane gives the depth buffer five times the precision
+      // (stone blocks, flags and plates lie a hair above the surface behind them)
+      const oldNear = env.camera.near;
+      env.camera.near = 0.5; env.camera.updateProjectionMatrix();
+      ctx.cleanup.push(() => { env.camera.near = oldNear; env.camera.updateProjectionMatrix(); });
       applyGfx();
       ctx.started.forEach((f) => { try { f(); } catch (e) { console.error(e); } });
     }

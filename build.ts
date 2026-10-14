@@ -5,7 +5,7 @@
 //   bun run build.ts --dev      readable build (no minify, no obfuscation) for debugging
 //   bun run build.ts --no-obf   minified but not obfuscated
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import type { BunPlugin } from "bun";
 import { hasHooks, injectHooks } from "./tools/dev-hooks";
 
@@ -139,8 +139,9 @@ const html = template
   .replace("<!--WB_CSS-->", () => `<style>${safeCss}</style>`)
   .replace("<!--WB_JS-->", () => `<script>${safeJs}</script>`);
 
-mkdirSync(join(root, "dist"), { recursive: true });
-const outFile = join(root, "dist", "Workbench.html");
+// WB_OUT=<file> builds somewhere else (several test runs can then use their own copy without overwriting dist/)
+const outFile = process.env.WB_OUT ? resolve(process.env.WB_OUT) : join(root, "dist", "Workbench.html");
+mkdirSync(dirname(outFile), { recursive: true });
 writeFileSync(outFile, html);
 console.log(
   `Built ${relative(root, outFile)}  ${(html.length / 1048576).toFixed(2)} MB  (js ${(js.length / 1024).toFixed(0)} KB, css ${(css.length / 1024).toFixed(0)} KB)  ${obfuscate ? "obfuscated" : watchMode ? "dev" : "minified"}  ${((Date.now() - t0) / 1000).toFixed(1)}s`,
