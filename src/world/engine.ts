@@ -6,6 +6,7 @@ import { quality } from "../core/perf";
 import { worldBridge, assistantBridge } from "../core/bridge";
 import { getMemories, restoreMemories } from "../features/memory";
 import { APP_VERSION } from "../version";
+import { openSaveChooser, blockWorldStorage, restoreBlockWorldStorage } from "../features/saves";
 import { installInfinite } from "./infinite";
 
 let started = false;
@@ -970,12 +971,15 @@ function serializeWorkbenchBundle(){
   try{ bundle.extras={}; ['wb-myfiles-v1','wb-myfiles-stat','wb-weak-v1','wb-badges-v1','wb-streak-v1','wb-summary-count','wb-inf-day','wb-bw-maxdefs'].forEach(function(k){var v=localStorage.getItem(k); if(v!==null) bundle.extras[k]=v;}); }catch(e){}
   return bundle;
 }
+function serializeBlockWorldSave(){
+  return { format:'Stark Workbench Block World Save', version:2, appVersion:APP_VERSION, savedAt:new Date().toISOString(), world:serializeWorld(), storage:blockWorldStorage() };
+}
 function downloadSave(){
-  const blob = new Blob([JSON.stringify(serializeWorkbenchBundle(),null,2)], { type:'application/json' });
+  const blob = new Blob([JSON.stringify(serializeBlockWorldSave(),null,2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'workbench-save.json';
+  a.download = 'workbench-block-world-' + new Date().toISOString().slice(0,10) + '.json';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -983,6 +987,8 @@ function downloadSave(){
 }
 
 function loadSaveData(data){
+  if(data && (data.format === 'Stark Workbench User Saves' || data.format === 'Stark Workbench Full Backup')) throw new Error('That is a User saves file, not a Block World save. Restore it from the User / Saves tab.');
+  if(data && data.format === 'Stark Workbench Block World Save'){ try{ restoreBlockWorldStorage(data.storage); }catch(e){} data = data.world || {}; }
   var bundle=data && data.format==='Stark Workbench Complete Save' ? data : null;
   if(bundle){ data=bundle.world||{}; try{ if(bundle.arcade){ replaceProfile(bundle.arcade); } }catch(e){} try{ if(Array.isArray(bundle.aiMemory)){ restoreMemories(bundle.aiMemory); } }catch(e){} try{ if(Array.isArray(bundle.aiHistory)){ assistantBridge.setHistory(bundle.aiHistory); } }catch(e){} try{ if(bundle.extras&&typeof bundle.extras==='object'){ Object.keys(bundle.extras).forEach(function(k){ if(/^wb-(myfiles|weak|badges|streak|summary|inf-day|bw-maxdefs)/.test(k)) localStorage.setItem(k,String(bundle.extras[k])); }); } }catch(e){} try{ if(bundle.education){ localStorage.setItem('wb-study-notes',JSON.stringify(bundle.education.notes||[])); localStorage.setItem('wb-flashcards',JSON.stringify(bundle.education.flashcards||[])); localStorage.setItem('wb-student-dashboard',JSON.stringify(bundle.education.dashboard||{})); } }catch(e){} }
   world.forEach(function(mesh){ scene.remove(mesh); });
@@ -1028,7 +1034,7 @@ function loadSaveData(data){
   }
 }
 
-document.getElementById('save-btn').addEventListener('click', downloadSave);
+document.getElementById('save-btn').addEventListener('click', function(){ openSaveChooser(); });
 const loadFileInput = document.getElementById('load-file-input');
 document.getElementById('load-btn').addEventListener('click', function(){ loadFileInput.click(); });
 loadFileInput.addEventListener('change', function(){
@@ -4168,7 +4174,11 @@ function wbInfHud(){
   if(wbInf.hud) return wbInf.hud;
   var h = document.createElement('div'); h.id = 'wb-inf-hud';
   h.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:60;padding:6px 14px;border-radius:10px;background:rgba(10,14,24,.8);border:1px solid rgba(255,255,255,.28);color:#fff;font:600 13px system-ui,sans-serif;display:none;text-align:center;pointer-events:none;max-width:92vw';
-  document.body.appendChild(h); wbInf.hud = h; return h;
+  document.body.appendChild(h); wbInf.hud = h; setInterval(function(){ if(h.style.display !== 'none' && !wbInfHudVisible()) h.style.display = 'none'; }, 100); return h;
+}
+function wbInfHudVisible(){
+  var tw = document.getElementById('tab-world'), ov = document.getElementById('mode-select-overlay');
+  return !!(wbInf.on && tw && tw.classList.contains('active') && !(ov && ov.classList.contains('show')));
 }
 function wbInfClearDrips(){ wbInf.drips.forEach(function(d){ scene.remove(d.m); d.m.material.dispose(); }); wbInf.drips = []; }
 function wbInfClearZ(){ wbInf.z.forEach(function(z){ z.alive = false; if(z.group) scene.remove(z.group); }); wbInf.z = []; if(wbInf.zf) wbInf.zf.units = []; }
@@ -4282,7 +4292,7 @@ function wbInfTick(dt){
   else if(night) txt = '🌙 Night (calm) · dawn in ' + Math.ceil(left) + 's';
   else if(zOn) txt = '☀️ Day ' + legacyDay + ' · night in ' + Math.ceil(left) + 's · next: Wave ' + wave + ' (' + Math.min(100, 5 + 3 * (wave - 1)) + ' zombies)';
   else txt = '☀️ Day ' + legacyDay + ' · night in ' + Math.ceil(left) + 's · zombies start on Day ' + WB_Z_START;
-  h.textContent = txt; h.style.display = (tw && tw.classList.contains('active')) ? 'block' : 'none';
+  h.textContent = txt; h.style.display = wbInfHudVisible() ? 'block' : 'none';
 }
 var wbFast = false;                       // 5.53.1: Infinite 2x speed lives here so it can see the game (the old copy ran before this module loaded)
 function wbSpeedLabel(){ var b = document.getElementById('lb-speed'); if(b) b.textContent = wbFast ? '\u23E9 2x ON' : '\u23E9 1x'; }

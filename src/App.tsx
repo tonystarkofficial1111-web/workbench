@@ -4,6 +4,7 @@ import { Toasts } from "./components/Toasts";
 import { VersionBadge } from "./components/VersionBadge";
 import { Tour } from "./components/Tour";
 import { BackupBar } from "./components/BackupBar";
+import { SaveChooser } from "./components/SaveChooser";
 import { PerfHud } from "./components/PerfHud";
 import { OverlayHost } from "./core/overlay";
 import { StartTab } from "./tabs/StartTab";
@@ -106,6 +107,7 @@ export function App() {
       <VersionBadge />
       <Tour />
       <BackupBar />
+      <SaveChooser />
       <PerfHud />
       <OverlayHost />
     </>

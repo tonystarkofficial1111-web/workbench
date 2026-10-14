@@ -61,6 +61,13 @@ export function resetShopColors() {
 
 const LB = "wb-last-backup";
 export const lastBackup = () => +(lsGetRaw(LB) || 0) || 0;
+/** A User saves file was just written: the 10-minute reminder starts counting again. */
+export function markBackup() {
+  lsSetRaw(LB, String(Date.now()));
+  shopEvents.emit();
+}
+/** The 5.46 single-file backup of all of localStorage. The buttons now open the Block World / User saves chooser (features/saves.ts),
+ *  which reads these files too; this writer stays for anything that still calls it. */
 export function backupEverything(appVersion: string) {
   const o: Record<string, string | null> = {};
   for (let i = 0; i < localStorage.length; i++) {

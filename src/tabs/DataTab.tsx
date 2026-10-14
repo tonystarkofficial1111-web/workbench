@@ -3,13 +3,13 @@ import { activeTab, accentHex, layoutMode, toggleLayout, setAccent, resetAccent,
 import { useEmitter, useValue } from "../core/store";
 import {
   getProfile, profileEvents, tickEvents, achievements, getAchievementState, formatTime, koRatioText,
-  totalHighScorePoints, bannerTiers, calcWeightedScore, LB_NAMES, exportProfile, sanitizeImportedProfile,
-  replaceProfile, resetProfile, commitProfile, checkAchievements,
+  totalHighScorePoints, bannerTiers, calcWeightedScore, LB_NAMES,
+  resetProfile, commitProfile, checkAchievements,
 } from "../core/profile";
 import { worldBridge } from "../core/bridge";
 import { BADGES, getBadgeState, getStreak, badgeEvents, evalBadges } from "../features/badges";
-import { ITEMS, buy, equip, getShop, resetShopColors, shopEvents, backupEverything, restoreBackup, lastBackup } from "../features/shop";
-import { APP_VERSION } from "../version";
+import { ITEMS, buy, equip, getShop, resetShopColors, shopEvents, lastBackup } from "../features/shop";
+import { importSave, openSaveChooser } from "../features/saves";
 import { generateShareCard, ShareCardModal } from "../components/ShareCard";
 
 const THEMES: { id: string; bg: string; title: string; lockSecs?: number }[] = [
@@ -134,6 +134,7 @@ export function DataTab() {
   const p = getProfile();
   const [loginStatus, setLoginStatus] = useState<{ msg: string; ok: boolean } | null>(null);
   const [worldStatus, setWorldStatus] = useState("");
+  const [backupStatus, setBackupStatus] = useState("");
   const [shopMsg, setShopMsg] = useState("");
   const [nameFocused, setNameFocused] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -243,24 +244,17 @@ export function DataTab() {
                 <input
                   id="data-world-import-input"
                   type="file"
-                  accept="application/json,.json"
+                  accept="application/json,.json,.wbsave"
                   hidden
                   onChange={(e) => {
                     const file = e.target.files && e.target.files[0];
-                    if (!file) return;
                     const input = e.target;
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      try {
-                        worldBridge.importData(JSON.parse(String(reader.result)));
-                        setWorldStatus("World loaded.");
-                        setTimeout(() => setWorldStatus((s) => (s === "World loaded." ? "" : s)), 2500);
-                      } catch (err: any) {
-                        setWorldStatus("Could not read that file: " + err.message);
-                      }
+                    if (!file) return;
+                    importSave(file).then((r) => {
+                      setWorldStatus(r.msg);
+                      if (r.ok && r.msg === "World loaded.") setTimeout(() => setWorldStatus((s) => (s === "World loaded." ? "" : s)), 2500);
                       input.value = "";
-                    };
-                    reader.readAsText(file);
+                    });
                   }}
                 />
               </div>
@@ -268,8 +262,8 @@ export function DataTab() {
             </div>
 
             <div className="data-card">
-              <h3>🕹️ Arcade Saves</h3>
-              <p>Progress for all 60 cabinets.</p>
+              <h3>🕹️ User Saves</h3>
+              <p>Progress for all 60 cabinets, your profile, shop, notes, AI memory and everything else except the Block World.</p>
               <ProfilePicture />
               <div className="login-name-field">
                 <label htmlFor="login-name-input">Display name</label>
@@ -321,32 +315,24 @@ export function DataTab() {
                 </div>
               </div>
               <div className="data-actions">
-                <button type="button" id="login-export-btn" onClick={() => { exportProfile(); setLoginStatus({ msg: "Progress exported — check your downloads.", ok: true }); }}>
+                <button type="button" id="login-export-btn" onClick={() => openSaveChooser()}>
                   Export progress
                 </button>
                 <label className="login-file-btn" htmlFor="login-file-input">Import progress…</label>
                 <input
                   id="login-file-input"
                   type="file"
-                  accept="application/json,.json"
+                  accept="application/json,.json,.wbsave"
                   hidden
                   onChange={(e) => {
                     const file = e.target.files && e.target.files[0];
-                    e.target.value = "";
+                    const input = e.target;
                     if (!file) return;
-                    if (file.size > 262144) { setLoginStatus({ msg: "That file is too large to be a progress file.", ok: false }); return; }
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      let parsed: any;
-                      try { parsed = JSON.parse(String(reader.result)); }
-                      catch { setLoginStatus({ msg: "Could not read that file — not valid progress data.", ok: false }); return; }
-                      const res = sanitizeImportedProfile(parsed);
-                      if (!res.ok) { setLoginStatus({ msg: res.error, ok: false }); return; }
-                      replaceProfile(res.profile);
-                      setLoginStatus({ msg: "Logged in — welcome back, " + res.profile.name + ". Record restored.", ok: true });
-                    };
-                    reader.onerror = () => setLoginStatus({ msg: "Could not read that file.", ok: false });
-                    reader.readAsText(file);
+                    setLoginStatus({ msg: "Reading " + file.name + "…", ok: true });
+                    importSave(file).then((r) => {
+                      setLoginStatus({ msg: r.msg, ok: r.ok });
+                      input.value = "";
+                    });
                   }}
                 />
               </div>
@@ -523,13 +509,27 @@ export function DataTab() {
       </div>
 
       <div className="wb44-sec">
-        <h3>💾 Full backup</h3>
-        <p className="wb44-mu">Everything lives in this browser. One cleared cache loses it, so back up often (you will be reminded every 10 minutes).</p>
-        <button className="wb44-btn" type="button" onClick={() => backupEverything(APP_VERSION)}>Back up everything</button>
-        <button className="wb44-btn ghost" type="button" onClick={() => backupFile.current?.click()}>Restore from backup</button>
-        <input type="file" accept=".json" style={{ display: "none" }} ref={backupFile} onChange={(e) => { if (e.target.files?.[0]) restoreBackup(e.target.files[0]); }} />
+        <h3>💾 Back up &amp; restore</h3>
+        <p className="wb44-mu">Everything lives in this browser. One cleared cache loses it, so back up often (you will be reminded every 10 minutes). You choose what to save: the Block World, or User saves (everything except the Block World).</p>
+        <button className="wb44-btn" type="button" id="backup-open-btn" onClick={() => openSaveChooser()}>Back up…</button>
+        <button className="wb44-btn ghost" type="button" id="backup-restore-btn" onClick={() => backupFile.current?.click()}>Restore from a file…</button>
+        <input
+          type="file"
+          accept="application/json,.json,.wbsave"
+          style={{ display: "none" }}
+          ref={backupFile}
+          id="backup-restore-input"
+          onChange={(e) => {
+            const file = e.target.files && e.target.files[0];
+            const input = e.target;
+            if (!file) return;
+            setBackupStatus("Reading " + file.name + "…");
+            importSave(file).then((r) => { setBackupStatus(r.msg); input.value = ""; });
+          }}
+        />
         <br />
-        <span className="wb44-mu">{lb ? "Last backup: " + new Date(lb).toLocaleString() : "No backup yet"}</span>
+        <span className="wb44-mu">{lb ? "Last User saves backup: " + new Date(lb).toLocaleString() : "No User saves backup yet"}</span>
+        <p className="wb44-mu" id="backup-status">{backupStatus}</p>
       </div>
 
       <div className="wb44-sec">

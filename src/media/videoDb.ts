@@ -37,6 +37,13 @@ export async function vAdd(file: File | Blob & { name?: string }): Promise<numbe
   videoEvents.emit();
   return id;
 }
+/** Put a video back with its original name and date (restoring a User saves file). */
+export async function vPut(rec: { name: string; size: number; type: string; added: number; blob: Blob }): Promise<number> {
+  const store = await tx("readwrite");
+  const id = (await wrap(store.add({ name: rec.name, size: rec.size, type: rec.type, blob: rec.blob, added: rec.added }))) as number;
+  videoEvents.emit();
+  return id;
+}
 export async function vGetAll(): Promise<VideoRec[]> {
   return ((await wrap((await tx("readonly")).getAll())) as VideoRec[]) || [];
 }

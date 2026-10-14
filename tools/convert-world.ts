@@ -40,6 +40,32 @@ rep("window.__workbenchWorld = world;", "window.__workbenchWorld = world; worldB
   s = s.slice(0, a) + s.slice(b);
 }
 
+// --- saving: the Block World file holds the Block World only; the Save button asks Block World or User saves ---
+// The Complete Save (world + arcade profile + AI + study) is no longer written. Everything that is not the Block World is a User save now
+// (features/saves.ts), and loadSaveData below still reads old Complete Save files, so nothing already saved stops working.
+rep(
+  "function downloadSave(){",
+  `function serializeBlockWorldSave(){
+  return { format:'Stark Workbench Block World Save', version:2, appVersion:APP_VERSION, savedAt:new Date().toISOString(), world:serializeWorld(), storage:blockWorldStorage() };
+}
+function downloadSave(){`,
+  "block world save",
+);
+rep(
+  "const blob = new Blob([JSON.stringify(serializeWorkbenchBundle(),null,2)], { type:'application/json' });",
+  "const blob = new Blob([JSON.stringify(serializeBlockWorldSave(),null,2)], { type:'application/json' });",
+  "download block world only",
+);
+rep("a.download = 'workbench-save.json';", "a.download = 'workbench-block-world-' + new Date().toISOString().slice(0,10) + '.json';", "download name");
+rep(
+  "function loadSaveData(data){",
+  `function loadSaveData(data){
+  if(data && (data.format === 'Stark Workbench User Saves' || data.format === 'Stark Workbench Full Backup')) throw new Error('That is a User saves file, not a Block World save. Restore it from the User / Saves tab.');
+  if(data && data.format === 'Stark Workbench Block World Save'){ try{ restoreBlockWorldStorage(data.storage); }catch(e){} data = data.world || {}; }`,
+  "load block world save",
+);
+rep("document.getElementById('save-btn').addEventListener('click', downloadSave);", "document.getElementById('save-btn').addEventListener('click', function(){ openSaveChooser(); });", "save button");
+
 s = s.replace(/\bwbProfile\b/g, "getProfile()");
 // Coins from boss kills / dawn bonuses: the original saved through the page's wbSaveProfile(), which is commitProfile() here
 // (it also tells the top bar to redraw the coin counter). Without this the call threw inside a try/catch and the coins were never saved.
@@ -102,6 +128,30 @@ __wbIife.FLAME_MAT = FLAME_MAT; __wbIife.CORE_MAT = CORE_MAT; __wbIife.GLOW_MAT 
   s = s.slice(0, end) + reg + s.slice(end);
 }
 
+// The Infinite day/night banner ("Night (calm) · dawn in 40s" ...) is a fixed overlay on <body>. It was only ever hidden from inside the
+// Infinite tick, which stops running when you leave the Block World tab, so the banner stayed painted over every other tab and over the mode
+// picker (its z-index 60 sits above the picker's 50). Now one rule decides: Infinite is running, the Block World tab is the open tab, and the
+// mode picker is closed. The tick applies it every step and a light watcher applies it while the tick is not running.
+rep(
+  "function wbInfClearDrips(){",
+  `function wbInfHudVisible(){
+  var tw = document.getElementById('tab-world'), ov = document.getElementById('mode-select-overlay');
+  return !!(wbInf.on && tw && tw.classList.contains('active') && !(ov && ov.classList.contains('show')));
+}
+function wbInfClearDrips(){`,
+  "hud visible rule",
+);
+rep(
+  "document.body.appendChild(h); wbInf.hud = h; return h;",
+  "document.body.appendChild(h); wbInf.hud = h; setInterval(function(){ if(h.style.display !== 'none' && !wbInfHudVisible()) h.style.display = 'none'; }, 100); return h;",
+  "hud watcher",
+);
+rep(
+  "h.textContent = txt; h.style.display = (tw && tw.classList.contains('active')) ? 'block' : 'none';",
+  "h.textContent = txt; h.style.display = wbInfHudVisible() ? 'block' : 'none';",
+  "hud tick visibility",
+);
+
 // Engine internals the extension may read (ENV_READ), read and re-bind (ENV_BIND), or hold by reference (ENV_CONST).
 const ENV_CONST = [
   "scene", "camera", "renderer", "canvas", "world", "trees", "worldFog", "hemi", "sunLight", "sunMesh", "moonMesh", "stars", "camTarget",
@@ -138,6 +188,7 @@ import { quality } from "../core/perf";
 import { worldBridge, assistantBridge } from "../core/bridge";
 import { getMemories, restoreMemories } from "../features/memory";
 import { APP_VERSION } from "../version";
+import { openSaveChooser, blockWorldStorage, restoreBlockWorldStorage } from "../features/saves";
 import { installInfinite } from "./infinite";
 
 let started = false;

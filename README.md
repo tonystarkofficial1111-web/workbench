@@ -1,4 +1,4 @@
-# Workbench 5.61.0 — React + TypeScript rewrite
+# Workbench 5.62.0 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -69,6 +69,25 @@ default on Chromebooks and slow machines) and *Low* (fewer pixels, plain shapes,
 `bun run build.ts --dev` and `PORT=5191 bun run serve.ts` give `/new-dbg` (state hooks: `window.__dbg`, `__dbg2`, and `__wbInf` for the Infinite
 context) and `/harness.js`. `tools/cdp.ts` starts headless Chrome over the DevTools protocol (GPU WebGL, screenshots, evals), which is how the
 screenshots and the placement / mode-switch checks were made.
+
+## Saving: Block World or User saves
+
+Every save / export / back-up button opens one chooser first (`src/components/SaveChooser.tsx`, state in `src/features/saves.ts`): **Block World** or **User saves**.
+The Export progress and Back up… buttons (User / Saves tab), the 10-minute reminder bar and the Save button inside Block World (patched in by `tools/convert-world.ts`)
+all go through it; the Block World card's *Export world* is explicit and saves the Block World straight away.
+
+| File | What it holds |
+|---|---|
+| Block World (`workbench-block-world-DATE.json`, format `Stark Workbench Block World Save`) | `serializeWorld()` (blocks, trees, farms, houses, villagers, inventory, camera) plus `BLOCK_WORLD_KEYS` from localStorage (`wb-rare-bank`, `wb-inf-best`, `wb-inf-day`, `wb-bw-maxdefs`, `wb-inf-gfx`) |
+| User saves (`workbench-user-saves-DATE.json` / `.wbsave`, format `Stark Workbench User Saves`) | every localStorage key of this app (`wb-`, `wb_`, `stark_` prefixes) except `BLOCK_WORLD_KEYS`, plus the `wbVideos` IndexedDB library. Without videos it is plain JSON; with videos it is a binary container: `WBUSERSAVE1\n`, a 4-byte big-endian manifest length, the manifest JSON (same fields as the JSON file, `videos[]` carries `length`), then each video's bytes |
+
+`importSave(file)` is the one reader behind every Import / Restore button and recognises Block World files, User saves (JSON and `.wbsave`), the old *Complete Save*, the old
+*Full Backup* (`backupEverything`, kept) and old progress files. Restoring User saves confirms, never writes Block World keys, de-duplicates videos (name + size + date), and sets
+`storeLock` (`src/core/store.ts`) so no timer can write over the restored data before the page reloads. `loadSaveData` in the engine still reads Complete Saves and refuses User saves.
+The screensaver's IndexedDB cache is not saved: it only holds the app's own embedded clips.
+
+The Infinite day / night banner (`#wb-inf-hud`) shows only while `wbInfHudVisible()` is true: Infinite is running, the Block World tab is open and the mode picker is closed
+(the tick applies it every step; a 100 ms watcher hides it while the tick is stopped).
 
 ## F1 Cockpit: the 3D seat, the driving rules and the crash scenes
 

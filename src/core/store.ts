@@ -40,6 +40,12 @@ export function useValue<T>(val: Value<T>): T {
   return val.get();
 }
 
+/**
+ * Raised while a restore is writing a whole save back into localStorage. Every helper below then refuses to write, so a timer that
+ * fires before the page reloads (the profile saves every 5 s) cannot put the old in-memory state on top of the restored one.
+ */
+export const storeLock = { on: false };
+
 /** Safe localStorage JSON helpers (the original wraps every access in try/catch). */
 export function lsGet<T>(key: string, fallback: T): T {
   try {
@@ -52,6 +58,7 @@ export function lsGet<T>(key: string, fallback: T): T {
   }
 }
 export function lsSet(key: string, value: unknown): boolean {
+  if (storeLock.on) return false;
   try {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
@@ -67,6 +74,7 @@ export function lsGetRaw(key: string): string | null {
   }
 }
 export function lsSetRaw(key: string, value: string): boolean {
+  if (storeLock.on) return false;
   try {
     localStorage.setItem(key, value);
     return true;
@@ -75,6 +83,7 @@ export function lsSetRaw(key: string, value: string): boolean {
   }
 }
 export function lsRemove(key: string) {
+  if (storeLock.on) return;
   try {
     localStorage.removeItem(key);
   } catch {

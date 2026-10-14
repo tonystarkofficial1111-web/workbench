@@ -1,0 +1,18 @@
+/* Save chooser: "What do you want to save?" -- Block World or User saves */
+.wb-sv{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.62)}
+.wb-sv-card{width:min(640px,100%);max-height:92vh;overflow:auto;padding:18px 20px;background:var(--panel,#1c1c26);color:var(--text);border:2px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.wb-sv-card h3{margin:0 0 4px;font-size:18px}
+.wb-sv-sub,.wb-sv-note{margin:4px 0 12px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.wb-sv-note{margin:10px 0 12px;font-size:11.5px}
+.wb-sv-opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* the app's own button look (light face, dark text) with room for a heading and a description */
+.wb-sv-opt{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;padding:14px;border-radius:10px;font-weight:500;font-size:12.5px;line-height:1.45}
+.wb-sv-opt b{font-size:15px;font-weight:700}
+.wb-sv-opt:hover:not(:disabled),.wb-sv-opt:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.wb-sv-opt:disabled{opacity:.55;cursor:default}
+.wb-sv-ico{font-size:26px;line-height:1}
+.wb-sv-check{display:flex;gap:8px;align-items:flex-start;margin:12px 0 0;font-size:12.5px;line-height:1.45;cursor:pointer}
+.wb-sv-check input{margin-top:2px}
+.wb-sv-done{margin:10px 0 14px;font-size:14px;line-height:1.5}
+.wb-sv-done.bad{color:#ff8a80}
+@media(max-width:560px){.wb-sv-opts{grid-template-columns:1fr}}

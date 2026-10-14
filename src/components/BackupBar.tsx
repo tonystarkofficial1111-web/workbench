@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { backupEverything, lastBackup } from "../features/shop";
-import { APP_VERSION } from "../version";
+import { lastBackup } from "../features/shop";
+import { openSaveChooser } from "../features/saves";
 
-/** 10-minute backup reminder bar (original 5.46.0). */
+/** 10-minute backup reminder bar (original 5.46.0). The button opens the Block World / User saves chooser. */
 export function BackupBar() {
   const [text, setText] = useState("");
   const [show, setShow] = useState(false);
@@ -23,7 +23,7 @@ export function BackupBar() {
   return (
     <div className="wb44-bar" style={{ display: show ? "flex" : "none" }}>
       <span>{text}</span>
-      <button className="wb44-btn" type="button" onClick={() => { backupEverything(APP_VERSION); setShow(false); }}>Back up everything</button>
+      <button className="wb44-btn" type="button" onClick={() => { openSaveChooser(); setShow(false); }}>Back up…</button>
       <button className="wb44-btn ghost" type="button" onClick={() => setShow(false)}>Remind me later</button>
     </div>
   );

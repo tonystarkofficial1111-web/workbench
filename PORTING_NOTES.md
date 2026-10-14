@@ -147,3 +147,17 @@ a bright red countdown for the corner (only a warning now), a more detailed inte
   finished a lap of every circuit and a 5-lap race with a pit stop; a "reckless" driver was disqualified on the Technical Loop; a driver steering into the barrier triggered each of the 20
   scenes (no errors, ~170 fps on the RTX 4070 laptop used); the report, Restart, Graphics cycling, close / reopen, a lost WebGL context and a refused context (2D fallback with the short crash screen) were all exercised.
   Numbers from the suspension over a Technical lap: roll up to 3.3 deg, pitch 2.7 deg, wheel travel +-10 cm, 6.4 g sideways, 2.7 g braking.
+
+## Save chooser, User Saves, Infinite banner (session 6, version 5.62.0)
+Requested: the day/night banner only inside the Infinite world; every export / save asks "Block World or User saves", Arcade Saves is renamed User Saves and a User save holds everything except the Block World.
+- **Banner leak**: `#wb-inf-hud` is a fixed overlay on `<body>` that was only hidden from inside `wbInfTick`, which stops when another tab is open, and its z-index (60) was above the mode picker (50).
+  `tools/convert-world.ts` now adds `wbInfHudVisible()` (Infinite on + `#tab-world` active + `#mode-select-overlay` not `.show`), uses it in the tick and adds a 100 ms hide-only watcher.
+  Checked with `tools/cdp.ts`: visible in Infinite, hidden on the Arcade and User / Saves tabs, hidden over the picker, hidden in Legacy.
+- **Saves**: see the README ("Saving"). Decisions worth knowing: (1) the Block World keys are an explicit list (`BLOCK_WORLD_KEYS`); a new Block World setting has to be added there or it will
+  land in User saves; (2) User saves only reads keys with this app's prefixes, because `file://` pages share one localStorage and other local pages' data must never end up in the file;
+  (3) saved items include anything typed in (YouTube API key, server address) and the chooser says so; (4) the profile is flushed (`saveProfile()`) before exporting because it is only
+  written every 5 s; (5) the Complete Save is no longer written (its arcade / AI / study parts are User saves now) but is still read; (6) the in-game Load now throws on a User saves file
+  instead of clearing the island (a file with no `blocks` used to empty the world).
+- **How it was checked** (headless Chrome, `--dev` build): chooser from Export progress, Back up… and the in-game Save; both export paths (container with a 2 KB video, plain JSON, Block World
+  file) and what they contain (no Block World keys, no foreign keys); a restore after wiping the data (notes, shop, video library back, Block World untouched); old Full Backup, old progress,
+  old Complete Save, new Block World file and a junk file through the import buttons; Escape / Cancel; phone width (390 px) and desktop layouts.
