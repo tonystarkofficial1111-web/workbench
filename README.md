@@ -26,7 +26,8 @@ bun run tools/split-html.ts "<Workbench_x_y_z.html>" _orig_new   # split it into
 `bun run serve` serves the original at `/orig` and the build at `/new`; `/orig-dbg` and `/new-dbg` (build the port with `--dev`) add
 test hooks to the Block World engine, and `/harness.js` (`tools/dev-harness.js`) holds the click / placement helpers used to check that
 every Block World button behaves the same in both. `bun run build.ts --dbg` puts the same hooks into the real obfuscated build so it can
-be driven too. **Never ship a `--dbg` build.**
+be driven too. **Never ship a `--dbg` build.** To keep a test build away from `dist/`, set `WB_OUT=<file>` when building and `WB_DIST=<file> PORT=<n>`
+when serving (handy when several test runs share one checkout).
 
 ## Layout
 
