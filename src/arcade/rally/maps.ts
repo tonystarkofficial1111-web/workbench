@@ -5,7 +5,7 @@ import { TrackPath } from "../f1/path";
  * surface, weather, scenery and height profile with crests and jumps. Coordinates are metres (x east, z south). Each stage is a little
  * harder than the one before: narrower, twistier, slipperier, and with bigger jumps.
  */
-export type Surface = "gravel" | "sand" | "snow" | "mud";
+export type Surface = "gravel" | "sand" | "snow" | "mud" | "tarmac";
 export interface RallyMap {
   id: string;
   name: string;

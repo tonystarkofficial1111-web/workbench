@@ -26,6 +26,7 @@ import { createF1View, createF1Sim, f1FixPoints, drawF1Hud, drawF1CrashFallback,
 import { webglOk } from "./car3d/stage";
 import { createDriftGame } from "./drift/game";
 import { createRallyGame } from "./rally/game";
+import { createThinkers3D } from "./thinkers";
 
 function L(m){ try{ (window.__wb519Log = window.__wb519Log || []).push(m); }catch(e){} }
 
@@ -120,6 +121,35 @@ rep(
   }
   function launchRallyStage2D(){`,
 );
+// 5.63.0: Take Your Time shows each assembly step as a ~10 s fast-forward 3D clip (src/arcade/thinkers) and drives the hill in 3D.
+// The timing checks, points and stages are unchanged; without WebGL the old flat pictures are used.
+rep(
+  `var stageEl=document.getElementById('ct-stage'), titleEl=document.getElementById('ct-title'), subEl=document.getElementById('ct-sub'), totalEl=document.getElementById('ct-total'), progress=document.getElementById('ct-progress-fill');`,
+  `var stageEl=document.getElementById('ct-stage'), titleEl=document.getElementById('ct-title'), subEl=document.getElementById('ct-sub'), totalEl=document.getElementById('ct-total'), progress=document.getElementById('ct-progress-fill');
+    var ct3=null;
+    if(webglOk()){ try{ stageEl.insertAdjacentHTML('beforebegin','<div class="c3d-host ct3-host" id="ct3-host"></div>'); ct3=createThinkers3D(document.getElementById('ct3-host')); o.shell.classList.add('c3d-shell'); }catch(e){ L('thinkers 3d: '+(e&&e.message)); ct3=null; var h3=document.getElementById('ct3-host'); if(h3) h3.remove(); } }`,
+);
+rep(`function assemblyVisual(part,phase,ok){`, `function assemblyVisual(part,phase,ok){ if(ct3) return '';`);
+rep(
+  `function animateAssembly(part,phase,ok,after){`,
+  `function animateAssembly(part,phase,ok,after){
+      if(ct3){ if(phase==='pick'){ ct3.ready(part.id,'Picking up: '+part.name); later(function(){ if(after) after(); },500); } else ct3.play(part.id,ok,function(){ if(!closed&&after) after(); }); return; }`,
+);
+rep(`var part=parts[idx],step=idx;setProgress(step/4*33.333);`, `var part=parts[idx],step=idx;setProgress(step/4*33.333);if(ct3) ct3.ready(part.id,'Step '+(idx+1)+' of 4 · '+part.name);`);
+rep(
+  `stageEl.innerHTML='<div class="ct-workbench">`,
+  `stageEl.innerHTML=ct3?('<div class="ct3-step"><div><b>'+part.name+'</b><small>'+part.desc+'</small></div><button class="type-btn" id="ct-pick">PICK UP PART</button></div><div class="ct-part-step">ASSEMBLY STEP '+(idx+1)+' / 4 · 750 POINTS</div><div id="ct-install-area"></div>'):'<div class="ct-workbench">`,
+);
+rep(`var gear=idx%5+1;`, `var gear=idx%5+1;if(ct3) ct3.drive(isDownhill,idx,count,gear);`);
+{
+  const a = body.indexOf(`'<div class="ct-stage-visual">`);
+  const b = body.indexOf(`';`, a);
+  if (a < 0 || b < 0 || body.indexOf(`'<div class="ct-stage-visual">`, a + 1) >= 0) throw new Error("convert-029: thinkers stage visual not found exactly once");
+  body = body.slice(0, a) + "(ct3?'':" + body.slice(a, b + 1) + ")" + body.slice(b + 1);
+}
+rep(`if(ok)earned+=isDownhill?300:375;setScore();`, `if(ok)earned+=isDownhill?300:375;setScore();if(ct3) ct3.shift(ok);`);
+rep(`cleanup();setProgress(100);titleEl.textContent='CHALLENGE COMPLETE';`, `cleanup();setProgress(100);if(ct3) ct3.finish();titleEl.textContent='CHALLENGE COMPLETE';`);
+rep(`var originalClose=o.close;o.close=function(){closed=true;cleanup();originalClose();};`, `var originalClose=o.close;o.close=function(){closed=true;cleanup();if(ct3) ct3.dispose();originalClose();};`);
 // a Graphics button next to Restart
 rep(
   `<button id="f1-restart" class="f1-restart-btn" type="button">↻ Restart Race</button></div>'+`,

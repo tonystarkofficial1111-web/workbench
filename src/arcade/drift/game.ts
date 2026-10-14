@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createStage, createKeys, touchPad, loadLevel, saveLevel, LEVEL_NAMES, type Level } from "../car3d/stage";
+import { createStage, createKeys, touchPad, loadLevel, saveLevel, setEnvironment, LEVEL_NAMES, type Level } from "../car3d/stage";
 import { Vehicle, type CarSpec } from "../car3d/vehicle";
 import { buildCar } from "../car3d/models";
 import { createParticles, createMarks } from "../car3d/fx";
@@ -53,6 +53,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   const stage = createStage(view, level);
   const T = stage.THREE, scene = stage.scene, camera = stage.camera, f = stage.f;
   stage.renderer.toneMappingExposure = 1.35;     // a night scene: lift the picture a little so the cars read against the dark
+  setEnvironment(stage, "night");               // warm lamps in the paint and the glass
   // a showroom light over the car while the menu or the result is up
   const show = new T.SpotLight(0xffffff, 260, 30, 0.55, 0.6, 1.6);
   scene.add(show); scene.add(show.target);

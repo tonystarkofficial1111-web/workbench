@@ -75,3 +75,14 @@
 .c3d-damage{position:absolute;left:14px;top:120px;width:120px;font-size:10px;color:#9fb0c0;pointer-events:none}
 .c3d-damage i{display:block;height:6px;border-radius:3px;background:linear-gradient(90deg,#2fe27a,#ffd34d,#ff5a4a);margin-top:3px}
 @media(max-width:720px){.c3d-mini{width:130px;height:98px}.c3d-cars,.c3d-maps{grid-template-columns:1fr}.c3d-help{display:none}.c3d-big{font-size:22px}.c3d-gauge b{font-size:30px}.c3d-split{top:118px;min-width:130px;font-size:11px}}
+/* Take Your Time: the 3D clips sit above the timing bar */
+.c3d-host.ct3-host{height:min(52vh,calc(98vw * 0.45));min-height:300px;margin:6px 0 10px}
+.ct3-badge{position:absolute;left:12px;top:10px;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,.6);font:800 14px 'Space Grotesk',Inter,sans-serif;color:#ffd34d;pointer-events:none}
+.ct3-badge b{color:#fff}.ct3-badge span{color:#9fb0c0;margin-left:6px;font-weight:600}
+.ct3-cap{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:88%;padding:6px 12px;border-radius:9px;background:rgba(8,10,16,.72);font:600 13.5px Inter,sans-serif;color:#e9eef5;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none}
+.ct3-cap.on{opacity:1}.ct3-cap.bad{color:#ff8a80;border:1px solid rgba(255,90,74,.5)}.ct3-cap.good{color:#7af0b0}
+.ct3-bar{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.12)}
+.ct3-bar i{display:block;height:100%;width:0;background:#ffd34d}
+.c3d-root button.ct3-skip{position:absolute;right:12px;top:10px;padding:5px 10px!important;border-radius:8px!important;background:rgba(0,0,0,.6)!important;color:#fff!important;border:1px solid rgba(255,255,255,.3)!important;font:700 12px Inter,sans-serif!important;cursor:pointer}
+.ct3-step{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line,#2a3142);border-radius:10px;background:rgba(18,24,36,.6)}
+.ct3-step b{display:block;font-size:15px}.ct3-step small{color:#9fb0c0;font-size:12px}

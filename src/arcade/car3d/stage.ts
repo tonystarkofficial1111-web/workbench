@@ -1,5 +1,6 @@
 // @ts-nocheck
 import * as THREE from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { lsGetRaw, lsSetRaw } from "../../core/store";
 
 /**
@@ -42,6 +43,34 @@ export function loadLevel(): Level {
   return 1;
 }
 export function saveLevel(l: Level) { lsSetRaw(KEY, String(l)); }
+
+/**
+ * Reflections for the metal, paint and glass (PMREM): built once from a tiny scene. `kind` picks it: an indoor room (the workshop), a day sky
+ * (the rally stages, with the given colours) or a night with a few warm lamps (the docks).
+ */
+export function setEnvironment(stage: Stage, kind: "room" | "sky" | "night", colors: [string, string, string] = ["#3f78c8", "#8fbde8", "#4a5a32"]) {
+  const T = stage.THREE, pm = new T.PMREMGenerator(stage.renderer);
+  let sc: any;
+  if (kind === "room") sc = new RoomEnvironment();
+  else {
+    sc = new T.Scene();
+    const c = document.createElement("canvas"); c.width = 4; c.height = 128; const g = c.getContext("2d")!;
+    const gr = g.createLinearGradient(0, 0, 0, 128);
+    if (kind === "sky") { gr.addColorStop(0, colors[0]); gr.addColorStop(0.48, colors[1]); gr.addColorStop(0.52, colors[2]); gr.addColorStop(1, colors[2]); }
+    else { gr.addColorStop(0, "#02040a"); gr.addColorStop(0.5, "#1a1c2a"); gr.addColorStop(0.52, "#0a0a0c"); gr.addColorStop(1, "#050506"); }
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 128);
+    const tx = new T.CanvasTexture(c); tx.colorSpace = T.SRGBColorSpace;
+    sc.add(new T.Mesh(new T.SphereGeometry(10, 16, 8), new T.MeshBasicMaterial({ map: tx, side: T.BackSide })));
+    if (kind === "night") for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2; const m = new T.Mesh(new T.BoxGeometry(1.2, 0.5, 0.2), new T.MeshBasicMaterial({ color: new T.Color(3, 1.8, 0.8) })); m.position.set(Math.cos(a) * 8, 3.5, Math.sin(a) * 8); m.lookAt(0, 0, 0); sc.add(m); }
+    else { const sun = new T.Mesh(new T.SphereGeometry(0.8, 8, 6), new T.MeshBasicMaterial({ color: new T.Color(6, 5.5, 4.5) })); sun.position.set(4, 6, -5); sc.add(sun); }
+  }
+  const rt = pm.fromScene(sc, 0.04);
+  stage.scene.environment = rt.texture;
+  sc.traverse((o: any) => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+  pm.dispose();
+  stage.onDispose(() => rt.dispose());
+  return rt.texture;
+}
 
 export function webglOk(): boolean {
   try {

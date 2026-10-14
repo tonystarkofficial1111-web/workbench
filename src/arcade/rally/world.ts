@@ -5,7 +5,7 @@ import { makeKit } from "../f1/car";
 import type { TrackPath } from "../f1/path";
 import type { Features } from "../car3d/stage";
 import type { Ground } from "../car3d/vehicle";
-import { groundTexture, checkerTexture } from "../car3d/tex";
+import { groundTexture, checkerTexture, asphaltTexture } from "../car3d/tex";
 import type { RallyMap } from "./maps";
 
 /**
@@ -118,7 +118,7 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
     const g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(pos, 3)); g.setAttribute("uv", new T.BufferAttribute(uvs, 2)); g.setAttribute("color", new T.BufferAttribute(cols, 3)); g.setIndex(idx); g.computeVertexNormals();
     return mine(g);
   };
-  const roadTex = mine(groundTexture(T, map.surface === "sand" ? "sand" : map.surface === "snow" ? "snow" : map.surface === "mud" ? "mud" : "gravel", map.seed + 5));
+  const roadTex = mine(map.surface === "tarmac" ? asphaltTexture(T, map.seed + 5) : groundTexture(T, map.surface === "sand" ? "sand" : map.surface === "snow" ? "snow" : map.surface === "mud" ? "mud" : "gravel", map.seed + 5));
   const roadMat = mine(new T.MeshLambertMaterial({ map: roadTex, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
   const rutC = map.surface === "snow" ? [0.78, 0.82, 0.88] : map.surface === "mud" ? [0.7, 0.66, 0.62] : [0.78, 0.74, 0.7];
   // three strips across: ruts darker where the wheels run
@@ -135,8 +135,8 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
   const props = new MB(T, 90); props.jitter = 0.05; props.ao = { y0: -50, h: 1, k: 0 };
   const placeOK = (x: number, z: number, m: number) => { path.nearest(x, z, tmp); return tmp.d > hw + m; };
   const kinds = TREES[map.scenery]!;
-  const treeAt = (mb: MB, x: number, z: number, s: number, r: Rng) => {
-    const y = terrainY(x, z) - 0.2, t = r.pick(kinds), leaf = () => r.pick(t.leaf);
+  const treeAt = (mb: MB, x: number, z: number, s: number, r: Rng, yAt?: number) => {
+    const y = yAt ?? terrainY(x, z) - 0.2, t = r.pick(kinds), leaf = () => r.pick(t.leaf);
     mb.push(x, y, z, r.int(0, 3) * Math.PI / 2, s);
     if (t.kind === "pine" || t.kind === "snowpine") {
       mb.bar(t.trunk, 0.5, 2.4, 0.5, 0, 0, 0);
@@ -157,8 +157,8 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
     }
     mb.pop();
   };
-  const rockAt = (mb: MB, x: number, z: number, s: number, r: Rng) => {
-    const y = terrainY(x, z) - 0.4, col = map.scenery === "canyon" ? r.pick([0xa45a36, 0x8e4a2c, 0xb86a40]) : map.scenery === "alpine" ? r.pick([0x7d838c, 0x6a7078]) : r.pick([0x7a766c, 0x6a665c]);
+  const rockAt = (mb: MB, x: number, z: number, s: number, r: Rng, yAt?: number) => {
+    const y = yAt ?? terrainY(x, z) - 0.4, col = map.scenery === "canyon" ? r.pick([0xa45a36, 0x8e4a2c, 0xb86a40]) : map.scenery === "alpine" ? r.pick([0x7d838c, 0x6a7078]) : r.pick([0x7a766c, 0x6a665c]);
     mb.push(x, y, z, r.range(0, 3), s);
     mb.box(col, 2.2, 1.4, 1.8, 0, 0.7, 0); mb.box(col, 1.4, 1.0, 1.2, 0.4, 1.6, 0.2); mb.box(col, 1.0, 0.6, 1.0, -0.6, 0.3, 0.9);
     if (map.scenery === "alpine") mb.box(0xf4f8fc, 1.5, 0.2, 1.3, 0.4, 2.15, 0.2, 0, 0, 0, { jit: 0.02 });
@@ -190,7 +190,7 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
   // the forest (or rocks / mesas) beyond: instanced, many
   {
     const variants: MB[] = [];
-    for (let v = 0; v < 3; v++) { const mb = new MB(T, 120 + v); mb.jitter = 0.06; mb.ao = { y0: 0, h: 4, k: 0.3 }; const r = new Rng(map.seed + v * 11); if (map.scenery === "canyon") rockAt(mb, 0, 0, 1 + v * 0.5, r); else treeAt(mb, 0, 0, 1, r); variants.push(mb); }
+    for (let v = 0; v < 3; v++) { const mb = new MB(T, 120 + v); mb.jitter = 0.06; mb.ao = { y0: 0, h: 4, k: 0.3 }; const r = new Rng(map.seed + v * 11); if (map.scenery === "canyon") rockAt(mb, 0, 0, 1 + v * 0.5, r, -0.4); else treeAt(mb, 0, 0, 1, r, 0); variants.push(mb); }   // built at the origin: each copy is put on the ground below
     const want = Math.round((map.scenery === "jungle" ? 1400 : map.scenery === "canyon" ? 260 : 1000) * amount);
     const dummy = new T.Object3D(), col = new T.Color(), mat = mine(new T.MeshLambertMaterial({ vertexColors: true }));
     const r2 = new Rng(map.seed + 33);

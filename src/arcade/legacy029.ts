@@ -7,6 +7,7 @@ import { createF1View, createF1Sim, f1FixPoints, drawF1Hud, drawF1CrashFallback,
 import { webglOk } from "./car3d/stage";
 import { createDriftGame } from "./drift/game";
 import { createRallyGame } from "./rally/game";
+import { createThinkers3D } from "./thinkers";
 
 function L(m){ try{ (window.__wb519Log = window.__wb519Log || []).push(m); }catch(e){} }
 
@@ -142,13 +143,15 @@ function wbPlayAgain(o, fn, score){
     '</div>';
     var o=ovOpen('🧠 Build, Climb & Race','Three stages · 9,000 points maximum · one attempt per timing check.',body);if(!o)return;
     var stageEl=document.getElementById('ct-stage'), titleEl=document.getElementById('ct-title'), subEl=document.getElementById('ct-sub'), totalEl=document.getElementById('ct-total'), progress=document.getElementById('ct-progress-fill');
+    var ct3=null;
+    if(webglOk()){ try{ stageEl.insertAdjacentHTML('beforebegin','<div class="c3d-host ct3-host" id="ct3-host"></div>'); ct3=createThinkers3D(document.getElementById('ct3-host')); o.shell.classList.add('c3d-shell'); }catch(e){ L('thinkers 3d: '+(e&&e.message)); ct3=null; var h3=document.getElementById('ct3-host'); if(h3) h3.remove(); } }
     var timers=[],raf=null,closed=false;
     function cleanup(){timers.forEach(clearTimeout);timers=[];if(raf)cancelAnimationFrame(raf);raf=null;}
     function later(fn,ms){var id=setTimeout(function(){if(!closed)fn();},ms);timers.push(id);return id;}
     function setProgress(n){if(progress)progress.style.width=Math.max(0,Math.min(100,n))+'%';}
     function setScore(){score.total=score.engine+score.uphill+score.downhill;if(totalEl)totalEl.textContent=score.total.toLocaleString();}
     function finish(){
-      cleanup();setProgress(100);titleEl.textContent='CHALLENGE COMPLETE';subEl.textContent='Your final engineering score is based on the three 3,000-point stages.';
+      cleanup();setProgress(100);if(ct3) ct3.finish();titleEl.textContent='CHALLENGE COMPLETE';subEl.textContent='Your final engineering score is based on the three 3,000-point stages.';
       stageEl.innerHTML='<div class="ct-final"><div class="ct-final-score">'+score.total.toLocaleString()+' <span>/ 9,000</span></div><div class="ct-score-breakdown"><div><b>ENGINE</b><strong>'+score.engine.toLocaleString()+'</strong><small>/ 3,000</small></div><div><b>UPHILL</b><strong>'+score.uphill.toLocaleString()+'</strong><small>/ 3,000</small></div><div><b>DOWNHILL</b><strong>'+score.downhill.toLocaleString()+'</strong><small>/ 3,000</small></div></div><div class="car-feedback">RESULT · Every correct assembly and shift added to your score. A missed timing check stayed missed and could not be retried.</div></div>';
     }
     function svgFor(kind){
@@ -157,7 +160,7 @@ function wbPlayAgain(o, fn, score){
       if(kind==='cam') return '<svg viewBox="0 0 150 100" width="140" height="90"><rect x="12" y="35" width="126" height="40" rx="8" fill="#4f5b67"/><path d="M20 35h110v-12H20z" fill="#7e8a96"/><path d="M34 30c5-16 13-16 18 0s13 16 18 0 13-16 18 0 13 16 18 0" fill="none" stroke="#dce4ea" stroke-width="7" stroke-linecap="round"/></svg>';
       return '<svg viewBox="0 0 180 110" width="165" height="100"><rect x="10" y="30" width="160" height="58" rx="12" fill="#4b5763" stroke="#aab4bd" stroke-width="3"/><rect x="28" y="16" width="124" height="20" rx="6" fill="#77838f"/><circle cx="45" cy="61" r="14" fill="#151c24"/><circle cx="135" cy="61" r="14" fill="#151c24"/><path d="M58 61h64" stroke="#d9e2e8" stroke-width="5"/></svg>';
     }
-    function assemblyVisual(part,phase,ok){
+    function assemblyVisual(part,phase,ok){ if(ct3) return '';
       var label=phase==='pick'?'PICKING UP '+part.name.toUpperCase():phase==='install'?'INSTALLING '+part.name.toUpperCase():(ok?'ASSEMBLED · READY FOR NEXT STEP':'ASSEMBLED ANYWAY · 0 POINTS');
       var cls=phase==='pick'?'pickup':phase==='install'?'install':phase==='done'?'installed':'';
       var miss=phase==='done'&&!ok?' missed':'';
@@ -171,6 +174,7 @@ function wbPlayAgain(o, fn, score){
       '</div></div>';
     }
     function animateAssembly(part,phase,ok,after){
+      if(ct3){ if(phase==='pick'){ ct3.ready(part.id,'Picking up: '+part.name); later(function(){ if(after) after(); },500); } else ct3.play(part.id,ok,function(){ if(!closed&&after) after(); }); return; }
       if(!stageEl||closed)return;
       var p=document.getElementById('ct-part-art'),h=document.getElementById('ct-hand-art'),lab=document.getElementById('ct-assembly-label');
       if(!p||!h){if(after)after();return;}
@@ -206,8 +210,8 @@ function wbPlayAgain(o, fn, score){
       function next(){
         if(closed)return;
         if(idx>=parts.length){score.engine=Math.min(3000,score.engine);setScore();later(stage2,650);return;}
-        var part=parts[idx],step=idx;setProgress(step/4*33.333);
-        stageEl.innerHTML='<div class="ct-workbench"><div class="ct-workbench-side"><span>WORKBENCH</span><div class="ct-part-piece">'+(idx===0?'🔩':idx===1?'🔧':idx===2?'⚙️':'🏎️')+'<b>'+part.name+'</b><small>'+part.desc+'</small><button class="type-btn" id="ct-pick">PICK UP PART</button></div></div><div class="ct-engine-bay"><span>ENGINE BAY</span><div class="ct-engine-block">'+(idx===0?'🧱':idx===1?'⚙️':idx===2?'🔩':'🚗')+'<b>'+(['PISTON','BLOCK','CAMSHAFT','CHASSIS'][idx])+'</b><small>INSTALLATION POINT READY</small></div></div></div><div class="ct-part-step">ASSEMBLY STEP '+(idx+1)+' / 4 · 750 POINTS</div><div id="ct-install-area">'+assemblyVisual(part,'pick',false)+'</div>';
+        var part=parts[idx],step=idx;setProgress(step/4*33.333);if(ct3) ct3.ready(part.id,'Step '+(idx+1)+' of 4 · '+part.name);
+        stageEl.innerHTML=ct3?('<div class="ct3-step"><div><b>'+part.name+'</b><small>'+part.desc+'</small></div><button class="type-btn" id="ct-pick">PICK UP PART</button></div><div class="ct-part-step">ASSEMBLY STEP '+(idx+1)+' / 4 · 750 POINTS</div><div id="ct-install-area"></div>'):'<div class="ct-workbench"><div class="ct-workbench-side"><span>WORKBENCH</span><div class="ct-part-piece">'+(idx===0?'🔩':idx===1?'🔧':idx===2?'⚙️':'🏎️')+'<b>'+part.name+'</b><small>'+part.desc+'</small><button class="type-btn" id="ct-pick">PICK UP PART</button></div></div><div class="ct-engine-bay"><span>ENGINE BAY</span><div class="ct-engine-block">'+(idx===0?'🧱':idx===1?'⚙️':idx===2?'🔩':'🚗')+'<b>'+(['PISTON','BLOCK','CAMSHAFT','CHASSIS'][idx])+'</b><small>INSTALLATION POINT READY</small></div></div></div><div class="ct-part-step">ASSEMBLY STEP '+(idx+1)+' / 4 · 750 POINTS</div><div id="ct-install-area">'+assemblyVisual(part,'pick',false)+'</div>';
         var pick=document.getElementById('ct-pick');
         pick.onclick=function(){
           if(pick.disabled||closed)return;pick.disabled=true;
@@ -229,12 +233,12 @@ function wbPlayAgain(o, fn, score){
       function next(){
         if(closed)return;
         if(idx>=count){if(isDownhill)score.downhill=earned;else score.uphill=earned;setScore();later(isDownhill?finish:stage3,650);return;}
-        var gear=idx%5+1;
+        var gear=idx%5+1;if(ct3) ct3.drive(isDownhill,idx,count,gear);
         stageEl.innerHTML='<div class="ct-drive-hud"><div><span>SHIFT '+(idx+1)+' / '+count+'</span><b>'+gear+' → '+(gear===5?3:gear+1)+'</b></div><div class="ct-mini-ai"><span>AI</span><i style="width:'+Math.min(96,35+idx*6)+'%"></i></div></div>'+
-          '<div class="ct-stage-visual"><div class="ct-road-visual"><div class="ct-road-hill">UPHILL POWERTRAIN · GEAR '+gear+'</div><div class="ct-road-car">🏎️</div><div class="ct-road-ai">🏎️</div></div><div class="ct-road-visual"><div class="ct-road-hill">'+(isDownhill?'DOWNHILL AI RACE':'HILL CLIMB')+' · SHIFT WINDOW</div><div class="ct-road-car" style="left:43%;bottom:20px">🏎️</div><div class="ct-road-ai" style="left:58%;bottom:74px">🏎️</div></div></div>';
+          (ct3?'':'<div class="ct-stage-visual"><div class="ct-road-visual"><div class="ct-road-hill">UPHILL POWERTRAIN · GEAR '+gear+'</div><div class="ct-road-car">🏎️</div><div class="ct-road-ai">🏎️</div></div><div class="ct-road-visual"><div class="ct-road-hill">'+(isDownhill?'DOWNHILL AI RACE':'HILL CLIMB')+' · SHIFT WINDOW</div><div class="ct-road-car" style="left:43%;bottom:20px">🏎️</div><div class="ct-road-ai" style="left:58%;bottom:74px">🏎️</div></div></div>');
         timingBar('ct-shift-'+(isDownhill?'down':'up')+'-'+idx,{label:'SHIFT WHEN RED ENTERS GREEN',targetLeft:42,targetWidth:16,speed:1150+((idx%3)*180),onResult:function(ok){
           var st=document.getElementById('ct-shift-'+(isDownhill?'down':'up')+'-'+idx+'-status');if(st)st.textContent=ok?'SHIFT CLEAN · +'+(isDownhill?300:375):'MISSED SHIFT · 0 POINTS';
-          if(ok)earned+=isDownhill?300:375;setScore();
+          if(ok)earned+=isDownhill?300:375;setScore();if(ct3) ct3.shift(ok);
           later(function(){idx++;next();},360);
         }});
       }
@@ -242,7 +246,7 @@ function wbPlayAgain(o, fn, score){
     }
     function stage2(){shiftStage('UPHILL POWERTRAIN',false);}
     function stage3(){shiftStage('DOWNHILL AI RACE',true);}
-    var originalClose=o.close;o.close=function(){closed=true;cleanup();originalClose();};
+    var originalClose=o.close;o.close=function(){closed=true;cleanup();if(ct3) ct3.dispose();originalClose();};
     stage1();
   }
 

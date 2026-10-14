@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { createStage, createKeys, touchPad, loadLevel, saveLevel, LEVEL_NAMES, type Level } from "../car3d/stage";
+import { createStage, createKeys, touchPad, loadLevel, saveLevel, setEnvironment, LEVEL_NAMES, type Level } from "../car3d/stage";
 import { Vehicle, type CarSpec } from "../car3d/vehicle";
 import { buildCar, type CarModel } from "../car3d/models";
 import { createParticles, createMarks } from "../car3d/fx";
@@ -93,6 +93,8 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   let path = rallyPath(map);
   let world: RallyWorld = buildRallyWorld(T, scene, map, path, f);
   let notes = buildNotes(map, path);
+  const skyEnv = () => setEnvironment(stage, "sky", [map.sky[0], map.sky[1], "#" + map.ground[0].toString(16).padStart(6, "0")]);
+  let envTex = skyEnv();
   let car: CarModel = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { interior: true });
   scene.add(car.group);
   // a soft light inside the cabin so the dash, the cage and the roof lining are not black from the seat
@@ -181,7 +183,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   function swapMap() {
     scene.remove(car.group); car.dispose(); rivals.forEach((r) => { scene.remove(r.model.group); r.model.dispose(); }); rivals = [];
     world.dispose(); mini.el.remove(); marks.clear(); dust.clear(); bits.clear();
-    path = rallyPath(map); world = buildRallyWorld(T, scene, map, path, f); notes = buildNotes(map, path); speedProfile();
+    path = rallyPath(map); world = buildRallyWorld(T, scene, map, path, f); notes = buildNotes(map, path); speedProfile(); envTex.dispose(); envTex = skyEnv();
     car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { interior: true }); scene.add(car.group); fitCabin();
     mini = createMinimap(root, path, { width: map.width * 1.6, color: "rgba(224,164,88,.95)" });
     v = new Vehicle(carDef.spec); placeAtStart(); makeRivals();
