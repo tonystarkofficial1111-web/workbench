@@ -44,6 +44,8 @@ export class MB {
   T: T3;
   rnd: Rng;
   jitter = 0.05;
+  /** Build a pale version of the model (for the green / red placement preview, which multiplies a tint into the colours). */
+  ghost = false;
   /** Darken vertices near the ground: strength k over height h above y0. */
   ao = { y0: 0, h: 0.9, k: 0.28 };
   groups = new Map<string, Group>();
@@ -115,6 +117,7 @@ export class MB {
         const f = 1 - ao.k * (1 - t) * (1 - t);
         r *= f; gg *= f; b *= f;
       }
+      if (this.ghost) { const l = 0.299 * r + 0.587 * gg + 0.114 * b, v = Math.min(1, 0.55 + 0.6 * l); r = gg = b = v; }   // placement previews: pale, so the green / red tint reads clearly
       g.col.push(r, gg, b);
       if (mat === "sway" || mat === "swayDS") {
         const y0 = o.swayY0 ?? 0, h = o.swayH ?? 2;

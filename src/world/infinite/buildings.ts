@@ -479,15 +479,21 @@ export function track(ctx: Ctx, root: any, owner: any) {
 }
 
 /** Add the moving parts of a model (flags, smoke, vane, windmill, halos...) to `parent`. */
-export function attachDyn(ctx: Ctx, owner: any, parent: any, dyn: Dyn[]) {
+export function attachDyn(ctx: Ctx, owner: any, parent: any, dyn: Dyn[], ghost = false) {
   const anim = ctx.x.anim, T = ctx.T;
   if (!anim) return;
   const fill = (g: any, mbm: MB) => {
+    mbm.ghost = ghost;
     const m = mbm.build(ctx.mats, true);
     m.children.slice().forEach((c: any) => { c.raycast = noRay; g.add(c); });
     track(ctx, m, owner);
   };
   for (const d of dyn) {
+    if (ghost) { // a placement preview stands still: only the solid moving parts (vane, windmill) are shown, as plain shapes
+      if (d.kind === "vane") { const g = new T.Group(); g.position.set(d.x, d.y, d.z); parent.add(g); fill(g, d.mb); }
+      else if (d.kind === "mill") { const cap = new T.Group(); cap.position.set(d.x, d.y, d.z); parent.add(cap); fill(cap, d.cap); const rotor = new T.Group(); rotor.position.set(0, d.ry, d.rz); cap.add(rotor); fill(rotor, d.rotor); }
+      continue;
+    }
     if (d.kind === "flag") anim.flag(owner, parent, d.x, d.y, d.z, d.o);
     else if (d.kind === "smoke") anim.smoke(owner, parent, d.x, d.y, d.z, d.o);
     else if (d.kind === "halo") anim.halo(owner, parent, d.x, d.y, d.z, d.o);
@@ -516,14 +522,17 @@ export function installBuildings(ctx: Ctx) {
     try {
       const same = (env.legacyBuildings || []).filter((x: any) => x.type === type).length - 1;   // the preview and the building placed from it get the same look
       const seed = 4000 + same * 977 + type.length * 131 + (type.charCodeAt(0) | 0) * 17;
+      // the engine builds its placement preview with the position hack (0, 0): that one gets a pale, still model
+      const wp = (window as any).__wbPos, ghost = !!(wp && wp.x === 0 && wp.z === 0);
       const rnd = new Rng(seed), mb = new MB(T, seed + 5);
+      mb.ghost = ghost;
       const fc: FC = { main: faction.color, accent: 0xe8c04a, variant: Math.max(0, same) };
       const dyn = BUILDERS[type]!(ctx, mb, rnd, fc);
       b.mesh.children.slice().forEach((c: any) => { b.mesh.remove(c); disposeKids(c); });
       const root = mb.build(ctx.mats, true);
       root.children.slice().forEach((m: any) => { b.mesh.add(m); });     // direct children: the engine's click test only looks at those
       track(ctx, root, b.mesh);
-      attachDyn(ctx, b.mesh, b.mesh, dyn);
+      attachDyn(ctx, b.mesh, b.mesh, dyn, ghost);
     } catch (e) { console.error("building model", type, e); }
     return b;
   };

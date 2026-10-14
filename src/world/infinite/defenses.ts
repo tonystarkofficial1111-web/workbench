@@ -22,13 +22,14 @@ export function installDefenses(ctx: Ctx) {
   const faction = () => { try { return I.pf(); } catch { return null; } };
 
   /** Meshes of a template: the geometry is shared between every copy, so a hundred walls are a hundred small groups, not a hundred geometries. */
-  function instance(key: string, build: () => { mb: MB; dyn: Dyn[] }) {
-    let t = cache.get(key);
+  function instance(key: string, build: (ghost: boolean) => { mb: MB; dyn: Dyn[] }, ghost = false) {
+    const ck = ghost ? key + "!ghost" : key;
+    let t = cache.get(ck);
     if (!t) {
-      const r = build();
+      const r = build(ghost);
       const root = r.mb.build(ctx.mats, true);
       t = { parts: root.children.map((m: any) => ({ geo: m.geometry, mat: m.material, tier: m.userData.tier || 0, cast: m.castShadow, recv: m.receiveShadow, noCast: !!m.userData.noShadowCast })), dyn: r.dyn };
-      cache.set(key, t);
+      cache.set(ck, t);
     }
     const g = new T.Group(), tiers: any[][] = [[], [], []];
     for (const p of t.parts) {
@@ -44,8 +45,9 @@ export function installDefenses(ctx: Ctx) {
 
   // ---------------------------------------------------------------------------------------------------------------- wall
   /** Local x is the long side (WL), z the thickness (WT). Origin on the ground at the centre of the segment. */
-  function buildWall(variant: number) {
+  function buildWall(variant: number, ghost = false) {
     const rnd = new Rng(700 + variant * 53), mb = new MB(T, 701 + variant);
+    mb.ghost = ghost;
     const WL = I.WL, WT = I.WT, H = 1.44;
     mb.ao = { y0: 0, h: 1.2, k: 0.26 };
     stoneBox(mb, rnd, WL, 0.16, WT + 0.16, 0, 0, 0, { tier: 1, faces: 5 });
@@ -79,9 +81,10 @@ export function installDefenses(ctx: Ctx) {
     mb.box(PAL.stoneL, 0.32, 0.08, 0.07, x, y + h / 2 + 0.05, z + 0.025, 0, 0, 0, { tier: 1 }); mb.box(PAL.stone[2], 0.34, 0.06, 0.1, x, y - h / 2 - 0.04, z + 0.035, 0, 0, 0, { tier: 1 });
   }
 
-  function buildTower() {
+  function buildTower(ghost = false) {
     const f = faction(), main = f ? f.color : 0x4f8fd6, accent = 0xe8c04a;
     const rnd = new Rng(555), mb = new MB(T, 556), dyn: Dyn[] = [];
+    mb.ghost = ghost;
     mb.ao = { y0: 0, h: 1.1, k: 0.26 };
     const WD = PAL.wood[0], WD2 = PAL.wood[1], DECK = 4.0, STONE_TOP = 1.96;
     // stone foot: plinth, body, string course
@@ -190,8 +193,9 @@ export function installDefenses(ctx: Ctx) {
   }
 
   // ---------------------------------------------------------------------------------------------------------------- torch and trap
-  function buildTorch(ghostOnly: boolean) {
+  function buildTorch(ghost = false) {
     const rnd = new Rng(808), mb = new MB(T, 809);
+    mb.ghost = ghost;
     mb.ao = { y0: 0, h: 0.6, k: 0.2 };
     for (let i = 0; i < 5; i++) { const a = i * 1.3; mb.blob(rnd.pick(PAL.stone), 0.1 + rnd.range(0, 0.06), Math.cos(a) * 0.17, 0.06, Math.sin(a) * 0.17, 1.2, 0.7, 1.2, 0, rnd.range(0, 6), { tier: i < 3 ? 0 : 1 }); }
     mb.cyl(PAL.stone[1], 0.2, 0.24, 0.1, 0, 0.05, 0, 8, 0, 0, 0, { jit: 0.05 });
@@ -204,8 +208,9 @@ export function installDefenses(ctx: Ctx) {
     return { mb, dyn: [] as Dyn[] };
   }
 
-  function buildTrap() {
+  function buildTrap(ghost = false) {
     const rnd = new Rng(909), mb = new MB(T, 910);
+    mb.ghost = ghost;
     mb.ao = { y0: 0, h: 0.5, k: 0.2 };
     mb.bar(PAL.wood[1], 1.5, 0.1, 1.5, 0, 0, 0);
     for (const sx of [-1, 1]) { mb.bar(PAL.wood[0], 0.13, 0.17, 1.56, sx * 0.72, 0, 0, 0, { tier: 1 }); mb.bar(PAL.wood[0], 1.56, 0.17, 0.13, 0, 0, sx * 0.72, 0, { tier: 1 }); }
@@ -229,16 +234,17 @@ export function installDefenses(ctx: Ctx) {
   MESH.wall = function () {
     if (!ctx.isInf()) return orig.wall.apply(this, arguments);
     try {
-      const v = (wallCount++) % 5;
-      const { g, dyn } = instance("wall" + v, () => buildWall(v));
-      return g;
+      const ghost = arguments[0] === true, v = ghost ? 0 : (wallCount++) % 5;       // the engine asks for the placement preview with `true`
+      return instance("wall" + v, (gh) => buildWall(v, gh), ghost).g;
     } catch (e) { console.error("wall model", e); return orig.wall.apply(this, arguments); }
   };
   MESH.tower = function () {
     if (!ctx.isInf()) return orig.tower.apply(this, arguments);
     try {
       const f = faction(), main = f ? f.color : 0x4f8fd6;
-      const { g, dyn } = instance("tower" + main, buildTower);
+      const ghost = arguments[0] === true;
+      const { g, dyn } = instance("tower" + main, (gh) => buildTower(gh), ghost);
+      if (ghost) return g;
       attachDyn(ctx, g, g, dyn);
       const gd = makeGuard(main);
       gd.g.position.set(-0.5, 4.1, 0.2); gd.g.visible = false;
@@ -252,7 +258,7 @@ export function installDefenses(ctx: Ctx) {
   MESH.torch = function (ghostOnly: boolean) {
     if (!ctx.isInf()) return orig.torch.apply(this, arguments);
     try {
-      const { g } = instance("torch", () => buildTorch(false));
+      const { g } = instance("torch", (gh) => buildTorch(gh), !!ghostOnly);
       // flame (the engine scales it every tick), halo and ground glow use the engine's shared materials
       const fl = new T.Group(); fl.position.y = 1.62;
       const f1 = new T.Mesh(flameGeo.outer, I.FLAME_MAT); f1.position.y = 0.28;
@@ -267,7 +273,7 @@ export function installDefenses(ctx: Ctx) {
   };
   MESH.trap = function () {
     if (!ctx.isInf()) return orig.trap.apply(this, arguments);
-    try { return instance("trap", buildTrap).g; } catch (e) { console.error("trap model", e); return orig.trap.apply(this, arguments); }
+    try { return instance("trap", (gh) => buildTrap(gh), arguments[0] === true).g; } catch (e) { console.error("trap model", e); return orig.trap.apply(this, arguments); }
   };
   const flameGeo = { outer: new T.ConeGeometry(0.2, 0.55, 8), core: new T.ConeGeometry(0.11, 0.32, 8) };
 }
