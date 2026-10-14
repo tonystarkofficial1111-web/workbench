@@ -155,7 +155,8 @@ export function installSky(ctx: Ctx) {
     // fog and background
     const D = env.camDistance as number;
     let near = D * 0.55 + 16, far = D * 2.7 + 110;
-    near += (10 - near) * fogA; far += (74 - far) * fogA;
+    // a fog day thickens the air with the zoom: the island is twice as wide as the original's, so a fixed limit would hide the whole map from the default view
+    near += (10 + D * 0.1 - near) * fogA; far += (55 + D * 0.7 - far) * fogA;
     near *= 1 - rain * 0.25; far *= 1 - rain * 0.35;
     // morning mist: for a short while after sunrise the air is thick and golden, and the far jungle fades into it
     const mist = (cyc < 0.3 ? 1 : 0) * smoothstep(-4, 1, e) * smoothstep(19, 6, e) * (1 - fogA) * (1 - rain) * (1 - smoothstep(30, 70, D));   // only when zoomed in: the map view stays clear
