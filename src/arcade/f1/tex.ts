@@ -33,6 +33,21 @@ export function asphaltTexture(T: T3) {
   const t = tex(T, c); cache.set("asphalt", t); return t;
 }
 
+/** Blocky grass: a grey-green square pixel pattern that multiplies the ground's own colours (so every circuit keeps its own greens). */
+export function grassTexture(T: T3) {
+  if (cache.has("grass")) return cache.get("grass");
+  const c = canvas(64, 64), g = c.getContext("2d")!, r = rand(21);
+  g.fillStyle = "#dcdcdc"; g.fillRect(0, 0, 64, 64);
+  for (let y = 0; y < 64; y += 4) for (let x = 0; x < 64; x += 4) {
+    const v = 168 + Math.floor(r() * 70), d = r();
+    g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, y, 4, 4);
+    if (d < 0.1) { g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(x, y, 4, 4); }
+    else if (d > 0.94) { g.fillStyle = "rgba(255,255,255,.3)"; g.fillRect(x, y, 4, 4); }
+  }
+  const t = tex(T, c, { aniso: 4 }); t.magFilter = T.NearestFilter; t.minFilter = T.LinearMipmapLinearFilter;
+  cache.set("grass", t); return t;
+}
+
 /** Two alternating blocks of colour along v (one repeat = both): kerbs and barrier panels. */
 export function stripeTexture(T: T3, a: string, b: string) {
   const key = "stripe" + a + b;

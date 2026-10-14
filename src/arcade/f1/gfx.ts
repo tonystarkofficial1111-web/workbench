@@ -38,12 +38,22 @@ export interface F1Features {
   fence: boolean;
   /** Shadow distance in metres around the car. */
   shadowReach: number;
+  /** Real bloom around bright things (High). */
+  bloom: number;
+  /** Light shafts from the sun (0 = off). */
+  rays: number;
+  /** Rear-view mirrors: 0 = a still picture, 1 = live at low resolution, 2 = live, sharper. */
+  mirrors: 0 | 1 | 2;
+  /** Sky reflections on the car paint, the tarmac and the cockpit. */
+  reflect: boolean;
+  /** Smoke, sparks, fire and debris in crashes (how many pieces at most). */
+  particles: number;
 }
 
 export function f1FeaturesFor(level: F1Level): F1Features {
-  if (level === 0) return { level, scale: 0.62, dprCap: 1, shadow: 0, msaa: 0, post: false, blur: 0, glow: 0, trees: 170, clouds: 5, props: 0, hills: true, cell: 11, fence: false, shadowReach: 0 };
-  if (level === 1) return { level, scale: 1, dprCap: 1.5, shadow: 1024, msaa: 4, post: true, blur: 0.9, glow: 0, trees: 480, clouds: 9, props: 1, hills: true, cell: 8, fence: true, shadowReach: 46 };
-  return { level, scale: 1, dprCap: 2, shadow: 2048, msaa: 4, post: true, blur: 1.2, glow: 0.35, trees: 860, clouds: 13, props: 2, hills: true, cell: 6, fence: true, shadowReach: 64 };
+  if (level === 0) return { level, scale: 0.62, dprCap: 1, shadow: 0, msaa: 0, post: false, blur: 0, glow: 0, trees: 170, clouds: 5, props: 0, hills: true, cell: 11, fence: false, shadowReach: 0, bloom: 0, rays: 0, mirrors: 0, reflect: false, particles: 220 };
+  if (level === 1) return { level, scale: 1, dprCap: 1.5, shadow: 1024, msaa: 4, post: true, blur: 0.9, glow: 0, trees: 480, clouds: 9, props: 1, hills: true, cell: 8, fence: true, shadowReach: 46, bloom: 0, rays: 0.6, mirrors: 1, reflect: true, particles: 500 };
+  return { level, scale: 1, dprCap: 2, shadow: 2048, msaa: 4, post: true, blur: 1.2, glow: 0, trees: 860, clouds: 13, props: 2, hills: true, cell: 6, fence: true, shadowReach: 64, bloom: 0.38, rays: 1, mirrors: 2, reflect: true, particles: 900 };
 }
 
 /** First-run default: Balanced, or Low on slow-looking devices (Chromebooks, few cores, little memory), as in the Infinite world. */

@@ -118,3 +118,32 @@ blocky (never round) trees, the telemetry and the maps kept, and the change writ
 - **How it was checked**: headless Chrome over CDP (`tools/cdp.ts`, GPU WebGL) with the `--dev` build: an autopilot that steers on the TURN prompts drove a full lap of each circuit at
   Low / Balanced / High; draw calls and triangles per level (about 33 / 77 / 83 calls and 37k / 120k / 240k triangles); Graphics cycling with stable geometry counts; layout at four window
   sizes; restart, close and reopen three times; a lost WebGL context mid-race and a refused context (both fall back to the 2D feed and the game keeps running).
+
+## F1 Cockpit 5.61.0: driving rules, 3D seat, crash scenes (session 5)
+Requested: Forza-like graphics, a more logical game (steering left for long enough leaves the road, a barrier touch disqualifies), 20 random ~7 s crash scenes
+with all the specs, an accurate cockpit (no see-through floor), the building that stood on the track fixed, a manual gearbox (Y / U), controls top left / map top right /
+a bright red countdown for the corner (only a warning now), a more detailed interior and working suspension.
+- **Split of work**: the generated game keeps the race and the telemetry; `src/arcade/f1/sim.ts` has the road rules and is the only place that moves the car across the road.
+  The loop calls `f1Sim.physics()` (gearbox, position, suspension, barrier) and `f1Sim.corner()` (warning); `f1Crash()` ends the race and hands over to the view's crash scene.
+  Every per-frame step in the loop is multiplied by `dk` (frame time / 16.67 ms), which also fixes the original running faster above 60 Hz (a lap at an emulated 60 Hz
+  and at 130 fps both take 12 s).
+- **Grip model** (arcade, because a lap here is 500-650 m): `D = |kappa| * v^2` against `G = 120 * tyre grip` (m/s^2, 55% on gravel); beyond G the car gets an outward
+  acceleration of `0.6 * (D - G)` (max 120), steering gives a sideways speed of up to 4.6 m/s. That makes the Circle flat out, the Technical Loop need ~60 mph in its
+  tightest bend, the Complex ~48 and the Curvy Ring ~33. Gravel drag is `0.04 + 0.006 * mph` per frame (a crawl out is always possible).
+- **Corner direction check** (same as in 5.60.0): 30 of 32 TURN corners sit on a bend that turns the same way in 3D; the other two (Curvy Ring) sit on an inflection in the game's own path.
+- **Cockpit** (`cockpit.ts`): a second small scene drawn into its own picture and composited after the speed blur (so only the world blurs), with its own near plane. The car
+  group is turned by the world camera's orientation (so reflections and the sun are right) and the camera sits at the driver's eyes inside it. The mirrors are real: the view renders
+  the scene from behind into two small render targets (Balanced: one per frame at 192 px, High: both at 320 px, Low: a still picture); the shadow map is drawn once per frame and
+  shared (`renderer.shadowMap.autoUpdate = false`). A multisampled render target only copies its picture out when something is rendered into it: clearing it is not enough
+  (this showed the cockpit through the crash scenes until `post.ts` rendered an empty scene after the clear).
+- **Crash scenes** (`crash.ts`): the player's car is rebuilt from `buildF1Car` (separate meshes per part) and simulated as rigid spheres with spin, ground and barrier collisions;
+  parts that come off become bodies of their own (`scene.attach` keeps their place). Pools of instanced boxes make sparks, smoke, fire, dust and debris (blocky, like the rest);
+  `world.breakBarrier()` knocks quads out of the barrier and fence index buffers (`repair()` restores them on restart). Scenes are data (`CRASH_SCENES`: speed, spin, bounce, parts lost,
+  fire, camera sequence, slow motion) scaled by the impact speed; the director cuts between 11 camera rigs. A point light is created with the scene (intensity 0) so no shader is rebuilt
+  when the first flash happens. Sounds are generated (no files).
+- **Buildings on the track**: the pit building and stands were boxes on a straight line, which stood on other stretches of the track on the Technical, Complex and Curvy
+  circuits. `world.ts` now samples each footprint against the whole circuit (`path.nearest`) and slides / flips / skips a building that does not fit (top-down views of all four maps checked).
+- **How it was checked** (`tools/f1-lab.ts` repeats the lap, race, crash and top-down runs): headless Chrome (`tools/cdp.ts`) with the `--dev` build: an autopilot that holds a target speed, slows for the bends ahead, shifts at the right revs and steers back to the middle
+  finished a lap of every circuit and a 5-lap race with a pit stop; a "reckless" driver was disqualified on the Technical Loop; a driver steering into the barrier triggered each of the 20
+  scenes (no errors, ~170 fps on the RTX 4070 laptop used); the report, Restart, Graphics cycling, close / reopen, a lost WebGL context and a refused context (2D fallback with the short crash screen) were all exercised.
+  Numbers from the suspension over a Technical lap: roll up to 3.3 deg, pitch 2.7 deg, wheel travel +-10 cm, 6.4 g sideways, 2.7 g braking.

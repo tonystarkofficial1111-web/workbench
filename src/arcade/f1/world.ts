@@ -5,15 +5,15 @@ import { Rng, fbm } from "../../world/infinite/rng";
 import type { TrackPath } from "./path";
 import type { F1Env } from "./env";
 import type { F1Features } from "./gfx";
-import { asphaltTexture, checkerTexture, gridTexture, stripeTexture, fenceTexture, boardTextures, garageTexture } from "./tex";
+import { asphaltTexture, checkerTexture, gridTexture, stripeTexture, fenceTexture, boardTextures, garageTexture, grassTexture } from "./tex";
 import { makeKit } from "./car";
 import { createSky, createClouds } from "./sky";
 
 type T3 = typeof THREE_NS;
 
-export const ROAD_HALF = 6.6;
-export const WALL_D = 14.6;
-const KERB_W = 1.5, SHOULDER = 13.0, WATER = -6.5;
+import { ROAD_HALF, WALL_D, KERB_W, SHOULDER } from "./consts";
+export { ROAD_HALF, WALL_D };
+const WATER = -6.5;
 const smooth = (a: number, b: number, v: number) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
 const circ = (a: number, b: number) => { const d = Math.abs(a - b) % 1; return Math.min(d, 1 - d); };
 
@@ -24,6 +24,10 @@ export interface F1World {
   groundY(x: number, z: number): number;
   update(dt: number, cam: any): void;
   dispose(): void;
+  /** Knock a stretch of barrier (and its fence) out between two lap fractions on one side (+1 right, -1 left). */
+  breakBarrier(side: number, u0: number, u1: number): void;
+  /** Put every broken barrier back. */
+  repair(): void;
 }
 
 interface RibbonOpts {
@@ -56,12 +60,15 @@ function ribbon(T: T3, path: TrackPath, o: RibbonOpts) {
       uv[(k * 2 + s) * 2] = t[0]!; uv[(k * 2 + s) * 2 + 1] = t[1]!;
     }
   }
+  const quadStart = new Int32Array(n).fill(-1);       // where each quad's six indices sit (a crash can knock a piece out of a barrier)
   for (let k = 0; k < n; k++) {
     if (o.skip && o.skip(k)) continue;
     const a = k * 2, b = a + 1, c = a + 2, d = a + 3;
+    quadStart[k] = idx.length;
     idx.push(a, b, c, c, b, d);
   }
   const g = new T.BufferGeometry();
+  g.userData.quadStart = quadStart;
   g.setAttribute("position", new T.BufferAttribute(pos, 3));
   g.setAttribute("color", new T.BufferAttribute(col, 3));
   g.setAttribute("uv", new T.BufferAttribute(uv, 2));
@@ -117,7 +124,7 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     return out;
   };
   const xs = lines(path.minX, path.maxX), zs = lines(path.minZ, path.maxZ), NX = xs.length, NZ = zs.length;
-  const gh = new Float32Array(NX * NZ), gpos = new Float32Array(NX * NZ * 3), gcol = new Float32Array(NX * NZ * 3);
+  const gh = new Float32Array(NX * NZ), gpos = new Float32Array(NX * NZ * 3), gcol = new Float32Array(NX * NZ * 3), guv = new Float32Array(NX * NZ * 2);
   const tmp = { d: 0, h: 0, i: 0, side: 1 };
   const sand = rgb(T, 0xcdbf8c);
   for (let a = 0; a < NX; a++) for (let b = 0; b < NZ; b++) {
@@ -127,7 +134,7 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     const blend = 1 - smooth(16, 80, tmp.d);
     const y = far + (tmp.h - 0.35 - far) * blend;
     gh[k] = y;
-    gpos[k * 3] = x; gpos[k * 3 + 1] = y; gpos[k * 3 + 2] = z;
+    gpos[k * 3] = x; gpos[k * 3 + 1] = y; gpos[k * 3 + 2] = z; guv[k * 2] = x * 0.09; guv[k * 2 + 1] = z * 0.09;
     const near = 1 - smooth(20, 70, tmp.d);
     const nz = fbm(x * 0.03, z * 0.03, 9, 3);
     let c = mixc(gFar, mow(tmp.i), near);
@@ -143,9 +150,9 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     gidx.push(i00, i01, i10, i10, i01, i11);
   }
   const gg = own(new T.BufferGeometry());
-  gg.setAttribute("position", new T.BufferAttribute(gpos, 3)); gg.setAttribute("color", new T.BufferAttribute(gcol, 3));
+  gg.setAttribute("position", new T.BufferAttribute(gpos, 3)); gg.setAttribute("color", new T.BufferAttribute(gcol, 3)); gg.setAttribute("uv", new T.BufferAttribute(guv, 2));
   gg.setIndex(new T.BufferAttribute(new Uint32Array(gidx), 1)); gg.computeVertexNormals();
-  const terrain = new T.Mesh(gg, own(new T.MeshLambertMaterial({ vertexColors: true, flatShading: true })));
+  const terrain = new T.Mesh(gg, own(new T.MeshLambertMaterial({ vertexColors: true, flatShading: true, map: grassTexture(T) })));
   terrain.receiveShadow = sh; group.add(terrain);
   const bsearch = (arr: number[], v: number) => { let lo = 0, hi = arr.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (arr[m]! <= v) lo = m; else hi = m; } return lo; };
   const groundY = (x: number, z: number) => {
@@ -159,7 +166,11 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
   water.rotation.x = -Math.PI / 2; water.position.set(0, WATER, 0); group.add(water);
 
   // ------------------------------------------------------------------------------------------------ road, kerbs, run-off
-  const road = new T.Mesh(own(ribbon(T, path, { d0: () => -ROAD_HALF, d1: () => ROAD_HALF })), own(new T.MeshLambertMaterial({ map: asphaltTexture(T), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })));
+  // the tarmac is a real PBR surface: a little sheen towards the sun and the sky, and a bump from the grain of the asphalt
+  const roadMat = f.reflect
+    ? new T.MeshStandardMaterial({ map: asphaltTexture(T), bumpMap: asphaltTexture(T), bumpScale: 1.4, roughness: 0.62, metalness: 0, envMapIntensity: 0.45, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
+    : new T.MeshLambertMaterial({ map: asphaltTexture(T), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const road = new T.Mesh(own(ribbon(T, path, { d0: () => -ROAD_HALF, d1: () => ROAD_HALF })), own(roadMat));
   road.receiveShadow = sh; group.add(road);
 
   const kerbMat = own(new T.MeshLambertMaterial({ map: stripeTexture(T, "#d2262d", "#f0f0f2"), polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
@@ -171,7 +182,7 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     });
     const m = new T.Mesh(own(g), kerbMat); m.receiveShadow = sh; group.add(m);
   }
-  const shMat = own(new T.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  const shMat = own(new T.MeshLambertMaterial({ vertexColors: true, map: grassTexture(T), polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
   for (const side of [1, -1]) {
     const outside = (i: number) => (kap(i) * side < 0 ? 1 : 0);   // the outer side of a corner: gravel
     const g = ribbon(T, path, {
@@ -182,6 +193,8 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
   }
 
   // ------------------------------------------------------------------------------------------------ barriers, fences, bridge deck
+  const breakables: Record<string, Array<{ geo: any; backup: any }>> = { "1": [], "-1": [] };
+  const breakable = (side: number, geo: any) => breakables[String(side)]!.push({ geo, backup: geo.index.array.slice() });
   const wallMat = own(new T.MeshLambertMaterial({ map: stripeTexture(T, "#f0f0f2", hexStr(env.id === "technical" ? 0xe0a458 : 0xd2262d)), vertexColors: true, side: T.DoubleSide }));
   const capMat = own(new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide }));
   const tyre = rgb(T, 0x1b1c20), cap = rgb(T, 0xb7bcc3), conc = rgb(T, 0x8d9096);
@@ -191,6 +204,7 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     const top = ribbon(T, path, { d0: () => side * (WALL_D - 0.25), d1: () => side * (WALL_D + 0.25), y0: () => 1.05, y1: () => 1.05, c0: () => cap });
     const m1 = new T.Mesh(own(face), wallMat), m2 = new T.Mesh(own(top), capMat);
     for (const m of [m1, m2]) { m.castShadow = sh; m.receiveShadow = sh; group.add(m); }
+    breakable(side, face); breakable(side, top);
   }
   // where the road is lifted well above the ground (the bridge of a figure-eight) it gets an underside and a concrete beam
   if (cr) {
@@ -210,7 +224,7 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     const mb = new MB(T, 5); mb.ao = { y0: -9, h: 1, k: 0 }; mb.jitter = 0.01;
     for (const side of [1, -1]) {
       const g = ribbon(T, path, { d0: () => side * (WALL_D + 0.1), d1: () => side * (WALL_D + 0.1), y0: () => 1.1, y1: () => 3.5, uv: (k, s) => [path.arc[k]! / 1.4, s * 2], skip: underBridge });
-      group.add(new T.Mesh(own(g), fm));
+      group.add(new T.Mesh(own(g), fm)); breakable(side, g);
       for (let i = 0; i < n; i += 11) if (!underBridge(i)) mb.bar(0x70767e, 0.14, 3.5, 0.14, path.px[i]! - path.fz[i]! * side * (WALL_D + 0.1), path.py[i]!, path.pz[i]! + path.fx[i]! * side * (WALL_D + 0.1));
     }
     const m = mb.build(kit, false); m.traverse((o: any) => { o.castShadow = false; }); group.add(m);
@@ -239,9 +253,36 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     lampMB.pop();
   }
 
+  // floodlight towers along the start straight
+  for (const u of [0.9, 0.93, 0.96, 0.99, 0.03, 0.06]) {
+    const s = path.at(u), d = (WALL_D + 2.2), x = s.x + s.rx * d, z = s.z + s.rz * d, gy = Math.max(s.y - 0.1, groundY(x, z));
+    props.push(x, gy, z, Math.atan2(-s.rx, -s.rz));
+    props.cyl(0x7a7f87, 0.11, 0.17, 11.5, 0, 5.75, 0, 6);
+    props.box(0x2c313a, 1.5, 0.35, 0.8, 0, 11.6, -0.3); props.box(0xdfe3e7, 1.3, 0.12, 0.5, 0, 11.38, -0.35);
+    lampMB.push(x, gy, z, Math.atan2(-s.rx, -s.rz)); lampMB.box(0xfff4d6, 1.2, 0.08, 0.42, 0, 11.3, -0.38, 0, 0, 0, { mat: "lamp", noAO: true, jit: 0 }); lampMB.pop();
+    props.pop();
+  }
+
   // ------------------------------------------------------------------------------------------------ pit building, grandstands, tyre walls, boards
-  const place = (mb: MB, u: number, d: number, side: number, r: number, fn: () => void) => {
+  const built: Array<{ x: number; z: number; r: number }> = [];
+  const ptmp = { d: 0, h: 0, i: 0, side: 1 };
+  /** True when a box set `d` metres sideways of the road at lap position `u`, facing away from it, stays clear of every stretch of the circuit (also the ones that pass close by). */
+  const clearOf = (u: number, d: number, side: number, x0: number, x1: number, depth: number) => {
+    const s = path.at(u);
+    for (let a = x0; a <= x1 + 0.1; a += 4) for (let z = 0; z <= depth + 0.1; z += 3) {
+      const px = s.x + s.rx * d + s.fx * a + side * s.rx * z, pz = s.z + s.rz * d + s.fz * a + side * s.rz * z;
+      path.nearest(px, pz, ptmp);
+      if (ptmp.d < WALL_D + 3.5) return false;
+    }
+    return true;
+  };
+  /** Builds a building only where it fits; returns null (and builds nothing) where it would stand on the track or on another building. */
+  const place = (mb: MB, u: number, d: number, side: number, r: number, x0: number, x1: number, depth: number, fn: () => void) => {
+    u = ((u % 1) + 1) % 1;
     const s = path.at(u), x = s.x + s.rx * d, z = s.z + s.rz * d;
+    if (!clearOf(u, d, side, x0, x1, depth)) return null;
+    if (built.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < (p.r + r - 8) ** 2)) return null;
+    built.push({ x, z, r });
     const gy = Math.min(Math.max(s.y - 0.1, groundY(x, z)), s.y + 0.2);
     // models face +z; the spectators look to -z, so +z must point away from the track
     mb.push(x, gy, z, Math.atan2(s.rx * side, s.rz * side)); fn(); mb.pop();
@@ -267,20 +308,33 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
     mb.box(0xd2262d, len + 1.2, 0.5, 0.2, 0, top + 0.1, -0.9);
   };
   if (f.props > 0) {
-    // the pit building across from the start line, on the left, with its garage doors painted on the track side
-    const pb = place(props, 0.972, -(WALL_D + 8.5), -1, 40, () => {
-      props.box(0xdfe3e7, 56, 4.6, 8.5, 0, 2.3, 4.2); props.box(0x2c313a, 56.6, 0.5, 9.3, 0, 4.7, 4.2); props.box(0xd2262d, 56.6, 0.3, 9.3, 0, 5.05, 4.2);
-      props.box(0xe9ecef, 10, 8.2, 9, 31.5, 4.1, 4.4); props.box(0x1a2a3a, 10.2, 1.7, 9.2, 31.5, 6.4, 4.4);
-    });
-    const s = pb.s, e = 0.12;
-    const px = pb.x + s.rx * e, pz = pb.z + s.rz * e, ax = s.fx * 28, az = s.fz * 28, y0 = pb.y + 0.3, y1 = pb.y + 4.1;
-    group.add(new T.Mesh(own(quadGeo(T, [[px - ax, y0, pz - az, px + ax, y0, pz + az, px + ax, y1, pz + az, px - ax, y1, pz - az]])), own(new T.MeshLambertMaterial({ map: garageTexture(T), side: T.DoubleSide }))));
+    // the pit building near the start line, with its garage doors painted on the track side. It is moved along the straight, or to the other side,
+    // until it stands clear of the track (some circuits loop back close to their start).
+    let pb: any = null, pbSide = -1;
+    search: for (const du of [0, -0.012, 0.012, -0.025, 0.025, -0.04, 0.04, -0.06, 0.06]) for (const sd of [-1, 1]) {
+      pb = place(props, 0.972 + du, sd * (WALL_D + 8.5), sd, 40, -29, 37, 9.8, () => {
+        props.box(0xdfe3e7, 56, 4.6, 8.5, 0, 2.3, 4.2); props.box(0x2c313a, 56.6, 0.5, 9.3, 0, 4.7, 4.2); props.box(0xd2262d, 56.6, 0.3, 9.3, 0, 5.05, 4.2);
+        props.box(0xe9ecef, 10, 8.2, 9, 31.5, 4.1, 4.4); props.box(0x1a2a3a, 10.2, 1.7, 9.2, 31.5, 6.4, 4.4);
+      });
+      if (pb) { pbSide = sd; break search; }
+    }
+    if (pb) {
+      const s = pb.s, e = -pbSide * 0.12;
+      const px = pb.x + s.rx * e, pz = pb.z + s.rz * e, ax = s.fx * 28, az = s.fz * 28, y0 = pb.y + 0.3, y1 = pb.y + 4.1;
+      group.add(new T.Mesh(own(quadGeo(T, [[px - ax, y0, pz - az, px + ax, y0, pz + az, px + ax, y1, pz + az, px - ax, y1, pz - az]])), own(new T.MeshLambertMaterial({ map: garageTexture(T), side: T.DoubleSide }))));
+    }
   }
   const standCount = f.props === 0 ? 0 : f.props === 1 ? 3 : 6;
   for (let k = 0; k < standCount; k++) {
-    const u = 0.1 + (k * 0.85) / Math.max(1, standCount) + rnd.range(-0.02, 0.02), s = path.at(u), outer = s.kap > 0 ? -1 : 1;   // outside of the bend: the cars come straight at the crowd
-    if (cr && (circ(u, cr[0]) < 0.06 || circ(u, cr[1]) < 0.06)) continue;
-    place(props, u, outer * (WALL_D + 9), outer, 26, () => stand(props, 34 + (k % 2) * 8, 6 + (k % 3), f.props >= 2));
+    const u0 = 0.1 + (k * 0.85) / Math.max(1, standCount) + rnd.range(-0.02, 0.02), len = 34 + (k % 2) * 8, rows = 6 + (k % 3), depth = rows + 2.5;
+    // outside of the bend first: the cars come straight at the crowd; then the other side; then a little further along
+    let done = false;
+    for (const du of [0, -0.012, 0.012, -0.025, 0.025, -0.04, 0.04, -0.06, 0.06]) {
+      const u = u0 + du, s = path.at(u), outer = s.kap > 0 ? -1 : 1;
+      if (cr && (circ(u, cr[0]) < 0.06 || circ(u, cr[1]) < 0.06)) continue;
+      for (const sd of [outer, -outer]) if (place(props, u, sd * (WALL_D + 9), sd, 26, -len / 2 - 1.5, len / 2 + 1.5, depth + 1.5, () => stand(props, len, rows, f.props >= 2))) { done = true; break; }
+      if (done) break;
+    }
   }
   if (f.props > 0) {
     // tyre walls on the outside of the sharpest corners
@@ -396,6 +450,17 @@ export function buildWorld(T: T3, path: TrackPath, env: F1Env, f: F1Features): F
   return {
     group, sky, sunDir: sky.sunDir, groundY,
     update(dt: number, cam: any) { clouds.update(dt, cam); },
+    breakBarrier(side: number, u0: number, u1: number) {
+      const k0 = Math.floor(u0 * n), k1 = Math.ceil(u1 * n);
+      for (const b of breakables[String(side)] || []) {
+        const qs = b.geo.userData.quadStart as Int32Array, arr = b.geo.index.array;
+        for (let k = k0; k <= k1; k++) { const s = qs[((k % n) + n) % n]!; if (s >= 0) arr.fill(0, s, s + 6); }
+        b.geo.index.needsUpdate = true;
+      }
+    },
+    repair() {
+      for (const side of ["1", "-1"]) for (const b of breakables[side]!) { b.geo.index.array.set(b.backup); b.geo.index.needsUpdate = true; }
+    },
     dispose() {
       sky.dispose(); clouds.dispose();
       group.traverse((o: any) => { if (o.geometry && !o.isInstancedMesh) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });

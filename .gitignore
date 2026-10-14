@@ -6,3 +6,6 @@ _orig/original.html
 _orig/data/body-final*.html
 _orig/data/txt-*
 .claude/
+
+# Pictures made by tools/f1-lab.ts
+_f1lab/

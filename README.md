@@ -1,4 +1,4 @@
-# Workbench 5.60.0 — React + TypeScript rewrite
+# Workbench 5.61.0 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -70,29 +70,42 @@ default on Chromebooks and slow machines) and *Low* (fewer pixels, plain shapes,
 context) and `/harness.js`. `tools/cdp.ts` starts headless Chrome over the DevTools protocol (GPU WebGL, screenshots, evals), which is how the
 screenshots and the placement / mode-switch checks were made.
 
-## F1 Cockpit: the 3D live feed
+## F1 Cockpit: the 3D seat, the driving rules and the crash scenes
 
-Since 5.60.0 the cockpit's live feed is a three.js scene (`src/arcade/f1/`). The game itself is still the generated `legacy029.ts`: it owns the
-state (lap position, speed, steering, rivals, TURN prompts), the 2D cockpit overlay, the minimap and every telemetry panel. A WebGL canvas sits
-right under the game's 2D canvas, which is now transparent, and `tools/convert-029.ts` adds the few hooks that connect them (it renames the old
-renderer to `f1RenderScene2D`, which stays as the automatic fallback when WebGL is missing or lost).
+Since 5.60.0 the cockpit's live feed is a three.js scene and since 5.61.0 the cockpit itself is part of it (`src/arcade/f1/`). The game is still the
+generated `legacy029.ts`: it owns the race (laps, timing, tyres, pit stops, corner coach) and every telemetry panel. A WebGL canvas sits right under
+the game's 2D canvas, which is transparent and only draws the HUD (controls top left, map top right, the red corner countdown, shift light, barrier
+warning). `tools/convert-029.ts` adds the hooks that connect them (about twenty small `rep()` / `repRange()` patches that fail the build when an anchor
+is missing); the old 2D renderer stays as `f1RenderScene2D`, the automatic fallback when WebGL is missing or lost.
 
 | Module | What |
 |---|---|
-| `view.ts` | renderer, camera rig (eye on the player's lap position, lane, steering, brake dive, cornering roll, shake), rivals, sun shadow that follows the camera, Graphics button, fallback |
-| `path.ts` | the circuit as a smooth 3D path through the game's own track points (same lap fractions, so the prompts line up), nearest-point lookup, bridge for the figure-eight, easing of bends tighter than the road |
-| `world.ts` | road, kerbs, run-off, terrain, barriers, fences, bridge deck, start line and grid, gantry, pit building, grandstands, tyre walls, sponsor boards, blocky instanced trees, mountains |
-| `env.ts` | one look per circuit: Midday (Circle), Golden hour (Technical Loop), Cool morning (Complex), Sunset (Curvy Ring); the sun azimuth is also what the 2D cockpit uses for its lighting |
-| `sky.ts`, `car.ts`, `tex.ts`, `post.ts`, `gfx.ts` | shader sky dome and boxy clouds, rival car model, procedural pictures, the full-screen pass (speed blur, vignette, grade, ACES), graphics levels |
+| `sim.ts` | the driving rules: manual gearbox with rev limiter (Y / U), a real position across the road, grip (`D = kappa * v^2` against the tyres' limit, sliding wide beyond it), kerbs and gravel, the barrier (touching it ends the race), suspension springs (roll, dive, squat, bumps, wheel travel), and the corner warning (a warning only) |
+| `consts.ts` | road width, barrier distance, car half-width, gears, lap progress per mph per frame |
+| `hud.ts`, `report.ts` | the on-screen HUD; the disqualification report (impact, race, tyres, systems, car) and the short 2D crash screen |
+| `view.ts` | renderer, camera on the chassis (road, slide, roll, dive, bumps), rivals that make room, sun shadow, sky reflections (PMREM), live mirrors, Graphics button, fallback, hand-over to a crash |
+| `cockpit.ts`, `car.ts` | the driver's seat: the car seen from the helmet (nose, wishbones, halo, mirrors), steering wheel with a live screen and shift lights, arms; the F1 car model with separate parts and PBR materials |
+| `crash.ts` | twenty crash scenes: rigid bodies for the car and every torn-off part, barrier damage, sparks / smoke / fire / dust / debris pools, camera rigs and cuts, slow motion, sounds |
+| `path.ts` | the circuit as a smooth 3D path through the game's own track points (same lap fractions, so the prompts line up), nearest-point lookup, the figure-eight's bridge, easing of bends tighter than the road |
+| `world.ts` | road, kerbs, run-off, terrain, barriers (breakable), fences, bridge deck, start line, gantry, pit building and stands (placed only where they fit), floodlights, boards, blocky trees, mountains |
+| `env.ts`, `sky.ts`, `tex.ts`, `post.ts`, `gfx.ts` | one look per circuit (Midday, Golden hour, Cool morning, Sunset), shader sky and boxy clouds, procedural pictures, the finishing pass (speed blur, bloom, light shafts, grade, ACES), graphics levels |
 
-**Graphics button** (next to Restart; saved as `wb-f1-gfx`): *Low* (fewer pixels, no shadows or post pass, fewer trees, for Chromebooks), *Balanced*
-(the default: 4x multisampling, sun shadows, post pass, stands and boards), *High* (sharper, bigger shadows, crowds, more trees, a little glow).
-The first run starts on Balanced, or on Low on a Chromebook / 4 cores or fewer / 4 GB or less, like the Infinite world's first-run default.
-Changing the level rebuilds the scenery in about 0.1 s without touching the race.
-The cockpit's Close button now also runs the cockpit's own cleanup (loop, keys, sound, WebGL context); before, only the shell was closed.
+**Rules of the road**: the gearbox is manual, steering moves the car across the road (it keeps its place when you let go), a bend asks for grip
+that grows with the square of the speed, beyond the limit the car is pushed to the outside, gravel slows it, and touching a barrier disqualifies you.
+The corner prompt only warns. All physics steps are scaled by the frame time, so the game runs at the same speed on a 60 Hz and a 144 Hz screen.
 
-For tests: a `--dev` or `--dbg` build exposes `window.__f1View` (`.last.player`, `.last.aiCars`, `.turns`, `.dbg()` with the renderer, scene, camera and path).
+**Crash scenes**: one of twenty at random (never the same twice in a row), scaled by the impact speed, about seven seconds with a report after
+about six. `window.__f1Scene = n` (dev / dbg builds) picks one for tests.
 
+**Graphics button** (next to Restart; saved as `wb-f1-gfx`): *Low* (fewer pixels, no shadows, post pass, live mirrors or reflections, for Chromebooks),
+*Balanced* (the default: 4x multisampling, sun shadows, live mirrors at low resolution, sky reflections, light shafts), *High* (sharper, bigger shadows,
+crowds, more trees, sharper mirrors, real bloom). The first run starts on Balanced, or on Low on a Chromebook / 4 cores or fewer / 4 GB or less, like
+the Infinite world. Changing the level rebuilds the scenery in about 0.3 s without touching the race.
+The cockpit's Close button also runs the cockpit's own cleanup (loop, keys, sound, WebGL context).
+
+For tests: a `--dev` or `--dbg` build exposes `window.__f1View` (`.last.player`, `.last.aiCars`, `.turns`, `.dbg()` with the renderer, scene, camera, path and
+cockpit). `bun run tools/f1-lab.ts <lap|race|crash|top> <map> ...` builds the dev build, serves it, drives the game in headless Chrome (an autopilot that brakes for the
+bends and shifts by hand, or a driver that steers into the barrier) and writes pictures to `_f1lab/`.
 ## Access codes
 
 The Developer gate, Assistant gate and Assistant-memory lock compare against a **salted, iterated SHA-256 digest** (`src/core/gate.ts`);
