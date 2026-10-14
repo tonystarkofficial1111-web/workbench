@@ -304,8 +304,8 @@ export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: numb
     // seats, dash, roll cage and a steering wheel (rally cockpit view)
     const im = new MB(T, 320); im.jitter = 0.02; im.ao = { y0: 0.3, h: 1, k: 0.3 };
     const [ex, ey, ez] = S.eye;
-    im.box(0x202227, 1.4, 0.2, 0.5, 0, ey - 0.28, ez + 0.95);                          // dashboard
-    im.box(0x2a2d33, 1.4, 0.06, 0.3, 0, ey - 0.16, ez + 1.1, 0.4, 0, 0);
+    im.box(0x202227, 1.4, 0.2, 0.5, 0, ey - 0.36, ez + 0.98);                          // dashboard
+    im.box(0x2a2d33, 1.4, 0.06, 0.3, 0, ey - 0.24, ez + 1.12, 0.4, 0, 0);
     for (const s of [-1, 1]) { im.box(0x1d1f23, 0.48, 0.5, 0.1, s * 0.36, ey - 0.35, ez - 0.32); im.box(0x1d1f23, 0.48, 0.1, 0.5, s * 0.36, ey - 0.62, ez - 0.05); im.box(0xc8102e, 0.08, 0.5, 0.02, s * 0.36, ey - 0.3, ez - 0.26, 0, 0, 0, { jit: 0 }); }
     // roll cage: hoops and diagonal
     const cage = 0xd8dce2;
@@ -316,10 +316,21 @@ export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: numb
     im.box(0x202227, 0.24, 0.3, 0.7, 0, ey - 0.55, ez + 0.4); im.box(0x9aa0a8, 0.03, 0.3, 0.03, 0, ey - 0.3, ez + 0.4, 0.3, 0, 0, { mat: "metal" }); im.box(0xc8102e, 0.04, 0.4, 0.04, -0.1, ey - 0.28, ez + 0.1, -0.5, 0, 0);
     // co-driver's notes on the passenger side
     im.box(0xf2f2f4, 0.22, 0.02, 0.3, -ex, ey - 0.42, ez + 0.3, 0.6, 0, 0);
-    body.add(im.build({ ...kit, lit: kit.cf }, false));
+    // A-pillars, roof lining and door cards frame the view from the seat (the body's own boxes are invisible from inside)
+    for (const s of [-1, 1]) {
+      im.beam(0x202227, 0.07, s * 0.7, ey - 0.3, ez + 0.98, s * 0.64, ey + 0.21, ez + 0.36);
+      im.box(0x24262b, 0.06, 0.5, 1.3, s * 0.74, ey - 0.46, ez + 0.2);
+      im.box(0x1b1d22, 0.04, 0.05, 1.2, s * 0.72, ey - 0.2, ez + 0.2);
+    }
+    im.box(0x5c6068, 1.46, 0.04, 1.3, 0, ey + 0.2, ez - 0.25);                        // roof lining (fabric)
+    im.box(0x16181c, 1.36, 0.06, 0.08, 0, ey + 0.2, ez + 0.32);
+    // rally dash: a data screen and a row of switches
+    im.box(0x0e1014, 0.26, 0.14, 0.04, 0, ey - 0.24, ez + 0.88, -0.5, 0, 0);
+    for (let k = 0; k < 6; k++) im.box(k % 2 ? 0xd2262d : 0xe9e9ee, 0.03, 0.04, 0.03, -0.25 + k * 0.05 - ex * 0.2, ey - 0.27, ez + 0.83, 0, 0, 0, { jit: 0 });
+    body.add(im.build(kit, false));            // matte (Lambert): seen from inside there is no sky to reflect
     // instruments: two dials and a shift light bar
     const dm = new MB(T, 321); dm.jitter = 0; dm.ao = { y0: -9, h: 1, k: 0 };
-    for (const k of [-0.09, 0.09]) dm.cyl(0x0a0b0d, 0.07, 0.07, 0.02, ex + k, ey - 0.15, ez + 0.75, 12, Math.PI / 2 - 0.5, 0, 0);
+    for (const k of [-0.09, 0.09]) dm.cyl(0x0a0b0d, 0.07, 0.07, 0.02, ex + k, ey - 0.24, ez + 0.8, 12, Math.PI / 2 - 0.5, 0, 0);
     body.add(dm.build(kit, false));
     steeringWheel = new T.Group();
     const sw = new MB(T, 322); sw.jitter = 0; sw.ao = { y0: -9, h: 1, k: 0 };
@@ -327,7 +338,7 @@ export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: numb
     sw.box(0x2a2d33, 0.3, 0.03, 0.03, 0, 0, 0); sw.box(0x2a2d33, 0.03, 0.14, 0.03, 0, -0.08, 0);
     sw.box(0xc8102e, 0.03, 0.04, 0.03, 0, 0.18, 0, 0, 0, 0, { jit: 0 });
     steeringWheel.add(sw.build({ ...kit, lit: kit.rubber }, false));
-    steeringWheel.position.set(ex, ey - 0.12, ez + 0.5); steeringWheel.rotation.x = -0.35;
+    steeringWheel.position.set(ex, ey - 0.25, ez + 0.58); steeringWheel.rotation.x = -0.35;
     // the rotation order makes the tilt apply first, then the turn around the column
     steeringWheel.rotation.order = "XYZ";
     body.add(steeringWheel);

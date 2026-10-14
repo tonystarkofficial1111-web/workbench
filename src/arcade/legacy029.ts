@@ -6,6 +6,7 @@ import { openEngine, engineClosed } from "../core/overlay";
 import { createF1View, createF1Sim, f1FixPoints, drawF1Hud, drawF1CrashFallback, showF1Report, hideF1Report, F1_GEAR_MAX } from "./f1";
 import { webglOk } from "./car3d/stage";
 import { createDriftGame } from "./drift/game";
+import { createRallyGame } from "./rally/game";
 
 function L(m){ try{ (window.__wb519Log = window.__wb519Log || []).push(m); }catch(e){} }
 
@@ -98,7 +99,16 @@ function wbPlayAgain(o, fn, score){
     var oldClose=o.close;o.close=function(){window.removeEventListener('keydown',kd,true);window.removeEventListener('keyup',ku,true);oldClose();};
   }
 
-  function launchRallyStage(){
+  function launchRallyStage(){ if(webglOk()) return launchRally3D(); return launchRallyStage2D(); }
+  function launchRally3D(){
+    var o=ovOpen('🌲 Rally','Off-road racing · Subaru Impreza WRX STI or Toyota GR Yaris Rally1 · four stages, each harder than the last','<div class="c3d-host" id="rl3-host"></div>'); if(!o) return;
+    o.shell.classList.add('c3d-shell');
+    var g=null;
+    try{ g=createRallyGame(document.getElementById('rl3-host'),{done:function(score){ endGame('rally533','rally',score); }}); }catch(e){ L('rally 3d: '+(e&&e.message)); g=null; }
+    if(!g){ o.close(); return launchRallyStage2D(); }
+    var oc=o.close; o.close=function(){ try{ g.dispose(); }catch(e){} oc(); };
+  }
+  function launchRallyStage2D(){
     var body='<div class="study-shell"><div class="study-card"><h4>🌲 Rally Stage</h4><div class="study-muted">W throttle · S brake · A/D steer. Keep the car inside the stage and finish quickly.</div><canvas id="rally-canvas" width="700" height="300" style="width:100%;border:2px solid var(--line);border-radius:10px;background:#08100b;margin-top:12px"></canvas><div class="car-feedback" id="rally-feedback">STAGE READY · Press W to launch.</div></div></div>';
     var o=ovOpen('🌲 Rally Stage','Timed off-road driving challenge.',body);if(!o)return;
     var cv=document.getElementById('rally-canvas'),ctx=cv.getContext('2d'),keys={},x=350,y=255,v=0,steer=0,start=0,raf=null,done=false;

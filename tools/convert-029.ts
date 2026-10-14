@@ -25,6 +25,7 @@ import { openEngine, engineClosed } from "../core/overlay";
 import { createF1View, createF1Sim, f1FixPoints, drawF1Hud, drawF1CrashFallback, showF1Report, hideF1Report, F1_GEAR_MAX } from "./f1";
 import { webglOk } from "./car3d/stage";
 import { createDriftGame } from "./drift/game";
+import { createRallyGame } from "./rally/game";
 
 function L(m){ try{ (window.__wb519Log = window.__wb519Log || []).push(m); }catch(e){} }
 
@@ -104,6 +105,20 @@ rep(
     var oc=o.close; o.close=function(){ try{ g.dispose(); }catch(e){} oc(); };
   }
   function launchDrift2D(){`,
+);
+// 5.63.0: Rally is 3D too (src/arcade/rally): two rally cars, four stages, three rival crews, pace notes. The old 2D stage is the fallback.
+rep(
+  `function launchRallyStage(){`,
+  `function launchRallyStage(){ if(webglOk()) return launchRally3D(); return launchRallyStage2D(); }
+  function launchRally3D(){
+    var o=ovOpen('🌲 Rally','Off-road racing · Subaru Impreza WRX STI or Toyota GR Yaris Rally1 · four stages, each harder than the last','<div class="c3d-host" id="rl3-host"></div>'); if(!o) return;
+    o.shell.classList.add('c3d-shell');
+    var g=null;
+    try{ g=createRallyGame(document.getElementById('rl3-host'),{done:function(score){ endGame('rally533','rally',score); }}); }catch(e){ L('rally 3d: '+(e&&e.message)); g=null; }
+    if(!g){ o.close(); return launchRallyStage2D(); }
+    var oc=o.close; o.close=function(){ try{ g.dispose(); }catch(e){} oc(); };
+  }
+  function launchRallyStage2D(){`,
 );
 // a Graphics button next to Restart
 rep(
