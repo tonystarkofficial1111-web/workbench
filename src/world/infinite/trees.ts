@@ -49,6 +49,10 @@ function leafClump(mb: MB, rnd: Rng, c: number, r: number, x: number, y: number,
     const by = y - h * 0.1 - rnd.range(0, 0.1) * h;
     mb.box(c3, bw, bh, bd, bx, by, bz, 0, 0, 0, o(t1, c3, by, bh));
   }
+  for (let i = 0; i < 2; i++) { // small corner blocks (High only) break the outline into finer steps
+    const c4 = rnd.pick(GREENS), s4 = r * rnd.range(0.45, 0.7), by = y + h * rnd.range(-0.1, 0.25);
+    mb.box(c4, s4, s4 * 0.8, s4, x + (rnd.chance(0.5) ? 1 : -1) * w * 0.42, by, z + (rnd.chance(0.5) ? 1 : -1) * d * 0.42, 0, 0, 0, o(2, c4, by, s4 * 0.8));
+  }
 }
 
 /** A square trunk built from stacked blocks that step sideways in whole blocks as it leans, instead of a smooth bent cylinder. */

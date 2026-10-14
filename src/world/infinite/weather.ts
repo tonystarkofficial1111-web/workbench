@@ -67,7 +67,7 @@ const SPLASH_F = `
 precision highp float;
 varying float vA; varying float vK; uniform float uRain;
 void main(){
-  vec2 c = gl_PointCoord - 0.5; float d = length(c) * 2.0;
+  vec2 c = gl_PointCoord - 0.5; float d = max(abs(c.x), abs(c.y)) * 2.0;   // rain splashes are square ripples
   float ring = smoothstep(0.55, 0.78, d) * (1.0 - smoothstep(0.78, 1.0, d));
   gl_FragColor = vec4(0.9, 0.95, 1.0, ring * vA * 0.5 * uRain);
 }`;

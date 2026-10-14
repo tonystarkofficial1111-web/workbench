@@ -158,8 +158,8 @@ export function installSky(ctx: Ctx) {
     near += (10 - near) * fogA; far += (74 - far) * fogA;
     near *= 1 - rain * 0.25; far *= 1 - rain * 0.35;
     // morning mist: for a short while after sunrise the air is thick and golden, and the far jungle fades into it
-    const mist = (cyc < 0.3 ? 1 : 0) * smoothstep(-4, 1, e) * smoothstep(19, 6, e) * (1 - fogA) * (1 - rain);
-    near *= 1 - 0.45 * mist; far *= 1 - 0.55 * mist;
+    const mist = (cyc < 0.3 ? 1 : 0) * smoothstep(-4, 1, e) * smoothstep(19, 6, e) * (1 - fogA) * (1 - rain) * (1 - smoothstep(30, 70, D));   // only when zoomed in: the map view stays clear
+    near *= 1 - 0.4 * mist; far *= 1 - 0.5 * mist;
     state.mist = mist;
     cFog.copy(cHor).lerp(cZen, 0.12).multiplyScalar(0.92);
     env.worldFog.color.copy(cFog); env.worldFog.near = near; env.worldFog.far = far;

@@ -369,7 +369,8 @@ export function buildIsland(ctx: Ctx, seed: number): Island {
     for (let k = 0; k < rc.n; k++) {
       const a = rr.range(0, 6.28), d = k === 0 ? 0 : rr.range(0.6, 1.4), rho = rr.range(0.45, 0.95) * (k === 0 ? 1.25 : 1);
       const base = rr.pick([0x77716a, 0x6a665e, 0x84806f, 0x5f5b54]);
-      mb.blob(base, rho, Math.cos(a) * d, rho * 0.45, Math.sin(a) * d, rr.range(0.9, 1.3), rr.range(0.7, 1), rr.range(0.9, 1.3), 1, rr.range(0, 6),
+      // chunky blocks, each turned a little, not round lumps
+      mb.box(base, rho * 1.8 * rr.range(0.9, 1.3), rho * 1.2 * rr.range(0.7, 1), rho * 1.8 * rr.range(0.9, 1.3), Math.cos(a) * d, rho * 0.6, Math.sin(a) * d, 0, Math.sin(a * 3.1) * 0.3, 0,
         { grad: [base, rr.chance(0.5) ? 0x4c6a36 : base, rho * 0.1, rho * 1.1] });
     }
     const g = mb.build(ctx.mats, true);

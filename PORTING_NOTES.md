@@ -77,6 +77,11 @@ paths; zombies that look like zombies and walk differently; armoured, named vill
 - **Island**: radius 56 (was 26), grass radius 42. The ground is one flat layer rendered as merged meshes; the engine still sees one tiny `Block`
   per land cell so `getGroundHeight`, the nav grid and placement keep working. Land is y = 1 (camera minimum zoom is 10, so the camera never sinks under it).
   Trees keep the engine's tree contract (invisible pick proxies); chopped trees go through `wbTreeDown` for the fall animation.
+- **Nature is blocky, not round** (asked for after the first pass: "a little more blocky, less circular", nature and trees only): trees are square trunks that
+  step sideways in whole blocks under leaf clumps made of boxes (a main block plus top, side and corner blocks, the extras only from Medium / High), palms and
+  bamboo are stacked square segments, stumps and bushes and loose rocks and cave boulders are blocks, fronds and grass blades are stepped flat pieces (`shapes.ts`),
+  trees and plants stand in quarter turns, the ground / sand / path textures are square-cornered, rain splashes are square ripples, and the sky has a square sun and
+  moon and pixel-cell clouds. Buildings, people, halos and the UI were left as they were on purpose.
 - **Models**: `mb.ts` merges primitives into a few vertex-coloured meshes per model. Buildings are built when `createBuilding` runs (the placement preview
   and the building placed from it get the same variant); the Armory / Market / Workshop menus open from the new models because every model mesh is a
   *direct* child of `building.mesh` (the engine's click test only looks at those). Defenses replace `iife.MESH.*` and keep the contracts the 5.56 code relies
