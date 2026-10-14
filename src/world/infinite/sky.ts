@@ -169,7 +169,7 @@ export function installSky(ctx: Ctx) {
 
     // lights
     focus.set(Math.round(env.camTarget.x * 2) / 2, 0, Math.round(env.camTarget.z * 2) / 2);
-    const sunI = lerp(0, 1, smoothstep(-3.5, 3, e)) * lerp(0.6, 2.1, smoothstep(0, 28, e)) * (1 - 0.72 * dark) * (1 - 0.5 * rain) * (1 - 0.35 * fogA) * (1 - 0.6 * bl);
+    const sunI = lerp(0, 1, smoothstep(-3.5, 3, e)) * lerp(0.9, 2.1, smoothstep(0, 26, e)) * (1 - 0.72 * dark) * (1 - 0.5 * rain) * (1 - 0.35 * fogA) * (1 - 0.6 * bl);
     const L = env.sunLight, H = env.hemi;
     L.color.copy(cSun);
     L.intensity = sunI;
@@ -191,8 +191,8 @@ export function installSky(ctx: Ctx) {
     H.groundColor.setRGB(lerp(0.08, 0.24, daylight), lerp(0.09, 0.27, daylight), lerp(0.12, 0.13, daylight));
     // golden hour: the shaded sides of trees and walls pick up a warm bounce from the glowing horizon
     tmp.setRGB(0.62, 0.34, 0.15); H.groundColor.lerp(tmp, tw * 0.55 * (1 - dark));
-    H.intensity = (lerp(0.8, 1.0, Math.sqrt(daylight))) * (1 - 0.2 * dark) * (1 + 0.5 * air.flash) * (1 + 0.3 * tw * (1 - dark));
-    env.renderer.toneMappingExposure = env.shadersOn ? 1.02 + 0.22 * tw : 1;
+    H.intensity = (lerp(0.8, 1.0, Math.sqrt(daylight))) * (1 - 0.2 * dark) * (1 + 0.5 * air.flash) * (1 + 0.5 * tw * (1 - dark));
+    env.renderer.toneMappingExposure = env.shadersOn ? 1.02 + 0.5 * tw : 1;
     // engine meshes that follow the sun and moon (the post-effects read the sun's position)
     env.sunMesh.position.copy(focus).addScaledVector(sunDir, 160);
     env.moonMesh.position.copy(focus).addScaledVector(moonDir, 160);
