@@ -23,6 +23,8 @@ const header = `// @ts-nocheck
 import { getProfile, recordGameScore, trackGamePlayed, saveProfile, checkAchievements } from "../core/profile";
 import { openEngine, engineClosed } from "../core/overlay";
 import { createF1View, createF1Sim, f1FixPoints, drawF1Hud, drawF1CrashFallback, showF1Report, hideF1Report, F1_GEAR_MAX } from "./f1";
+import { webglOk } from "./car3d/stage";
+import { createDriftGame } from "./drift/game";
 
 function L(m){ try{ (window.__wb519Log = window.__wb519Log || []).push(m); }catch(e){} }
 
@@ -88,6 +90,21 @@ function repRange(from: string, until: string, to: string) {
 }
 // 5.63.0: ten gears instead of eight; the one table lives in src/arcade/f1/consts.ts and the game reads its length everywhere
 rep(`var GEAR_MAX=[12,24,36,50,64,80,97,115];`, `var GEAR_MAX=F1_GEAR_MAX.slice();`);
+// 5.63.0: Drift King is 3D (src/arcade/drift). The 2D game stays as the fallback when WebGL is not available.
+// The overlay's own Close button empties the overlay; the 3D game notices its canvas has gone and cleans up (sound, keys, GPU memory).
+rep(
+  `function launchDrift(){`,
+  `function launchDrift(){ if(webglOk()) return launchDrift3D(); return launchDrift2D(); }
+  function launchDrift3D(){
+    var o=ovOpen('🏎️ Drift King','Night docks · Nissan Skyline GT-R (R34) or Ford Mustang GT 5.0 · four courses, each harder than the last','<div class="c3d-host" id="dk3-host"></div>'); if(!o) return;
+    o.shell.classList.add('c3d-shell');
+    var g=null;
+    try{ g=createDriftGame(document.getElementById('dk3-host'),{done:function(score){ endGame('drift519','drift',score); }}); }catch(e){ L('drift 3d: '+(e&&e.message)); g=null; }
+    if(!g){ o.close(); return launchDrift2D(); }
+    var oc=o.close; o.close=function(){ try{ g.dispose(); }catch(e){} oc(); };
+  }
+  function launchDrift2D(){`,
+);
 // a Graphics button next to Restart
 rep(
   `<button id="f1-restart" class="f1-restart-btn" type="button">↻ Restart Race</button></div>'+`,

@@ -1,0 +1,77 @@
+/* 3D car games (Drift King, Rally, Take Your Time clips): one full-screen-ish stage with a HUD, menus and results on top */
+.g519-shell.c3d-shell{width:min(1280px,98vw);max-height:none;padding:12px 14px 10px}
+.g519-shell.c3d-shell>h3{margin:0 0 2px}
+.g519-shell.c3d-shell>.g519-sub{margin:0 0 8px}
+.c3d-host{position:relative;width:100%;height:min(76vh,calc(98vw * 0.56));min-height:340px;border-radius:12px;overflow:hidden;background:#05070d;border:2px solid var(--line,#2a3142)}
+.c3d-root{position:absolute;inset:0;font-family:Inter,system-ui,sans-serif;color:#e9eef5;user-select:none}
+.c3d-view{position:absolute;inset:0}
+.c3d-canvas{display:block;outline:none}
+.c3d-hud{position:absolute;left:14px;top:12px;text-shadow:0 2px 6px rgba(0,0,0,.8);pointer-events:none}
+.c3d-big{font:800 30px 'Space Grotesk',Inter,sans-serif;letter-spacing:.02em}
+.c3d-chain{font:700 22px 'Space Grotesk',Inter,sans-serif;color:#ffd34d;min-height:26px}
+.c3d-mult{font:800 18px 'Space Grotesk',Inter,sans-serif;color:#1fb6ff;min-height:20px}
+.c3d-angle{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:min(320px,50%);height:12px;border-radius:7px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);pointer-events:none}
+.c3d-angle i{display:block;height:100%;width:0;border-radius:7px;background:#5d6876;transition:width .05s}
+.c3d-angle i.on{background:linear-gradient(90deg,#ffd34d,#ff6a1a)}
+.c3d-angle b{position:absolute;left:50%;top:-22px;transform:translateX(-50%);font:700 14px 'Space Grotesk',Inter,sans-serif;text-shadow:0 2px 4px #000}
+.c3d-gauge{position:absolute;right:16px;bottom:14px;display:grid;grid-template-columns:auto auto;align-items:end;gap:0 8px;text-shadow:0 2px 6px rgba(0,0,0,.85);pointer-events:none}
+.c3d-gauge b{font:800 40px 'Space Grotesk',Inter,sans-serif;line-height:1}
+.c3d-gauge span{font:700 11px Inter,sans-serif;color:#9fb0c0}
+.c3d-gauge em{grid-column:1/3;font:800 15px 'Space Grotesk',Inter,sans-serif;font-style:normal;color:#ffd34d;justify-self:end}
+.c3d-gauge em::before{content:"GEAR ";color:#9fb0c0;font-size:11px}
+.c3d-lap{position:absolute;left:50%;top:10px;transform:translateX(-50%);display:flex;gap:6px;align-items:baseline;background:rgba(0,0,0,.45);padding:5px 12px;border-radius:9px;pointer-events:none}
+.c3d-lap span{font:700 10px Inter,sans-serif;color:#9fb0c0}
+.c3d-lap b{font:800 16px 'Space Grotesk',Inter,sans-serif;margin-right:8px}
+.c3d-mini{position:absolute;right:12px;top:12px;width:200px;height:150px;background:rgba(5,8,14,.55);border:1px solid rgba(255,255,255,.18);border-radius:10px;pointer-events:none}
+.c3d-help{position:absolute;left:14px;bottom:12px;font-size:11px;color:#c7d1dc;background:rgba(0,0,0,.42);padding:5px 9px;border-radius:8px;max-width:46%;pointer-events:none}
+.c3d-help b{color:#fff}
+.c3d-banner{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%) scale(.9);opacity:0;transition:opacity .18s,transform .18s;text-align:center;pointer-events:none;text-shadow:0 3px 10px rgba(0,0,0,.9)}
+.c3d-banner.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.c3d-banner b{display:block;font:900 34px 'Space Grotesk',Inter,sans-serif;letter-spacing:.03em}
+.c3d-banner small{display:block;font:700 16px Inter,sans-serif;color:#cfd8e3}
+.c3d-banner.good b{color:#2fe27a}.c3d-banner.bad b{color:#ff5a4a}.c3d-banner.clip b{color:#1fb6ff}.c3d-banner.warn b{color:#ffd34d}
+.c3d-count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none}
+.c3d-count.on{display:flex}
+.c3d-count b{font:900 120px 'Space Grotesk',Inter,sans-serif;color:#ff3b30;text-shadow:0 0 30px rgba(255,59,48,.7),0 4px 12px #000}
+.c3d-count b.go{color:#2fe27a;text-shadow:0 0 30px rgba(47,226,122,.7),0 4px 12px #000}
+.c3d-menu,.c3d-result{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(90deg,rgba(4,6,12,.86) 0%,rgba(4,6,12,.55) 55%,rgba(4,6,12,.1) 100%);overflow:auto;padding:14px;box-sizing:border-box}
+.c3d-menu.on,.c3d-result.on{display:flex;justify-content:flex-start}
+.c3d-result{justify-content:center!important;background:rgba(4,6,12,.62)}
+.c3d-menu-card{width:min(560px,100%);max-height:100%;overflow:auto;padding:4px 6px}
+.c3d-title{font:800 22px 'Space Grotesk',Inter,sans-serif;letter-spacing:.06em;margin-bottom:6px}
+.c3d-title span{color:#1fb6ff}
+.c3d-sec{font:800 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9fb0c0;margin:10px 0 6px}
+.c3d-sec small{letter-spacing:0;text-transform:none;font-weight:600;color:#6f7f90;margin-left:6px}
+.c3d-cars,.c3d-maps{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.c3d-root button.c3d-pick{display:flex!important;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px 11px!important;border-radius:10px!important;background:rgba(18,24,36,.9)!important;color:#e9eef5!important;border:1px solid rgba(255,255,255,.14)!important;font:inherit!important;cursor:pointer}
+.c3d-root button.c3d-pick:hover{border-color:#1fb6ff!important}
+.c3d-root button.c3d-pick.on{border-color:#1fb6ff!important;box-shadow:0 0 0 2px rgba(31,182,255,.35) inset;background:rgba(14,34,52,.95)!important}
+.c3d-pick b{font-size:13.5px}
+.c3d-pick small{font-size:11px;color:#9fb0c0;font-weight:500;line-height:1.35}
+.c3d-pick .c3d-best{color:#cfd8e3}
+.c3d-stars{color:#ffd34d;font-size:12px;letter-spacing:1px}
+.c3d-stat{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:6px;width:100%;font-size:10px;color:#9fb0c0}
+.c3d-stat em{font-style:normal}
+.c3d-stat i{display:block;height:5px;border-radius:3px;background:linear-gradient(90deg,#1fb6ff,#5fd4c7)}
+.c3d-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.c3d-root .c3d-row button{padding:9px 14px!important;border-radius:9px!important;background:rgba(18,24,36,.95)!important;color:#e9eef5!important;border:1px solid rgba(255,255,255,.2)!important;font:700 13px Inter,sans-serif!important;cursor:pointer}
+.c3d-root .c3d-row button.c3d-go{background:#1fb6ff!important;color:#06121c!important;border-color:#1fb6ff!important}
+.c3d-note{font-size:11.5px;color:#9fb0c0;line-height:1.5;margin:10px 0 0}
+.c3d-score{font:900 54px 'Space Grotesk',Inter,sans-serif;line-height:1.05}
+.c3d-medal{font:700 16px Inter,sans-serif;color:#ffd34d;margin:2px 0 10px}
+.c3d-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.c3d-grid div{background:rgba(18,24,36,.9);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:7px 9px}
+.c3d-grid em{display:block;font-style:normal;font-size:10px;color:#9fb0c0;text-transform:uppercase;letter-spacing:.06em}
+.c3d-grid b{font:800 17px 'Space Grotesk',Inter,sans-serif}
+.c3d-touch{position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:space-between;gap:6px;padding:0 10px;pointer-events:none}
+.c3d-root .c3d-touch button{pointer-events:auto;min-width:58px;padding:14px 10px!important;border-radius:12px!important;background:rgba(10,14,22,.62)!important;color:#fff!important;border:1px solid rgba(255,255,255,.3)!important;font:800 13px Inter,sans-serif!important;touch-action:none}
+.c3d-root .c3d-touch button.on{background:rgba(31,182,255,.55)!important}
+.c3d-pace{position:absolute;left:50%;top:48px;transform:translateX(-50%);padding:6px 14px;border-radius:10px;background:rgba(10,12,18,.72);border:1px solid rgba(255,211,77,.5);font:800 18px 'Space Grotesk',Inter,sans-serif;color:#ffd34d;display:none;align-items:center;gap:10px;pointer-events:none}
+.c3d-pace.on{display:flex}
+.c3d-pace i{font-style:normal;font-size:26px}
+.c3d-split{position:absolute;right:16px;top:172px;min-width:170px;background:rgba(5,8,14,.6);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:6px 9px;font-size:12px;pointer-events:none}
+.c3d-split div{display:flex;justify-content:space-between;gap:10px;padding:1px 0}
+.c3d-split div.you{color:#ffd34d;font-weight:800}
+.c3d-damage{position:absolute;left:14px;top:120px;width:120px;font-size:10px;color:#9fb0c0;pointer-events:none}
+.c3d-damage i{display:block;height:6px;border-radius:3px;background:linear-gradient(90deg,#2fe27a,#ffd34d,#ff5a4a);margin-top:3px}
+@media(max-width:720px){.c3d-mini{width:130px;height:98px}.c3d-cars,.c3d-maps{grid-template-columns:1fr}.c3d-help{display:none}.c3d-big{font-size:22px}.c3d-gauge b{font-size:30px}.c3d-split{top:118px;min-width:130px;font-size:11px}}

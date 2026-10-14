@@ -4,6 +4,8 @@
 import { getProfile, recordGameScore, trackGamePlayed, saveProfile, checkAchievements } from "../core/profile";
 import { openEngine, engineClosed } from "../core/overlay";
 import { createF1View, createF1Sim, f1FixPoints, drawF1Hud, drawF1CrashFallback, showF1Report, hideF1Report, F1_GEAR_MAX } from "./f1";
+import { webglOk } from "./car3d/stage";
+import { createDriftGame } from "./drift/game";
 
 function L(m){ try{ (window.__wb519Log = window.__wb519Log || []).push(m); }catch(e){} }
 
@@ -236,7 +238,16 @@ function wbPlayAgain(o, fn, score){
 
 
   /* ---- 7. Drift King (car) — v2: proper drift physics ---- */
-  function launchDrift(){
+  function launchDrift(){ if(webglOk()) return launchDrift3D(); return launchDrift2D(); }
+  function launchDrift3D(){
+    var o=ovOpen('🏎️ Drift King','Night docks · Nissan Skyline GT-R (R34) or Ford Mustang GT 5.0 · four courses, each harder than the last','<div class="c3d-host" id="dk3-host"></div>'); if(!o) return;
+    o.shell.classList.add('c3d-shell');
+    var g=null;
+    try{ g=createDriftGame(document.getElementById('dk3-host'),{done:function(score){ endGame('drift519','drift',score); }}); }catch(e){ L('drift 3d: '+(e&&e.message)); g=null; }
+    if(!g){ o.close(); return launchDrift2D(); }
+    var oc=o.close; o.close=function(){ try{ g.dispose(); }catch(e){} oc(); };
+  }
+  function launchDrift2D(){
     var body='<div class="g519-hud"><span>Style: <b id="dk-style">0</b></span><span>Time: <b id="dk-time">30</b>s</span><span>Speed: <b id="dk-speed">0</b></span><span>Slip: <b id="dk-drift">0&deg;</b></span></div>'+
       '<canvas id="dk-canvas" width="600" height="360" class="g519-canvas"></canvas>'+
       '<p class="g519-sub" id="dk-msg" style="text-align:center;">WASD/Arrows to drive. Turn at speed to slide the rear — counter-steer to hold the drift. 30 seconds.</p>'+
