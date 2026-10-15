@@ -5312,6 +5312,7 @@ function __wbBuildEnv(){
   Object.defineProperty(env, "NAV_N", { get: function(){ return NAV_N; }, enumerable: true });
   Object.defineProperty(env, "legacyAgents", { get: function(){ return legacyAgents; }, enumerable: true });
   Object.defineProperty(env, "WB_Z_START", { get: function(){ return WB_Z_START; }, enumerable: true });
+  Object.defineProperty(env, "legacyShots", { get: function(){ return legacyShots; }, enumerable: true });
   Object.defineProperty(env, "simTime", { get: function(){ return simTime; }, set: function(v){ simTime = v; }, enumerable: true });
   Object.defineProperty(env, "camDistance", { get: function(){ return camDistance; }, set: function(v){ camDistance = v; }, enumerable: true });
   Object.defineProperty(env, "camYaw", { get: function(){ return camYaw; }, set: function(v){ camYaw = v; }, enumerable: true });
@@ -5358,6 +5359,13 @@ function __wbBuildEnv(){
   Object.defineProperty(env, "updateLegacy", { get: function(){ return updateLegacy; }, set: function(v){ updateLegacy = v; }, enumerable: true });
   Object.defineProperty(env, "selectVillager", { get: function(){ return selectVillager; }, set: function(v){ selectVillager = v; }, enumerable: true });
   Object.defineProperty(env, "wbInfClearZ", { get: function(){ return wbInfClearZ; }, set: function(v){ wbInfClearZ = v; }, enumerable: true });
+  Object.defineProperty(env, "updateSiegeUnits", { get: function(){ return updateSiegeUnits; }, set: function(v){ updateSiegeUnits = v; }, enumerable: true });
+  Object.defineProperty(env, "launchBoulder", { get: function(){ return launchBoulder; }, set: function(v){ launchBoulder = v; }, enumerable: true });
+  Object.defineProperty(env, "boulderImpact", { get: function(){ return boulderImpact; }, set: function(v){ boulderImpact = v; }, enumerable: true });
+  Object.defineProperty(env, "openWorkshopMenu", { get: function(){ return openWorkshopMenu; }, set: function(v){ openWorkshopMenu = v; }, enumerable: true });
+  Object.defineProperty(env, "turnTo", { get: function(){ return turnTo; }, set: function(v){ turnTo = v; }, enumerable: true });
+  Object.defineProperty(env, "getTerritoryById", { get: function(){ return getTerritoryById; }, set: function(v){ getTerritoryById = v; }, enumerable: true });
+  Object.defineProperty(env, "updateSiegeHealthBar", { get: function(){ return updateSiegeHealthBar; }, set: function(v){ updateSiegeHealthBar = v; }, enumerable: true });
   return env;
 }
 try{ installInfinite(__wbBuildEnv()); }catch(e){ console.error('Infinite extension failed to start', e); }

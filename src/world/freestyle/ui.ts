@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { DAY_LENGTH } from "./ctx";
 import type { FsGame, Villager, Bld } from "./game";
-import { RES_INFO, ROLES, BUILD, BUILD_ORDER, TRADES, FOOD_ITEMS, NEEDS, canPay, pay, costText, type Res, type Role, type BType } from "./data";
+import { RES_INFO, ROLES, BUILD, BUILD_ORDER, TRADES, FOOD_ITEMS, NEEDS, CREWED, canPay, pay, costText, type Res, type Role, type BType } from "./data";
 
 /**
  * Free Style's screen: resources and time at the top, every villager's state in the side bar, the food bar to drag food onto people,
@@ -307,11 +307,11 @@ export class FsUi {
     if (!b.built) {
       const k = Math.floor((b.progress / d.work) * 100), builders = S.villagers.filter((v) => v.task && v.task.k === "build" && v.task.b === b && v.task.busy).length;
       body += `<div class="fs-stat"><span>Built</span><i class="fs-m hp"><i style="width:${k}%"></i></i><span>${k}%</span></div><p class="fs-small">${builders ? builders + " building now" : "Waiting for builders"}</p>`;
-    } else if (b.type === "tower") {
-      const gv = S.villagers.find((v) => v.towerId === b.id);
+    } else if (CREWED.includes(b.type)) {
+      const gv = S.villagers.find((v) => v.towerId === b.id), tw = b.type === "tower";
       const opts = S.villagers.filter((v) => !v.leader && v.collapsed <= 0).map((v) => `<option value="${v.id}"${gv && gv.id === v.id ? " selected" : ""}>${esc(v.name)} (${ROLES[v.role].name})</option>`).join("");
-      body += gv ? `<p>🛡️ <b>${esc(gv.name)}</b> keeps watch here${gv.spear ? " with a spear" : ""}.</p>` : `<p class="fs-red">Empty. A tower only defends with a guard on it.</p>`;
-      body += `<div class="fs-row"><select data-a="guard"><option value="">— choose a guard —</option>${opts}</select>${gv ? `<button class="fs-b sm" data-a="unguard">Call down</button>` : ""}</div>`;
+      body += gv ? `<p>🛡️ <b>${esc(gv.name)}</b> ${tw ? "keeps watch here" + (gv.spear ? " with a spear" : "") : "crews it"}.</p>` : `<p class="fs-red">Empty. ${tw ? "A tower" : "It"} only defends with a guard ${tw ? "on" : "at"} it.</p>`;
+      body += `<div class="fs-row"><select data-a="guard"><option value="">— choose a guard —</option>${opts}</select>${gv ? `<button class="fs-b sm" data-a="unguard">${tw ? "Call down" : "Stand down"}</button>` : ""}</div>`;
     } else if (d.slots) {
       const w = [...(b.workers || [])].map((id) => S.villagers.find((v) => v.id === id)).filter(Boolean);
       const role = ({ farm: "Farmer", mine: "Miner", campfire: "Cook", workshop: "Smith", armory: "Smith" } as any)[b.type];
@@ -399,7 +399,7 @@ export class FsUi {
       const id = +(el as HTMLSelectElement).value; const v = S.villagers.find((q) => q.id === id); if (!v) return;
       S.villagers.forEach((q) => { if (q.towerId === b.id) { q.towerId = undefined; q.y = 0; q.task = null; } });
       g.release(v); v.role = "guard"; v.towerId = b.id; b.guard = v.id; v.task = null; v.path = null; v.y = 0;
-      this.toast(v.name + " goes up the tower", "good");
+      this.toast(v.name + (b.type === "tower" ? " goes up the tower" : " crews the " + BUILD[b.type].name.toLowerCase()), "good");
       (el as HTMLElement).blur(); this.renderPanel(true);
     }
     if (this.raid && this.raid.onChange) this.raid.onChange(a, el);

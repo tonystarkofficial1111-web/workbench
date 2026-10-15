@@ -162,6 +162,7 @@ const ENV_CONST = [
 const ENV_READ = [
   "shadersOn", "legacyDay", "legacyDayTimer", "legacyMode", "legacyFactions", "legacyPlayer", "legacyBuildings", "legacyOreNodes", "wbInf", "wbFx",
   "followKing", "currentMode", "wbFast", "wbFast10", "navLand", "NAV_N", "legacyAgents", "WB_Z_START",
+  "legacyShots",
 ];
 const ENV_BIND = [
   "simTime", "camDistance", "camYaw", "camPitch", "legacyWaterMesh", "WB_ISLAND_R", "WB_GRASS_R",
@@ -170,6 +171,8 @@ const ENV_BIND = [
   "addArmorVisual", "addShieldVisual", "addSpearVisual", "addCrossbowVisual", "upgradeSwordVisual", "initLegacyMode", "wbInfStop",
   "wbBuildInfiniteTerrain", "updateSky", "killLegacyUnit", "openArmoryMenu", "grantIronUpgrade", "makeSiegeUnit", "updateSoldierMovement",
   "wbTreeDown", "wbGroundHits", "wbGfxAutoShaders", "damageLegacyTarget", "updateLegacy", "selectVillager", "wbInfClearZ",
+  // 5.67.0 siege engines (src/world/siege)
+  "updateSiegeUnits", "launchBoulder", "boulderImpact", "openWorkshopMenu", "turnTo", "getTerritoryById", "updateSiegeHealthBar",
 ];
 const envCode = `
 function __wbBuildEnv(){

@@ -17,6 +17,7 @@ import { installDefenses } from "./defenses";
 import { installSky } from "./sky";
 import { installWater } from "./water";
 import { installWeather } from "./weather";
+import { installSiege } from "../siege";
 import { quality } from "../../core/perf";
 import { worldBridge } from "../../core/bridge";
 
@@ -48,6 +49,7 @@ export function installInfinite(env: Env) {
   installBuildings(ctx);
   installCastle(ctx);
   installDefenses(ctx);
+  try { installSiege(ctx, env); } catch (e) { console.error("siege engines failed to start", e); }   // all modes, not only Infinite
   const worldEl = () => document.getElementById("tab-world");
   const active = () => { const e = worldEl(); return !!(e && e.classList.contains("active")); };
   const attached = (o: any) => { for (let p = o; p; p = p.parent) if (p === env.scene) return true; return false; };

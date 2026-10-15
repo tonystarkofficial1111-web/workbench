@@ -5,6 +5,7 @@ import { PAL, shade, gableRoof, bellRoof, lantern, barrel, crate, sack, woodPile
 import { BUILDERS, attachDyn, track } from "../infinite/buildings";
 import type { FsCtx } from "./ctx";
 import type { BType } from "./data";
+import { siegeStatic } from "../siege/models";
 
 /**
  * Free Style's own models, in the Infinite world's style (blocky, merged, vertex coloured, detail tiers): the tent that replaces the castle,
@@ -362,6 +363,12 @@ export function buildingModel(ctx: FsCtx, type: BType, seed: number, owner: any,
   else if (type === "campfire") dyn = buildCampfire(ctx, mb, rnd);
   else if (type === "well") dyn = buildWell(ctx, mb, rnd);
   else if (type === "tower") dyn = buildTower(ctx, mb, rnd, color);
+  else if (type === "ballista" || type === "catapult") {   // the siege engines, same models as in Legacy and Infinite
+    const r: any = siegeStatic(ctx, type, color);
+    owner.add(r.root); owner.userData.siege = r;
+    ctx.tiered.push({ userData: { tiers: r.tiers, owner } });
+    return r.root;
+  }
   else dyn = BUILDERS[type](ctx, mb, rnd, { main: color, accent: 0xe8c04a, variant: seed % 3 });
   const g = mb.build(ctx.mats, true);
   track(ctx, g, owner);

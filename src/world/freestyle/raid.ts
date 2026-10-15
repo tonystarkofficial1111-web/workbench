@@ -9,6 +9,7 @@ import { FsGame, DEPOT, type Villager } from "./game";
 import { START, N } from "./land";
 import { RES_INFO, BUILD, costText, type Cost, type Res, type BType } from "./data";
 import { DAY_LENGTH } from "./ctx";
+import { boltParts, animXbow } from "../siege/models";
 
 /**
  * Raids. Fifteen villages to raid (five easy, five medium, five hard), each described with what it has and a faded picture of it.
@@ -250,15 +251,59 @@ export class FsRaid {
     if (!best) return;
     from.cd = 1.7;
     const m = new this.g.T.Mesh(this.arrowGeo, this.arrowMat); this.ctx.scene.add(m);
-    this.arrows.push({ m, x0: from.x, y0: from.y, z0: from.z, t: 0, dur: 0.25 + bd * 0.04, target: best, dmg: dmgAmt });
+    this.arrows.push({ m, x0: from.x, y0: from.y, z0: from.z, tx: best.x, tz: best.z, t: 0, dur: 0.25 + bd * 0.04, target: best, dmg: dmgAmt });
   }
   private updateArrows(dt: number) {
     for (let i = this.arrows.length - 1; i >= 0; i--) {
       const a = this.arrows[i]; a.t += dt; const k = Math.min(1, a.t / a.dur), tg = a.target;
-      const x = a.x0 + (tg.x - a.x0) * k, z = a.z0 + (tg.z - a.z0) * k, y = a.y0 + (1.7 - a.y0) * k + Math.sin(k * Math.PI) * 1.5;
-      a.m.position.set(x, y, z); a.m.lookAt(tg.x, 1.6, tg.z);
-      if (k >= 1) { if (!tg.down) this.hit(tg, a.dmg); this.ctx.scene.remove(a.m); this.arrows.splice(i, 1); }
+      const lift = a.kind === "rock" ? 4.5 : a.kind === "bolt" ? 0.4 : 1.5;
+      const x = a.x0 + (a.tx - a.x0) * k, z = a.z0 + (a.tz - a.z0) * k, y = a.y0 + (1.7 - a.y0) * k + Math.sin(k * Math.PI) * lift;
+      if (a.kind === "rock") { a.m.position.set(x, y, z); a.m.rotation.x += dt * 6; a.m.rotation.z += dt * 4; }
+      else { a.m.lookAt(x, y, z); a.m.position.set(x, y, z); }
+      if (!a.fixed) { a.tx = tg.x; a.tz = tg.z; }
+      if (k >= 1) {
+        if (a.kind === "rock" || a.kind === "bolt") {   // boulders hit everyone where they land; bolts go through whoever stands in line behind
+          const foes = a.foes as Fighter[];
+          for (const f of foes) { if (f.down) continue; const d = Math.hypot(f.x - x, f.z - z); if (f === tg || d < (a.kind === "rock" ? 2.2 : 0.9)) this.hit(f, f === tg ? a.dmg : a.dmg * 0.6); }
+          this.ctx.env.spawnShards(x, 1.3, z, a.kind === "rock" ? 0x7a6a50 : 0x8a6a44);
+          this.ctx.fx && this.ctx.fx.dust && this.ctx.fx.dust(x, 1.1, z, a.kind === "rock" ? 1.4 : 0.5);
+        } else if (!tg.down) this.hit(tg, a.dmg);
+        this.ctx.scene.remove(a.m); this.arrows.splice(i, 1);
+      }
     }
+  }
+  /** a crewed giant crossbow or catapult in Free Style: turn to the nearest raider in range, wait for the reload, fire */
+  private engineTick(b: any, foes: Fighter[], dt: number) {
+    const A = this.attack, T = this.g.T, kind = b.type, r = b.g && b.g.userData.siege;
+    let st = A.engines.get(b.id); if (!st) { st = { cd: 1.5, load: 0.5, fire: 0, x: b.x, z: b.z }; A.engines.set(b.id, st); }
+    const min = kind === "catapult" ? 3.5 : 1.5, max = kind === "catapult" ? 18 : 16;
+    let best: any = null, bd = max;
+    for (const e of foes) { if (e.down) continue; const d = Math.hypot(e.x - b.x, e.z - b.z); if (d >= min && d < bd) { bd = d; best = e; } }
+    st.cd -= dt;
+    if (kind === "ballista") { if (!(st.fire > 0) && st.load < 1) st.load = Math.min(1, st.load + dt / 2.8); }
+    if (best && b.g) {
+      const want = Math.atan2(best.x - b.x, best.z - b.z); let dy = want - b.g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      b.g.rotation.y += dy * Math.min(1, dt * 3);
+      const ready = kind === "ballista" ? st.load >= 1 : st.cd <= 0;
+      if (ready && Math.abs(dy) < 0.12) {
+        let m: any;
+        if (kind === "ballista") { m = new T.Group(); for (const q of boltParts(this.ctx)) m.add(new T.Mesh(q.geo, q.mat)); st.load = 0; st.fire = 0.3; }
+        else { m = new T.Mesh(this.rockGeo || (this.rockGeo = new T.DodecahedronGeometry(0.3, 0)), this.rockMat || (this.rockMat = new T.MeshLambertMaterial({ color: 0x6b6860, flatShading: true }))); st.cd = 4.5; st.thr = 0.3; }
+        this.ctx.scene.add(m);
+        const y0 = kind === "ballista" ? 2.5 : 3.0;
+        this.arrows.push({ m, x0: b.x, y0, z0: b.z, tx: best.x, tz: best.z, fixed: kind === "catapult", t: 0, dur: kind === "ballista" ? 0.15 + bd / 30 : 0.9 + bd * 0.06, target: best, dmg: kind === "ballista" ? 40 : 32, kind: kind === "ballista" ? "bolt" : "rock", foes });
+      }
+    }
+    // animate: the bow draws and snaps, the catapult arm swings and is wound back
+    if (r && kind === "ballista") animXbow(T, r, st, dt);
+    if (r && kind === "catapult") {
+      let th: number;
+      if (st.thr > 0) { st.thr -= dt; th = -1.2 + 2.1 * (1 - Math.max(0, st.thr) / 0.3); }
+      else th = 0.9 - 2.1 * Math.min(1, Math.max(0, 1 - st.cd / 4));
+      r.pivot.rotation.x = th; r.ammo.visible = !(st.thr > 0) && st.cd < 1.4;
+      if (!(st.thr > 0) && st.cd > 0.3) r.winch.rotation.x -= dt * 3.2;
+    }
+    b.g.userData.busy = !!best;
   }
   private drawFighters(list: Fighter[], rdt: number) {
     const t = this.ctx.rtime;
@@ -421,7 +466,7 @@ export class FsRaid {
       const f = this.fighter("them", sx + (i % 4) * 1.1, sz + Math.floor(i / 4) * 1.1, { spear: i < P.spears, armour: i < P.armour, hp: P.hp, color: P.color, seed: 9000 + i * 17 + g.day() });
       g.root.add(f.R.g); (f as any).path = land.path(f.x, f.z, DEPOT.x, DEPOT.z) || [[DEPOT.x, DEPOT.z]]; them.push(f);
     }
-    this.attack = { P, them, us: new Map<number, Fighter>(), t: 0, stealT: 0, towers: new Map() };
+    this.attack = { P, them, us: new Map<number, Fighter>(), t: 0, stealT: 0, towers: new Map(), engines: new Map() };
     g.S.villagers.forEach((v) => { if (v.asleep) { v.asleep = false; v.task = null; } });
     g.log(`⚔️ ${P.from} is raiding your village! ${P.desc}. Your guards and towers fight back.`, "bad");
     this.api.focus((sx + START.x) / 2, (sz + START.z) / 2);
@@ -470,6 +515,11 @@ export class FsRaid {
       if (!guard) continue;
       let tw = A.towers.get(b.id); if (!tw) { tw = { x: b.x, z: b.z, y: 5.2, cd: 0.5 }; A.towers.set(b.id, tw); }
       this.shoot(tw, A.them, dt, 12, guard.spear ? 14 : 10);
+    }
+    // crewed giant crossbows and catapults
+    for (const b of g.built("ballista").concat(g.built("catapult"))) {
+      const crew = S.villagers.find((v) => v.towerId === b.id && v.task && v.task.k === "tower" && v.task.at);
+      if (crew) this.engineTick(b, A.them, dt);
     }
     this.updateArrows(dt);
     // raiders at the tent with nobody to stop them carry off part of the store

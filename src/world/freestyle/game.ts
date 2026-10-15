@@ -221,7 +221,7 @@ export class FsGame {
   finishBuilding(b: Bld) {
     b.built = true; b.progress = BUILD[b.type].work; b.site2 = null; b.site = null;
     this.showBuilding(b);
-    this.log(BUILD[b.type].name + " finished." + (b.type === "tower" ? " Click it to send a Guard up." : ""), "good");
+    this.log(BUILD[b.type].name + " finished." + (b.type === "tower" ? " Click it to send a Guard up." : b.type === "ballista" || b.type === "catapult" ? " Click it to choose a Guard to crew it." : ""), "good");
   }
 
   canPlace(type: BType, x: number, z: number): string | null {
@@ -688,6 +688,12 @@ export class FsGame {
       case "tower": {
         const b: Bld = t.b;
         if (!S.buildings.includes(b) || v.towerId !== b.id) { v.y = 0; v.task = null; break; }
+        if (b.type !== "tower") {   // a siege engine: the crew stands at the winch behind it
+          const yaw = b.g ? b.g.rotation.y : b.rot, bx = b.x - Math.sin(yaw) * 1.45, bz = b.z - Math.cos(yaw) * 1.45;
+          if (!t.at) { if (!t.p) { t.p = 1; this.goTo(v, bx, bz); } if (this.walk(v, dt)) t.at = 1; break; }
+          v.x = bx; v.z = bz; v.yaw = yaw; v.working = b.g && b.g.userData.busy ? 1 : 0;
+          break;
+        }
         const lx = b.x + Math.sin(b.rot) * 1.3, lz = b.z + Math.cos(b.rot) * 1.3;
         if (!t.up) {
           if (!t.p) { t.p = 1; this.goTo(v, lx, lz); }

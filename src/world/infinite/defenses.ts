@@ -4,7 +4,10 @@ import { MB } from "./mb";
 import { Rng } from "./rng";
 import { PAL, shade, stoneBox, quoins, bellRoof, doorAt, lantern, barrel, roundShield, vines, ivy, bush, bracket } from "./props";
 import { track, attachDyn, eachWall, type Dyn } from "./buildings";
-import { humanParts, randomLook, armourSet, crossbowParts, instantiate, setTier } from "./humans";
+import { humanParts, randomLook, armourSet, instantiate, setTier } from "./humans";
+import { buildDeckCrossbow } from "../siege/models";
+
+const DECK_Y = 4.0;   // the tower deck height (DECK in buildTower)
 
 /**
  * Walls, towers, torches and traps (Infinite world only). The tower is the showpiece: a stone keep with a door, arrow slits and quoins,
@@ -171,21 +174,18 @@ export function installDefenses(ctx: Ctx) {
     mb.pop();
   };
 
-  /** A static armoured crossbowman for the deck (same body parts as the helpers, posed to aim). */
+  /** The armoured crew for the deck crossbow (same body parts as the helpers), hands on the winch. Shown while a helper mans the tower.
+   *  (5.67.0: the hand-held crossbow became the giant crossbow mounted on the deck, see buildDeckCrossbow.) */
   function makeGuard(main: number) {
     const g = new T.Group(), tiers: any[] = [];
     const L = randomLook(new Rng(321), main);
-    const P = humanParts(ctx, L), A = armourSet(ctx, L, 0xc03030), C = crossbowParts(ctx);
+    const P = humanParts(ctx, L), A = armourSet(ctx, L, 0xc03030);
     const piv = (x: number, y: number, z = 0) => { const p = new T.Group(); p.position.set(x, y, z); return p; };
     const body = piv(0, 0.4), headP = piv(0, 0.4), aL = piv(-0.205 * L.build, 0.33), aR = piv(0.205 * L.build, 0.33), lL = piv(-0.085, 0.4), lR = piv(0.085, 0.4);
     body.add(instantiate(ctx, P.torso, tiers), instantiate(ctx, A.torso, tiers)); headP.add(instantiate(ctx, P.head, tiers), instantiate(ctx, A.head, tiers)); body.add(headP);
     aL.add(instantiate(ctx, P.armL, tiers), instantiate(ctx, A.armL, tiers)); aR.add(instantiate(ctx, P.armR, tiers), instantiate(ctx, A.armR, tiers)); body.add(aL, aR);
     lL.add(instantiate(ctx, P.legL, tiers), instantiate(ctx, A.legL, tiers)); lR.add(instantiate(ctx, P.legR, tiers), instantiate(ctx, A.legR, tiers));
-    const mount = new T.Group(); mount.position.set(0.02, 0.2, 0.14);
-    const stock = instantiate(ctx, C.stock, tiers), limb = instantiate(ctx, C.limb, tiers), str = instantiate(ctx, C.string, tiers);
-    stock.position.z = 0.1; limb.position.z = 0.15; str.position.z = 0.22;
-    mount.add(stock, limb, str); body.add(mount);
-    aL.rotation.set(-1.2, 0, -0.35); aR.rotation.set(-1.1, 0, 0.35); body.rotation.x = 0.06;
+    aL.rotation.set(-1.0, 0, -0.2); aR.rotation.set(-0.9, 0, 0.2); body.rotation.x = 0.18; lL.rotation.x = -0.25; lR.rotation.x = 0.2;
     g.add(body, lL, lR);
     g.scale.setScalar(1.15);
     g.traverse((m: any) => { m.raycast = () => {}; });
@@ -246,8 +246,13 @@ export function installDefenses(ctx: Ctx) {
       const { g, dyn } = instance("tower" + main, (gh) => buildTower(gh), ghost);
       if (ghost) return g;
       attachDyn(ctx, g, g, dyn);
+      // the giant crossbow on the deck (always there; it turns towards the nearest zombie, see src/world/siege) and its crew
+      const xb = buildDeckCrossbow(ctx, main);
+      xb.g.position.set(0.15, DECK_Y + 0.1, 0.2); g.add(xb.g); g.userData.deckXbow = xb;
+      xb.g.traverse((m: any) => { m.raycast = () => {}; });
+      ctx.tiered.push({ userData: { tiers: xb.tiers, owner: g } });
       const gd = makeGuard(main);
-      gd.g.position.set(-0.5, 4.1, 0.2); gd.g.visible = false;
+      gd.g.position.set(0.15, DECK_Y + 0.1, -0.85); gd.g.visible = false;
       g.add(gd.g); g.userData.guard = gd.g;
       const handle = { userData: { tiers: [[], [], []], owner: g } };
       gd.g.traverse((m: any) => { if (m.isMesh && m.userData.tier != null) handle.userData.tiers[m.userData.tier]!.push(m); });

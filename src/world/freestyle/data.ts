@@ -47,7 +47,9 @@ export const ROLES: Record<Role, { name: string; icon: string; desc: string }> =
   guard: { name: "Guard", icon: "🛡️", desc: "Protects the village. Assign one to a Tower to man it." },
 };
 
-export type BType = "tent" | "campfire" | "house" | "farm" | "well" | "mine" | "workshop" | "armory" | "market" | "tower";
+export type BType = "tent" | "campfire" | "house" | "farm" | "well" | "mine" | "workshop" | "armory" | "market" | "tower" | "ballista" | "catapult";
+/** buildings a Guard crews (towers are climbed, the siege engines are worked from behind) */
+export const CREWED: BType[] = ["tower", "ballista", "catapult"];
 export interface BDef { name: string; icon: string; cost: Cost; work: number; r: number; desc: string; slots?: number; beds?: number; buildable?: boolean }
 export const BUILD: Record<BType, BDef> = {
   tent: { name: "Tent", icon: "⛺", cost: {}, work: 0, r: 2.4, beds: 6, desc: "Your home. Click it to feed villagers, give jobs, build and raid. Food and resources are kept here." },
@@ -60,8 +62,10 @@ export const BUILD: Record<BType, BDef> = {
   armory: { name: "Armory", icon: "🛡️", cost: { wood: 30, stone: 25, iron: 10 }, work: 70, r: 1.7, slots: 1, desc: "A smith makes armour here (5 iron + 2 hide each)." },
   market: { name: "Market", icon: "⚖️", cost: { wood: 35, stone: 15 }, work: 50, r: 1.7, desc: "Trade what you have too much of." },
   tower: { name: "Tower", icon: "🗼", cost: { wood: 40, iron: 12 }, work: 60, r: 1.4, desc: "A watchtower. Empty until you assign a Guard to it; a manned tower shoots at raiders." },
+  ballista: { name: "Giant crossbow", icon: "🏹", cost: { wood: 45, iron: 14 }, work: 60, r: 1.3, desc: "A giant crossbow on a carriage. Send a Guard to crew it: it fires huge bolts that go through up to three raiders." },
+  catapult: { name: "Catapult", icon: "☄️", cost: { wood: 50, stone: 20, iron: 8 }, work: 70, r: 1.2, desc: "Hurls boulders that hit every raider where they land. Needs a Guard to crew it; slow to reload, best against groups." },
 };
-export const BUILD_ORDER: BType[] = ["campfire", "house", "farm", "well", "mine", "workshop", "armory", "market", "tower"];
+export const BUILD_ORDER: BType[] = ["campfire", "house", "farm", "well", "mine", "workshop", "armory", "market", "tower", "ballista", "catapult"];
 
 export const PRODUCE = {
   breadEvery: 32,            // per farmer
