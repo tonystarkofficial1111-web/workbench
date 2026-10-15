@@ -122,6 +122,7 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     env.camDistance = cam.dist;
   }
   const focus = (x: number, z: number) => { cam.tx = x; cam.tz = z; cam.follow = false; };
+  if (typeof __WB_DBG__ !== "undefined" && __WB_DBG__) (window as any).__fsCam = (x: number, z: number, dist: number, pitch: number, yaw: number) => { cam.tx = x; cam.tz = z; cam.dist = dist; cam.pitch = pitch; cam.yaw = yaw; cam.follow = false; };
 
   // ------------------------------------------------------------------------------------------------ pointer: click, drag to pan, right-drag to turn, wheel to zoom
   const canvas = ctx.canvas;

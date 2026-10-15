@@ -2,7 +2,7 @@
 import { Rng, fbm, vnoise, clamp, smoothstep } from "../infinite/rng";
 import { MB, applyTier } from "../infinite/mb";
 import { jungleFloorTexture, sandTexture } from "../infinite/tex";
-import { PAL } from "../infinite/props";
+import { PAL, shade } from "../infinite/props";
 import { VERT as WATER_VERT, FRAG as WATER_FRAG, waterPicture } from "../infinite/water";
 import type { FsCtx } from "./ctx";
 
@@ -293,14 +293,39 @@ export function buildLand(ctx: FsCtx, seed: number): Land {
   const addNode = (kind: "stone" | "iron", x: number, z: number) => {
     const r2 = new Rng(seed * 7 + nid * 13), mb = new MB(T, seed + nid * 31);
     mb.jitter = 0.05; mb.ao = { y0: 0, h: 1.2, k: 0.25 };
-    const n = kind === "iron" ? r2.int(3, 5) : r2.int(4, 7);
+    const n = kind === "iron" ? r2.int(4, 6) : r2.int(5, 8);
+    const cols = kind === "iron" ? [0x5a524c, 0x4e4844, 0x625a52, 0x564a42] : [0x8a857c, 0x7a756c, 0x949086, 0x6e6a62, 0x84806f];
     for (let k = 0; k < n; k++) {
-      const a = r2.range(0, 6.28), d = k === 0 ? 0 : r2.range(0.4, 1.0), s = r2.range(0.45, 0.85) * (k === 0 ? 1.3 : 1);
-      const base = kind === "iron" ? r2.pick([0x5a524c, 0x4e4844, 0x625a52]) : r2.pick([0x8a857c, 0x7a756c, 0x949086, 0x6e6a62]);
-      mb.box(base, s * 1.7, s * 1.25, s * 1.6, Math.cos(a) * d, s * 0.62, Math.sin(a) * d, 0, a, 0, { grad: [base, kind === "iron" ? 0x6a5040 : 0x5c7a40, 0, s * 1.3] });
-      if (kind === "iron") for (let j = 0; j < 4; j++) { const c = r2.chance(0.6) ? 0xb0602a : 0xc9ced6; mb.box(c, 0.16, 0.1, 0.16, Math.cos(a) * d + r2.range(-s * 0.6, s * 0.6), s * r2.range(0.5, 1.15), Math.sin(a) * d + r2.range(-s * 0.6, s * 0.6), 0, r2.range(0, 3), 0, { noAO: true, jit: 0.1, mat: c === 0xc9ced6 ? "metal" : "lit" }); }
-      else if (r2.chance(0.5)) mb.box(0x5c7a40, s * 1.2, 0.06, s * 1.1, Math.cos(a) * d, s * 1.25, Math.sin(a) * d, 0, a, 0, { noAO: true });   // moss on top
+      const a = r2.range(0, 6.28), d = k === 0 ? 0 : r2.range(0.45, 1.05), s = r2.range(0.4, 0.8) * (k === 0 ? 1.35 : 1), ry = r2.range(0, 1.6);
+      const x = Math.cos(a) * d, z = Math.sin(a) * d, base = r2.pick(cols), w = s * 1.6, h = s * 1.15, dd = s * 1.45;
+      mb.push(x, 0, z, ry);
+      // a boulder in layers: a wide foot, the body, a narrower lighter top, chunks on its shoulders
+      mb.box(shade(base, 0.85), w * 1.08, h * 0.28, dd * 1.06, 0, h * 0.14, 0, 0, 0, 0, { jit: 0.05 });
+      mb.box(base, w, h * 0.55, dd, 0, h * 0.55, 0, 0, 0, 0, { jit: 0.05 });
+      mb.box(shade(base, 1.1), w * 0.78, h * 0.25, dd * 0.75, r2.range(-0.05, 0.05), h * 0.95, r2.range(-0.05, 0.05), 0, 0, 0, { jit: 0.05 });
+      for (let j = 0; j < 3; j++) { const sx = r2.chance(0.5) ? 1 : -1, cs = s * r2.range(0.25, 0.4); mb.box(shade(base, r2.range(0.92, 1.08)), cs, cs * 0.8, cs, sx * w * 0.42, h * r2.range(0.5, 0.95), r2.range(-dd * 0.35, dd * 0.35), 0, r2.range(0, 1), 0, { tier: 1, jit: 0.05 }); }
+      // strata lines and cracks
+      for (let j = 0; j < 2; j++) mb.box(shade(base, 0.7), w + 0.012, 0.025, dd + 0.012, 0, h * (0.36 + j * 0.25), 0, 0, 0, 0, { tier: 2, noAO: true });
+      mb.box(0x2e2b28, 0.03, h * 0.4, 0.02, r2.range(-w * 0.3, w * 0.3), h * 0.55, dd / 2 + 0.006, 0, 0, r2.range(-0.4, 0.4), { tier: 2, noAO: true });
+      if (kind === "iron") {
+        // ore: clusters of rusty and bright metal cubes poking out of the faces
+        for (let j = 0; j < 5; j++) {
+          const face = r2.int(0, 3), fx = face === 0 ? w / 2 : face === 1 ? -w / 2 : r2.range(-w * 0.35, w * 0.35), fz = face === 2 ? dd / 2 : face === 3 ? -dd / 2 : r2.range(-dd * 0.35, dd * 0.35), fy = h * r2.range(0.35, 0.95);
+          for (let q = 0; q < 3; q++) {
+            const bright = r2.chance(0.3), c = bright ? 0xc9ced6 : r2.pick([0xb0602a, 0x9a4e22, 0xc0703a]), cs = r2.range(0.07, 0.13);
+            mb.box(c, cs, cs, cs, fx + r2.range(-0.08, 0.08), fy + r2.range(-0.08, 0.08), fz + r2.range(-0.08, 0.08), r2.range(0, 1), r2.range(0, 1), 0, { noAO: true, jit: 0.08, mat: bright ? "metal" : "lit", tier: q === 0 ? 0 : 1 });
+          }
+        }
+        for (let j = 0; j < 4; j++) mb.box(r2.pick([0x7a4a2a, 0x6a4430, 0x8a5430]), r2.range(0.1, 0.2), 0.02, r2.range(0.1, 0.2), r2.range(-w * 0.3, w * 0.3), h * 1.08, r2.range(-dd * 0.3, dd * 0.3), 0, 0, 0, { tier: 2, noAO: true });   // rust stains on top
+      } else if (r2.chance(0.6)) {
+        mb.box(0x5c7a40, w * 0.6, 0.05, dd * 0.55, r2.range(-0.05, 0.05), h * 1.09, 0, 0, 0, 0, { noAO: true, jit: 0.08 });   // moss on top
+        for (let j = 0; j < 3; j++) mb.box(r2.pick([0x4c6a36, 0x587a3c]), 0.12, 0.04, 0.12, r2.range(-w * 0.4, w * 0.4), h * 1.12, r2.range(-dd * 0.3, dd * 0.3), 0, 0, 0, { tier: 2, noAO: true });
+      }
+      mb.pop();
     }
+    // loose stones and grass at the foot
+    for (let k = 0; k < 10; k++) { const a = r2.range(0, 6.28), d = r2.range(1.1, 1.7), cs = r2.range(0.08, 0.2); mb.box(r2.pick(cols), cs, cs * 0.6, cs, Math.cos(a) * d, cs * 0.3, Math.sin(a) * d, 0, r2.range(0, 3), 0, { tier: k < 5 ? 1 : 2, jit: 0.08 }); }
+    for (let k = 0; k < 8; k++) { const a = r2.range(0, 6.28), d = r2.range(1.0, 1.5), hh = r2.range(0.15, 0.32); mb.box(r2.pick([0x4f8a34, 0x5e9a3e, 0x6fa54a]), 0.07, hh, 0.07, Math.cos(a) * d, hh / 2, Math.sin(a) * d, 0, r2.range(0, 3), r2.range(-0.3, 0.3), { tier: 2, noAO: true, mat: "sway", sway: 0.6, swayY0: 0, swayH: 0.35 }); }
     const g = mb.build(ctx.mats, true); g.position.set(x, 1, z); nodeGroup.add(g);
     applyTier(g, ctx.gfx.f.tier); ctx.tiered.push(g);
     const node: Node = { id: nid++, kind, x, z, amount: kind === "iron" ? 30 : 45, max: kind === "iron" ? 30 : 45, r: 1.3, model: g };
