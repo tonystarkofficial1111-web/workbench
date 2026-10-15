@@ -1,4 +1,4 @@
-# Workbench 5.66.1 — React + TypeScript rewrite
+# Workbench 5.67.0 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -80,6 +80,25 @@ water through a small env shim (`src/world/freestyle/ctx.ts`). Saved to localSto
 | `ui.ts` | top bar, villager side bar, food bar (drag onto a villager), tent menu, building panels, help |
 | `raid.ts` | 15 raid villages with pictures, the battle map, the counter-raid |
 | `index.ts` | start / continue screen, camera and input, frame loop, saving |
+
+## Block World: siege engines, sky, features (5.67.0)
+
+| Where | What |
+|---|---|
+| `src/world/siege/` | giant crossbow (ballista) and catapult models, their targeting (troops, zombies, castles), bolts; installed for every engine mode from `installInfinite`. Free Style uses the same models as crewed buildings |
+| `src/world/infinite/sky.ts` | golden-hour sky (rays, corona, lit cloud bellies, afterglow, cirrus, stars, square lens flares); a second copy runs for Legacy / classic from the render hook in `infinite/index.ts` |
+| `src/world/features/` | photo mode (shared with Free Style), minimap, daily report, Legacy weather |
+| `src/world/freestyle/weather.ts` | Free Style daily weather with a forecast, reusing `infinite/weather.ts` visuals |
+
+## Car games extras (5.67.0)
+
+`src/arcade/car3d/sky.ts` is the Forza-style shader sky for Rally and Drift King (Day/Night or Sunset). `src/arcade/car3d/extras.ts` adds the
+paint shop, the ghost of your best run, telemetry with sector times and photo mode to both games.
+
+## Workbench (5.67.0)
+
+`src/components/QuickSearch.tsx` (Ctrl+K, reads section headings from the page when it opens) and `src/components/LiveBackground.tsx`
+(animated layer behind the pages, page transitions; off switch in User / Saves).
 
 ### Driving it from a script
 
