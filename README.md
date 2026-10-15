@@ -1,4 +1,4 @@
-# Workbench 5.66.0 — React + TypeScript rewrite
+# Workbench 5.66.1 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
