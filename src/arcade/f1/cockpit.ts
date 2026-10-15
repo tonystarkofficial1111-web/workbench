@@ -4,6 +4,7 @@ import { MB } from "../../world/infinite/mb";
 import { buildF1Car, makeLink, EYE_POS } from "./car";
 import type { F1Env } from "./env";
 import { GEAR_MAX } from "./consts";
+import { clusterCanvas } from "../car3d/interior";
 
 type T3 = typeof THREE_NS;
 
@@ -53,8 +54,29 @@ export function createCockpit(T: T3, kit: any, env: F1Env, f: { level: number })
       dm.box(0x0e0f12, 0.012, 0.02, 0.012, s * 0.1, 0.052, -0.024, 0, 0, 0, { jit: 0 });
     }
     dm.box(0x23272e, 0.13, 0.012, 0.006, 0, -0.068, -0.018, 0, 0, 0, { jit: 0 });
+    // 5.65.0: chunkier grips with finger ridges and a thumb rest, a raised bezel round the screen, a clutch paddle line
+    for (const s of [-1, 1]) {
+      for (let k = 0; k < 4; k++) dm.box(0x1a1c20, 0.066, 0.008, 0.056, s * 0.135, -0.06 + k * 0.03, -0.014, 0, 0, 0, { jit: 0 });
+      dm.box(0x2a2e35, 0.03, 0.03, 0.03, s * 0.112, 0.075, -0.028);
+      dm.box(0x0e0f12, 0.012, 0.13, 0.012, s * 0.168, -0.01, -0.03);
+    }
+    dm.box(0x0e0f12, 0.13, 0.008, 0.012, 0, 0.034, -0.026); dm.box(0x0e0f12, 0.13, 0.008, 0.012, 0, -0.026, -0.026);
+    for (const s of [-1, 1]) dm.box(0x0e0f12, 0.008, 0.068, 0.012, s * 0.064, 0.004, -0.026);
+    dm.box(0x2a2e35, 0.16, 0.02, 0.008, 0, -0.085, 0.018);
     wheelRot.add(dm.build({ ...kit, lit: kit.cf }, false));
   }
+  // 5.65.0: a dash display on the cowl, above the wheel: tachometer, speedometer, gear, odometer and trip, fuel and temperature
+  const dash = clusterCanvas(T, "rally");
+  const dashPanel = new T.Mesh(new T.PlaneGeometry(0.2, 0.078), new T.MeshBasicMaterial({ map: dash.tex, toneMapped: false }));
+  dashPanel.position.set(0, 0.672, 0.84); dashPanel.rotation.set(-0.35, Math.PI, 0); car.group.add(dashPanel);
+  {
+    const hm = new MB(T, 73); hm.ao = { y0: -1, h: 1, k: 0 }; hm.jitter = 0.01;
+    hm.box(0x15171b, 0.23, 0.1, 0.03, 0, 0.668, 0.878, -0.35, 0, 0); hm.box(0x15171b, 0.23, 0.015, 0.07, 0, 0.722, 0.85, 0.2, 0, 0);
+    // padded headrest wings either side of the helmet and the cockpit rim padding, seen at the edges of the view
+    for (const s of [-1, 1]) { hm.box(0x1f2a44, 0.07, 0.12, 0.34, s * 0.22, 0.68, -0.1); hm.box(0x1f2a44, 0.05, 0.05, 0.6, s * 0.245, 0.64, 0.25); for (let k = 0; k < 4; k++) hm.box(0x2a3a5a, 0.072, 0.008, 0.33, s * 0.22, 0.64 + k * 0.025, -0.1, 0, 0, 0, { jit: 0 }); }
+    car.group.add(hm.build(kit, false));
+  }
+  let odo = 0;
   // shift paddles behind the grips: they flick when you change gear (right = up with Y, left = down with U)
   const paddles = [-1, 1].map((s) => {
     const pm = new T.Mesh(new T.BoxGeometry(0.05, 0.075, 0.008), new T.MeshStandardMaterial({ color: 0x1d2025, roughness: 0.45, metalness: 0.2 }));
@@ -165,6 +187,9 @@ export function createCockpit(T: T3, kit: any, env: F1Env, f: { level: number })
     const lit = Math.round(Math.max(0, Math.min(1, ((p.rpm || 0) - 0.55) / 0.45)) * 15), blink = (p.rpm || 0) >= 0.98 && Math.floor(now / 90) % 2 === 0;   // shift lights: the last part of the rev range
     leds.forEach((l, i) => l.mat.color.copy(i < lit && !(blink && i > 4) ? l.on : l.off));
     drawScreen(p, now, extra);
+    // the game's 115 mph is about 75 m/s on screen; the odometer counts real miles of that
+    odo += ((p.speed || 0) * 0.65 * dt) / 1609;
+    dash.update({ mph: p.speed || 0, rpm: (p.rpm || 0) * 15000, redline: 13500, gear: p.gear || 1, odo: 1240 + odo, trip: odo, fuel: 0.95 - odo * 0.6, temp: 0.55 + (p.rpm || 0) * 0.3 });
     // the brake light stays off in the cockpit
     car.brake.visible = false;
   }

@@ -12,7 +12,7 @@ import { MB } from "../../world/infinite/mb";
  */
 export interface Gauges { update(d: { mph: number; rpm: number; redline: number; gear: number; odo: number; trip: number; fuel: number; temp: number; units?: "mph" | "kmh" }): void; tex: any }
 
-function clusterCanvas(T: any, style: "street" | "rally") {
+export function clusterCanvas(T: any, style: "street" | "rally") {
   const c = document.createElement("canvas"); c.width = 512; c.height = 200;
   const g = c.getContext("2d")!;
   const tex = new T.CanvasTexture(c); tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = 4;

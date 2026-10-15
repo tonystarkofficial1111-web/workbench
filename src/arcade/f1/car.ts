@@ -203,6 +203,25 @@ export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf
     const set = [makeLink(T, linkMat, 0.026), makeLink(T, linkMat, 0.026), makeLink(T, linkMat, 0.03), makeLink(T, linkMat, 0.03), makeLink(T, rodMat, 0.034), makeLink(T, rodMat, 0.022)];
     set.forEach((l) => group.add(l.mesh)); links.push(set);
   });
+  // 5.65.0: a coil-over spring and damper at each corner, from the lower wishbone near the upright up to the chassis. The coil is a
+  // helix of short bars (one instanced mesh for the whole car) that squashes and stretches with the wheel's travel.
+  const TURNS = 7, SEGS = TURNS * 8, coilR = 0.045;
+  const coilGeo = new T.BoxGeometry(1, 1, 1), coilMat = new T.MeshStandardMaterial({ color: 0xe0b020, metalness: 0.75, roughness: 0.35, envMapIntensity: 1 });
+  const coils = new T.InstancedMesh(coilGeo, coilMat, SEGS * 4); coils.frustumCulled = false; coils.castShadow = true; group.add(coils);
+  const dampers = F1_WHEELS.map(() => ({ body: makeLink(T, kit.metal, 0.034), rod: makeLink(T, kit.metal, 0.014), cap: makeLink(T, linkMat, 0.06) }));
+  dampers.forEach((d) => group.add(d.body.mesh, d.rod.mesh, d.cap.mesh));
+  const cA = new T.Vector3(), cB = new T.Vector3(), cD = new T.Vector3(), cU = new T.Vector3(), cW = new T.Vector3(), cP = new T.Vector3(), cQ = new T.Vector3(), cM = new T.Vector3();
+  const cq = new T.Quaternion(), cz = new T.Vector3(0, 0, 1), cS = new T.Vector3(), cMat = new T.Matrix4();
+  function placeCoil(k: number, a: any, b: any) {
+    cD.subVectors(b, a); const L = cD.length(); cD.divideScalar(L);
+    cU.set(0, 1, 0); if (Math.abs(cD.y) > 0.9) cU.set(1, 0, 0); cU.cross(cD).normalize(); cW.crossVectors(cD, cU);
+    const at = (s: number, out: any) => { const th = s * TURNS * Math.PI * 2; return out.copy(a).addScaledVector(cD, L * (0.08 + 0.84 * s)).addScaledVector(cU, Math.cos(th) * coilR).addScaledVector(cW, Math.sin(th) * coilR); };
+    for (let s = 0; s < SEGS; s++) {
+      at(s / SEGS, cP); at((s + 1) / SEGS, cQ);
+      cM.addVectors(cP, cQ).multiplyScalar(0.5); cS.subVectors(cQ, cP); const len = cS.length(); cq.setFromUnitVectors(cz, cS.divideScalar(len));
+      cMat.compose(cM, cq, cP.set(0.012, 0.012, len * 1.15)); coils.setMatrixAt(k * SEGS + s, cMat);
+    }
+  }
   const v = (a: number[], sx: number) => new T.Vector3(a[0]! * sx, a[1]!, a[2]!);
   const A = new T.Vector3(), B = new T.Vector3();
   function setSuspension(comp: number[], steer: number) {
@@ -219,7 +238,13 @@ export function buildF1Car(T: T3, kit: any, color: string | number, accent = 0xf
       L[3].set(v(ib.loR, sx), A.set(hx, hy - 0.17, hz - 0.06));
       L[4].set(v(ib.rocker, sx), B.set(hx, hy + 0.19, hz + 0.03));
       L[5].set(v(ib.rack, sx), A.set(hx, hy - 0.02, hz - 0.1 * w.s));
+      // coil-over: bottom on the lower wishbone (moves with the wheel, travel shown twice as big so it can be seen), top on the chassis
+      cA.set(hx - sx * 0.12, hy - 0.12 + up, hz + (front ? -0.14 : 0.14));
+      cB.set(sx * 0.36, front ? 0.66 : 0.64, hz + (front ? -0.2 : 0.2));
+      placeCoil(i, cA, cB);
+      const d = dampers[i]!; cM.lerpVectors(cA, cB, 0.55); d.body.set(cB, cM); d.rod.set(cM, cA); cP.lerpVectors(cA, cB, 0.06); cQ.lerpVectors(cA, cB, 0.12); d.cap.set(cP, cQ);
     }
+    coils.instanceMatrix.needsUpdate = true;
   }
   setSuspension([0, 0, 0, 0], 0);
 
