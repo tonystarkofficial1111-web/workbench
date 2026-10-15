@@ -60,6 +60,13 @@ export class FsGame {
   listeners: Array<(e: any) => void> = [];
   sel = -1;
   leader: Villager | null = null;
+  /** today's weather (set by weather.ts) */
+  weather = "sunny";
+  /** what happened today, for the dawn report */
+  daily: any = { wood: 0, stone: 0, iron: 0, food: 0, water: 0, built: 0, born: 0, died: 0, hunted: 0, skins: 0 };
+  get wet() { return this.weather === "rain" || this.weather === "storm"; }
+  /** outdoor work speed (storms slow it) */
+  get outdoor() { return this.weather === "storm" ? 0.85 : 1; }
   lastCyc = 0;
   private toolCache = new Map<string, any>();
   private iconCache = new Map<string, any>();
@@ -219,7 +226,7 @@ export class FsGame {
   updateScaffold(b: Bld) { if (b.site2) { const k = clamp(b.progress / BUILD[b.type].work, 0, 1); b.site2.scale.set(1, 0.08 + 0.92 * k, 1); } }
 
   finishBuilding(b: Bld) {
-    b.built = true; b.progress = BUILD[b.type].work; b.site2 = null; b.site = null;
+    b.built = true; b.progress = BUILD[b.type].work; b.site2 = null; b.site = null; this.daily.built++;
     this.showBuilding(b);
     this.log(BUILD[b.type].name + " finished." + (b.type === "tower" ? " Click it to send a Guard up." : b.type === "ballista" || b.type === "catapult" ? " Click it to choose a Guard to crew it." : ""), "good");
   }
@@ -432,7 +439,7 @@ export class FsGame {
   addCarry(v: Villager, c: Cost) { v.carry = v.carry || {}; (Object.keys(c) as Res[]).forEach((k) => (v.carry![k] = (v.carry![k] || 0) + (c[k] || 0))); }
   deposit(v: Villager) {
     if (!v.carry) return;
-    (Object.keys(v.carry) as Res[]).forEach((k) => (this.S.stock[k] = (this.S.stock[k] || 0) + (v.carry![k] || 0)));
+    (Object.keys(v.carry) as Res[]).forEach((k) => { this.S.stock[k] = (this.S.stock[k] || 0) + (v.carry![k] || 0); if (k === "wood" || k === "stone" || k === "iron") this.daily[k] += v.carry![k] || 0; });
     v.carry = null;
     this.emit({ type: "stock" });
   }
@@ -589,7 +596,7 @@ export class FsGame {
         if (!t.p) { t.p = 1; if (!this.goTo(v, tr.x, tr.z)) { tr.claim = null; v.task = null; break; } }
         if (!this.near(v, tr.x, tr.z, 1.3)) { if (this.walk(v, dt)) { t.p = 0; t.fail = (t.fail || 0) + 1; if (t.fail > 2) { tr.claim = null; tr.bad = 1; v.task = null; } } break; }
         v.path = null; this.face(v, tr.x, tr.z); v.working = 1;
-        t.w = (t.w || 0) + dt;
+        t.w = (t.w || 0) + dt * this.outdoor;
         if (t.w >= PRODUCE.chop) {
           this.removeTree(tr, v);
           this.addCarry(v, { wood: PRODUCE.woodPerTree });
@@ -603,7 +610,7 @@ export class FsGame {
         if (!t.p) { t.p = 1; if (!this.goTo(v, n.x, n.z)) { v.task = null; break; } }
         if (!this.near(v, n.x, n.z, n.r + 0.9)) { if (this.walk(v, dt)) { t.p = 0; t.fail = (t.fail || 0) + 1; if (t.fail > 2) v.task = null; } break; }
         v.path = null; this.face(v, n.x, n.z); v.working = 1;
-        t.w = (t.w || 0) + dt;
+        t.w = (t.w || 0) + dt * this.outdoor;
         const spec = n.kind === "iron" ? PRODUCE.nodeIron : PRODUCE.nodeStone;
         if (t.w >= spec.every) {
           const got = Math.min(spec.n, n.amount);
@@ -639,7 +646,8 @@ export class FsGame {
         if (!this.near(v, src.x, src.z, src.well ? BUILD.well.r + 0.9 : 1.6)) { if (this.walk(v, dt)) { t.p = 0; t.fail = (t.fail || 0) + 1; if (t.fail > 2) v.task = null; } break; }
         v.path = null; this.face(v, src.x, src.z); v.working = 1;
         t.w = (t.w || 0) + dt;
-        if (t.w >= (src.well ? PRODUCE.wellFill : PRODUCE.fill)) { this.addCarry(v, { rawWater: src.well ? PRODUCE.wellPerTrip : PRODUCE.waterPerTrip }); v.task = v.leader ? { k: "deliver" } : null; }
+        // rain fills the wells and the buckets twice as fast
+        if (t.w >= (src.well ? PRODUCE.wellFill : PRODUCE.fill) * (this.wet ? 0.5 : 1)) { this.addCarry(v, { rawWater: src.well ? PRODUCE.wellPerTrip : PRODUCE.waterPerTrip }); v.task = v.leader ? { k: "deliver" } : null; }
         break;
       }
       case "build": {
@@ -649,7 +657,7 @@ export class FsGame {
         if (!t.p) { t.p = 1; if (!this.goTo(v, sx, sz)) { v.task = null; break; } }
         if (!this.near(v, sx, sz, 0.6) && !this.near(v, b.x, b.z, BUILD[b.type].r + 1.1)) { if (this.walk(v, dt)) { t.p = 0; t.fail = (t.fail || 0) + 1; if (t.fail > 2) v.task = null; } break; }
         v.path = null; this.face(v, b.x, b.z); v.working = 1; t.busy = 1;
-        b.progress += PRODUCE.build * dt;
+        b.progress += PRODUCE.build * dt * this.outdoor;
         t.sh = (t.sh || 0) + dt; if (t.sh > 1.2) { t.sh = 0; this.ctx.env.spawnShards(b.x + this.rnd.range(-0.6, 0.6), 1.5, b.z + this.rnd.range(-0.6, 0.6), 0x8a6a40); }
         this.updateScaffold(b);
         if (b.progress >= BUILD[b.type].work) { this.finishBuilding(b); v.task = null; }
@@ -665,14 +673,14 @@ export class FsGame {
         if (t.what === "mine") v.hidden = true;     // down the shaft
         t.w = (t.w || 0) + dt; t.w2 = (t.w2 || 0) + dt;
         const done = (msg?: string) => { if (msg) this.log(msg); };
-        if (t.what === "farm" && t.w >= PRODUCE.breadEvery) { t.w = 0; S.stock.bread++; this.emit({ type: "stock" }); }
+        if (t.what === "farm" && t.w >= PRODUCE.breadEvery * (this.wet ? 0.75 : 1)) { t.w = 0; S.stock.bread++; this.daily.food++; this.emit({ type: "stock" }); }
         if (t.what === "mine") {
-          if (t.w >= PRODUCE.mineStone.every) { t.w = 0; S.stock.stone += PRODUCE.mineStone.n; this.emit({ type: "stock" }); }
-          if (t.w2 >= PRODUCE.mineIron.every) { t.w2 = 0; S.stock.iron += PRODUCE.mineIron.n; this.emit({ type: "stock" }); }
+          if (t.w >= PRODUCE.mineStone.every) { t.w = 0; S.stock.stone += PRODUCE.mineStone.n; this.daily.stone += PRODUCE.mineStone.n; this.emit({ type: "stock" }); }
+          if (t.w2 >= PRODUCE.mineIron.every) { t.w2 = 0; S.stock.iron += PRODUCE.mineIron.n; this.daily.iron += PRODUCE.mineIron.n; this.emit({ type: "stock" }); }
         }
         if (t.what === "cook") {
-          if (S.stock.rawMeat > 0 && t.w >= PRODUCE.cook) { t.w = 0; S.stock.rawMeat--; S.stock.meat++; this.emit({ type: "stock" }); }
-          if (S.stock.rawWater > 0 && t.w2 >= PRODUCE.boilEvery) { t.w2 = 0; const n = Math.min(PRODUCE.boilN, S.stock.rawWater); S.stock.rawWater -= n; S.stock.water += n; this.emit({ type: "stock" }); }
+          if (S.stock.rawMeat > 0 && t.w >= PRODUCE.cook) { t.w = 0; S.stock.rawMeat--; S.stock.meat++; this.daily.food++; this.emit({ type: "stock" }); }
+          if (S.stock.rawWater > 0 && t.w2 >= PRODUCE.boilEvery) { t.w2 = 0; const n = Math.min(PRODUCE.boilN, S.stock.rawWater); S.stock.rawWater -= n; S.stock.water += n; this.daily.water += n; this.emit({ type: "stock" }); }
           if (S.stock.rawMeat <= 0 && S.stock.rawWater <= 0) { this.release(v); v.task = null; }
         }
         if (t.what === "spear" || t.what === "armour") {
@@ -740,7 +748,7 @@ export class FsGame {
     }
   }
   killAnimal(a: Animal, by: Villager | null) {
-    a.st = "dead"; a.t = 6; (a as any).claim = null;
+    a.st = "dead"; a.t = 6; (a as any).claim = null; this.daily.hunted++;
     const spec = ANIMALS[a.kind];
     if (by) { this.addCarry(by, { rawMeat: spec.meat, ...spec.extra }); by.task = { k: "deliver" }; }
   }
@@ -762,7 +770,7 @@ export class FsGame {
     this.release(v);
     if (v.r) { this.vGroup.remove(v.r.g); untrack(this.ctx, v.r.g); }
     this.S.buildings.forEach((b) => { if (b.guard === v.id) b.guard = undefined; });
-    this.S.stats.died++;
+    this.S.stats.died++; this.daily.died++;
     if (v.leader) { this.leader = null; this.log("Your leader has died. The village carries on without you...", "bad"); }
     else this.log(v.name + " has died.", "bad");
     if (this.sel === v.id) this.sel = -1;
@@ -773,7 +781,7 @@ export class FsGame {
     const work = v.task && (v.task.k === "build" ? N2.buildMul : v.working ? N2.workMul : 1) || 1;
     const mul = v.asleep ? N2.sleepMul : work;
     v.hunger = Math.max(0, v.hunger - N2.hunger * mul * dt);
-    v.thirst = Math.max(0, v.thirst - N2.thirst * mul * dt);
+    v.thirst = Math.max(0, v.thirst - N2.thirst * mul * dt * (this.wet ? 0.8 : 1));
     if (v.collapsed > 0) {
       v.collapsed -= dt; v.sick = Math.max(0, v.sick - dt);
       if (v.down !== "hurt" && v.hunger >= 20 && v.thirst >= 20) this.revive(v);   // the badly hurt need to be fed by hand
@@ -789,6 +797,11 @@ export class FsGame {
   /** every dawn: people sleep less, someone new may join */
   dawn() {
     const S = this.S, pop = S.villagers.length;
+    // yesterday, for the dawn report and the chart over the days
+    const rep = { day: this.day() - 1, ...this.daily, pop, foodStock: S.stock.bread + S.stock.meat, waterStock: S.stock.water, weather: this.weather };
+    S.history = (S.history || []).concat([{ day: rep.day, pop, food: rep.foodStock, water: rep.waterStock, wood: S.stock.wood }]).slice(-60);
+    this.daily = { wood: 0, stone: 0, iron: 0, food: 0, water: 0, built: 0, born: 0, died: 0, hunted: 0, skins: 0 };
+    this.emit({ type: "report", rep });
     S.villagers.forEach((v) => { v.asleep = false; if (v.task && v.task.k === "sleep") v.task = null; });
     const food = S.stock.bread + S.stock.meat, avgH = S.villagers.reduce((s, v) => s + v.hunger, 0) / Math.max(1, pop);
     if (pop < this.beds() && food >= Math.ceil(pop / 2) && avgH > 45) {
@@ -796,7 +809,7 @@ export class FsGame {
       const a = this.rnd.range(0, 6.28); v.x = START.x + Math.cos(a) * 24; v.z = START.z + Math.sin(a) * 24;
       if (!this.land.walkable(v.x, v.z)) { v.x = DEPOT.x; v.z = DEPOT.z + 2; }
       v.r.g.position.set(v.x, 1, v.z);
-      S.stats.born++;
+      S.stats.born++; this.daily.born++;
       this.log(v.name + " has joined your village! Give them a job in the tent.", "good");
     } else if (pop >= this.beds() && this.day() % 2 === 0) this.log("All beds are taken. Build a House so more people can join.", "info");
     this.emit({ type: "dawn", day: this.day() });
@@ -875,7 +888,8 @@ export class FsGame {
       } else if (a.st === "graze") { if (a.t <= 0) { a.st = "wander"; const r = this.rnd.range(3, 9), an = this.rnd.range(0, 6.28); a.tx = a.x + Math.cos(an) * r; a.tz = a.z + Math.sin(an) * r; a.t = 12; } }
       else { sp = spec.speed * 0.32; if (Math.hypot(a.tx - a.x, a.tz - a.z) < 0.4 || a.t <= 0) { a.st = "graze"; a.t = this.rnd.range(3, 10); } }
       // villagers nearby make them nervous (hunters are spotted from farther)
-      if (a.st !== "flee") for (const v of this.S.villagers) { if (v.asleep || v.collapsed > 0) continue; const d = Math.hypot(v.x - a.x, v.z - a.z); if (d < (v.task && v.task.animal === a ? 3.2 : 1.6)) { a.st = "flee"; a.from = v; a.t = 1.6; break; } }
+      const fogK = this.weather === "fog" ? 0.5 : 1;   // in fog the animals notice people later
+      if (a.st !== "flee") for (const v of this.S.villagers) { if (v.asleep || v.collapsed > 0) continue; const d = Math.hypot(v.x - a.x, v.z - a.z); if (d < (v.task && v.task.animal === a ? 3.2 : 1.6) * fogK) { a.st = "flee"; a.from = v; a.t = 1.6; break; } }
       if (sp > 0) {
         const dx = a.tx - a.x, dz = a.tz - a.z, d = Math.hypot(dx, dz);
         if (d > 0.05) {

@@ -13,6 +13,8 @@ import { clamp } from "../infinite/rng";
 import { BUILD, type BType } from "./data";
 import { FsUi } from "./ui";
 import { FsRaid } from "./raid";
+import { installFsWeather } from "./weather";
+import { createBlockPhoto } from "../features/photo";
 
 declare const __WB_DBG__: boolean;
 
@@ -77,6 +79,8 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
 
   const game = new FsGame(ctx, land, field, S);
   if (saved) game.restore(); else game.setupNew();
+  try { installFsWeather(ctx, game); } catch (e) { console.error("free style weather", e); }
+  const photo = createBlockPhoto({ host, canvas: ctx.canvas, name: "Free Style", render: () => ctx.renderer.render(ctx.scene, ctx.camera), dayLength: DAY_LENGTH, now: () => S.time, setSky: (t) => { env.wbPhotoTime = t; } });
   ctx.gfxChanged.push(() => game.refreshGfx());
   (ctx as any).applyGfx();
   if (typeof __WB_DBG__ !== "undefined" && __WB_DBG__) (window as any).__fs = { ctx, game, land };
@@ -90,7 +94,8 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     keys[e.code] = down;
     if (!down) return;
     if (e.code === "KeyF") { cam.follow = !cam.follow; ui.toast(cam.follow ? "Camera follows your leader" : "Camera free", "info"); }
-    if (e.code === "Escape") { if (ghost) cancelGhost(); else ui.closeAll(); }
+    if (e.code === "Escape") { if (photo.open) photo.exit(); else if (ghost) cancelGhost(); else ui.closeAll(); }
+    if (e.code === "KeyP") photo.toggle();
     if (e.code === "KeyR" && ghost) { ghost.rot = (ghost.rot + Math.PI / 2) % (Math.PI * 2); ghost.mesh.rotation.y = ghost.rot; }
     if (e.code === "Space") { speed = speed === 0 ? 1 : 0; ui.setSpeed(speed); e.preventDefault(); }
     if (e.code === "KeyT") ui.openTent();
@@ -276,7 +281,8 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     focus: (x: number, z: number) => focus(x, z),
     gfx: () => { ctx.gfx.cycle(); return ctx.gfx.name(); },
     gfxName: () => ctx.gfx.name(),
-    screenOf, villagerAt,
+    screenOf, villagerAt, photo,
+    camTarget: () => ({ x: cam.tx, z: cam.tz, d: cam.dist }),
   });
   const raid = new FsRaid(game, land, field, ui, { focus: (x: number, z: number) => focus(x, z), save: () => writeSave(false) });
   if (typeof __WB_DBG__ !== "undefined" && __WB_DBG__) (window as any).__fs.raid = raid;
@@ -292,7 +298,8 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     try {
       ctx.rtime += rdt; ctx.dt = rdt;
       // the night goes by faster when everyone is asleep and you asked for it
-      const sim = rdt * speed * (ui.skipNight && game.isNight() ? 6 : 1);
+      const sim = photo.open ? 0 : rdt * speed * (ui.skipNight && game.isNight() ? 6 : 1);   // photo mode holds the moment
+      photo.tick();
       if (ui.skipNight && !game.isNight()) ui.skipNight = false;
       let left = sim;
       while (left > 1e-6) { const st = Math.min(0.1, left); if (raid.battle) raid.battleUpdate(st); else { game.update(st); raid.homeUpdate(st); } left -= st; }
@@ -317,6 +324,7 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); window.removeEventListener("blur", blur);
     document.removeEventListener("visibilitychange", onHide); window.removeEventListener("beforeunload", onUnload);
     cancelGhost();
+    photo.dispose();
     raid.dispose();
     ui.dispose();
     for (const f of ctx.cleanup.splice(0)) { try { f(); } catch (e) { console.error(e); } }

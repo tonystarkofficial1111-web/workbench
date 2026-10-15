@@ -18,6 +18,7 @@ import { installSky } from "./sky";
 import { installWater } from "./water";
 import { installWeather } from "./weather";
 import { installSiege } from "../siege";
+import { installWorldFeatures, legacyWeather } from "../features";
 import { quality } from "../../core/perf";
 import { worldBridge } from "../../core/bridge";
 
@@ -50,6 +51,7 @@ export function installInfinite(env: Env) {
   installCastle(ctx);
   installDefenses(ctx);
   try { installSiege(ctx, env); } catch (e) { console.error("siege engines failed to start", e); }   // all modes, not only Infinite
+  try { installWorldFeatures(ctx, env); } catch (e) { console.error("world features failed to start", e); }   // minimap, daily report, photo mode
   const worldEl = () => document.getElementById("tab-world");
   const active = () => { const e = worldEl(); return !!(e && e.classList.contains("active")); };
   const attached = (o: any) => { for (let p = o; p; p = p.parent) if (p === env.scene) return true; return false; };
@@ -143,6 +145,7 @@ export function installInfinite(env: Env) {
     air.cover = 0.42; air.dark = air.rain = air.storm = air.fog = air.blood = air.flash = 0;
     const sctx: any = { ...ctx, frame: [], cleanup: [], x: {}, started: [], gfxChanged: [] };
     installSky(sctx);
+    sctx.frame.unshift(legacyWeather(sctx, env));   // the kind of day first, so the sky draws it this frame
     otherSky = sctx;
   }
   function stopOtherSky() {

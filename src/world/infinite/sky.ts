@@ -231,7 +231,7 @@ export function installSky(ctx: Ctx) {
 
   function update(dt: number) {
     const cam = env.camera, DAY = env.DAY_LENGTH as number;
-    const t = env.simTime as number, cyc = (t % DAY) / DAY;
+    const t = (env.wbPhotoTime != null ? env.wbPhotoTime : env.simTime) as number, cyc = (((t % DAY) + DAY) % DAY) / DAY;   // photo mode may hold its own time of day
     const ease = (x: number) => (1 - Math.cos(Math.PI * x)) / 2;
     const a = cyc < 0.5 ? Math.PI * ease(cyc * 2) : Math.PI + Math.PI * ease((cyc - 0.5) * 2);
     // the sun's path leans away from east-west so it is never straight overhead; sunrise and sunset land beside the default view, so the low sun lights the island from the side

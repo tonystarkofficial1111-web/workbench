@@ -2,6 +2,8 @@
 import { DAY_LENGTH } from "./ctx";
 import type { FsGame, Villager, Bld } from "./game";
 import { RES_INFO, ROLES, BUILD, BUILD_ORDER, TRADES, FOOD_ITEMS, NEEDS, CREWED, canPay, pay, costText, type Res, type Role, type BType } from "./data";
+import { WX_INFO } from "./weather";
+import { N } from "./land";
 
 /**
  * Free Style's screen: resources and time at the top, every villager's state in the side bar, the food bar to drag food onto people,
@@ -34,7 +36,9 @@ export class FsUi {
       <div class="fs-hint" style="display:none"></div>
       <div class="fs-toasts"></div>
       <div class="fs-modal" style="display:none"><div class="fs-modal-c"></div></div>
-      <div class="fs-help" style="display:none"></div>`;
+      <div class="fs-help" style="display:none"></div>
+      <div class="fs-mm"><canvas width="172" height="172"></canvas></div>
+      <div class="fs-report"></div>`;
     host.appendChild(root);
     const q = (s: string) => root.querySelector(s) as HTMLElement;
     this.top = q(".fs-top"); this.side = q(".fs-side-list"); this.bar = q(".fs-bar"); this.card = q(".fs-card"); this.modal = q(".fs-modal"); this.panel = q(".fs-panel");
@@ -43,7 +47,11 @@ export class FsUi {
     root.addEventListener("change", (e) => this.onChange(e));
     root.addEventListener("pointerdown", (e) => this.onDown(e));
     this.modal.addEventListener("click", (e) => { if (e.target === this.modal) this.closeAll(); });
-    g.on((e) => { if (e.type === "toast") this.toast(e.text, e.kind); if (e.type === "collapse" || e.type === "dawn") this.refresh(); });
+    g.on((e) => { if (e.type === "toast") this.toast(e.text, e.kind); if (e.type === "collapse" || e.type === "dawn") this.refresh(); if (e.type === "report") this.showReport(e.rep); });
+    this.mm = root.querySelector(".fs-mm canvas") as HTMLCanvasElement;
+    this.mm.addEventListener("click", (e) => { const r = this.mm.getBoundingClientRect(); this.api.focus(((e.clientX - r.left) / r.width) * N, ((e.clientY - r.top) / r.height) * N); });
+    this.report = root.querySelector(".fs-report") as HTMLElement;
+    this.report.addEventListener("click", (e) => { if ((e.target as HTMLElement).closest("[data-rx]")) this.report.classList.remove("on"); });
     this.refresh();
     if (!g.S.log.length || g.day() === 1) setTimeout(() => this.showHelp(true), 400);
   }
@@ -66,7 +74,56 @@ export class FsUi {
   }
   ghostWhy(why: string) { const s = this.hint.querySelector(".fs-why"); if (s) s.textContent = why ? " — " + why : ""; }
 
-  frame(dt: number) { this.acc += dt; if (this.acc > 0.25) { this.acc = 0; this.refresh(); } }
+  frame(dt: number) { this.acc += dt; if (this.acc > 0.25) { this.acc = 0; this.refresh(); this.drawMap(); } }
+
+  // ------------------------------------------------------------------------------------------------ minimap (5.67.0)
+  mm!: HTMLCanvasElement; report!: HTMLElement; private mmBase: HTMLCanvasElement | null = null;
+  private mapBase() {
+    const land = this.g.land, S = 172, c = document.createElement("canvas"); c.width = c.height = S; const q = c.getContext("2d")!;
+    const img = q.createImageData(S, S), k = N / S;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const i = Math.floor(y * k) * N + Math.floor(x * k), o = (y * S + x) * 4;
+      let col = [28, 74, 110];
+      if (land.land[i]) { const z = land.zone[i]; col = land.dWater[i]! < 2 ? [214, 196, 140] : z === 1 ? [52, 108, 46] : z === 2 ? [128, 122, 104] : [94, 152, 68]; }
+      img.data[o] = col[0]!; img.data[o + 1] = col[1]!; img.data[o + 2] = col[2]!; img.data[o + 3] = 255;
+    }
+    q.putImageData(img, 0, 0);
+    q.fillStyle = "#8a6a44"; for (const b of land.bridges) { q.save(); q.translate((b.x / N) * S, (b.z / N) * S); q.rotate(-b.a); q.fillRect(-2, -(b.hl / N) * S, 4, (2 * b.hl / N) * S); q.restore(); }
+    return c;
+  }
+  drawMap() {
+    if (!this.mm || this.mm.offsetParent === null) return;
+    if (!this.mmBase) this.mmBase = this.mapBase();
+    const q = this.mm.getContext("2d")!, S = 172, P = (v: number) => (v / N) * S, g = this.g;
+    q.drawImage(this.mmBase, 0, 0);
+    for (const n of g.land.nodes) { q.fillStyle = n.kind === "iron" ? "#b0602a" : "#9a968c"; q.fillRect(P(n.x) - 1.5, P(n.z) - 1.5, 3, 3); }
+    for (const a of g.S.animals) { if (a.st === "dead") continue; q.fillStyle = a.kind === "cow" ? "#6b4428" : a.kind === "sheep" ? "#f0ece2" : "#e8b020"; q.fillRect(P(a.x) - 1, P(a.z) - 1, 2, 2); }
+    for (const b of g.S.buildings) { const s = b.type === "tent" ? 7 : 4; q.fillStyle = b.built ? (b.type === "tent" ? "#7a845d" : "#c9b48a") : "rgba(201,180,138,.5)"; q.fillRect(P(b.x) - s / 2, P(b.z) - s / 2, s, s); q.strokeStyle = "#000"; q.lineWidth = 1; q.strokeRect(P(b.x) - s / 2, P(b.z) - s / 2, s, s); }
+    for (const v of g.S.villagers) { if (v.asleep) continue; q.fillStyle = v.leader ? "#ffd34d" : v.collapsed > 0 ? "#ff5a4a" : "#5ab0ff"; q.beginPath(); q.arc(P(v.x), P(v.z), v.leader ? 3 : 2, 0, Math.PI * 2); q.fill(); }
+    const A = this.raid && this.raid.attack;
+    if (A) for (const f of A.them) { if (f.down) continue; q.fillStyle = "#e0302a"; q.fillRect(P(f.x) - 2, P(f.z) - 2, 4, 4); }
+    const c = this.api.camTarget && this.api.camTarget(); if (c) { const r = Math.max(4, P(c.d * 0.7)); q.strokeStyle = "rgba(255,255,255,.8)"; q.strokeRect(P(c.x) - r, P(c.z) - r * 0.7, r * 2, r * 1.4); }
+  }
+
+  // ------------------------------------------------------------------------------------------------ the dawn report (5.67.0)
+  showReport(rep: any) {
+    if (localStorage.getItem("wb-fs-report-off") === "1") return;
+    const g = this.g, H = (g.S.history || []).slice(-20), w = WX_INFO[rep.weather || "sunny"] || WX_INFO.sunny;
+    const rows: Array<[string, string]> = [["🪵 Wood", "+" + rep.wood], ["🪨 Stone", "+" + rep.stone], ["⛓️ Iron", "+" + rep.iron], ["🍞 Food made", "+" + rep.food], ["🫖 Water boiled", "+" + rep.water], ["🏠 Built", String(rep.built)], ["🏹 Hunted", String(rep.hunted)], ["👶 Joined", String(rep.born)], ["🪦 Died", String(rep.died)]];
+    this.report.innerHTML = `<div class="fs-rh"><b>🌅 Day ${rep.day} report</b><button type="button" class="fs-x" data-rx="1">✕</button></div>` +
+      `<div class="fs-rg">${rows.map(([k, v]) => `<div><em>${k}</em><b>${v}</b></div>`).join("")}</div>` +
+      `<p class="fs-small">${rep.pop} people · food in store ${rep.foodStock} · boiled water ${rep.waterStock}. Weather: ${w.icon} ${w.name}.</p>` +
+      `<canvas width="300" height="70"></canvas><div class="fs-rk"><i style="background:#5ab0ff"></i>People <i style="background:#e0a23a"></i>Food <i style="background:#4aa4e0"></i>Water <i style="background:#c9a06a"></i>Wood</div>` +
+      `<label class="fs-small"><input type="checkbox" data-roff="1"> Don't show these reports</label>`;
+    this.report.classList.add("on");
+    const cb = this.report.querySelector("[data-roff]") as HTMLInputElement; cb.onchange = () => { localStorage.setItem("wb-fs-report-off", cb.checked ? "1" : "0"); if (cb.checked) this.report.classList.remove("on"); };
+    const cv = this.report.querySelector("canvas") as HTMLCanvasElement, q = cv.getContext("2d")!;
+    q.fillStyle = "rgba(10,14,22,.6)"; q.fillRect(0, 0, 300, 70);
+    const line = (key: string, color: string) => { const max = Math.max(1, ...H.map((h: any) => h[key] || 0)); q.strokeStyle = color; q.lineWidth = 2; q.beginPath(); H.forEach((h: any, i: number) => { const x = 8 + (i / Math.max(1, H.length - 1)) * 284, y = 62 - ((h[key] || 0) / max) * 54; i ? q.lineTo(x, y) : q.moveTo(x, y); }); q.stroke(); };
+    if (H.length > 1) { line("wood", "#c9a06a"); line("water", "#4aa4e0"); line("food", "#e0a23a"); line("pop", "#5ab0ff"); }
+    else { q.fillStyle = "#9fb0c0"; q.font = "11px system-ui"; q.fillText("The chart fills in over the days", 70, 40); }
+    clearTimeout((this as any).repT); (this as any).repT = setTimeout(() => this.report.classList.remove("on"), 16000);
+  }
   refresh() {
     this.renderTop(); this.renderSide(); this.renderBar();
     if (this.card.style.display !== "none") this.renderCard();
@@ -80,7 +137,9 @@ export class FsUi {
     const res = TOP_RES.filter((r) => r === "wood" || r === "stone" || r === "iron" || r === "bread" || r === "meat" || r === "water" || (S.stock[r] || 0) > 0)
       .map((r) => `<span class="fs-res${(r === "bread" || r === "meat" || r === "water") && S.stock[r] <= 2 ? " low" : ""}" title="${RES_INFO[r].name}">${RES_INFO[r].icon}<b>${Math.floor(S.stock[r] || 0)}</b></span>`).join("");
     const raid = S.raid && S.raid.pending ? `<span class="fs-raidwarn" title="${esc(S.raid.pending.desc || "")}">⚔️ Raid in ${Math.max(0, S.raid.pending.day - g.day())} d</span>` : "";
-    const html = `<div class="fs-time"><b>Day ${g.day()}</b> ${night ? "🌙" : "☀️"} ${g.clock()}</div><div class="fs-resl">${res}</div>${raid}
+    const W = S.weather || { today: "sunny", tomorrow: "sunny" }, wt = WX_INFO[W.today], wn = WX_INFO[W.tomorrow];
+    const wxChip = `<span class="fs-wx" title="${esc(wt.note || wt.name)} · Tomorrow: ${wn.name}">${wt.icon} ${wt.name} <small>· tomorrow ${wn.icon}</small></span>`;
+    const html = `<div class="fs-time"><b>Day ${g.day()}</b> ${night ? "🌙" : "☀️"} ${g.clock()}</div>${wxChip}<div class="fs-resl">${res}</div>${raid}
       <div class="fs-ctl">
         ${night && !this.skipNight ? `<button class="fs-b" data-a="skip" title="Make the night pass quickly">⏩ Skip night</button>` : ""}
         <button class="fs-b${sp === 0 ? " on" : ""}" data-a="speed" data-s="0" title="Pause (Space)">⏸</button>
@@ -89,6 +148,7 @@ export class FsUi {
         <button class="fs-b${sp === 4 ? " on" : ""}" data-a="speed" data-s="4" title="Faster">4×</button>
         <button class="fs-b gold" data-a="tent" title="Tent menu (T)">⛺ Tent</button>
         <button class="fs-b" data-a="save" title="Save now">💾</button>
+        <button class="fs-b" data-a="photo" title="Photo mode">📷</button>
         <button class="fs-b" data-a="gfx" title="Graphics detail">🎨 ${this.api.gfxName()}</button>
         <button class="fs-b" data-a="help" title="How to play">❓</button>
         <button class="fs-b red" data-a="exit" title="Save and leave">✕</button>
@@ -356,6 +416,7 @@ export class FsUi {
       case "skip": this.skipNight = true; if (this.api.getSpeed() === 0) this.setSpeed(1); this.renderTop(); break;
       case "tent": this.openTent(); break;
       case "save": this.api.save(); break;
+      case "photo": this.api.photo && this.api.photo.toggle(); break;
       case "gfx": this.toast("Graphics: " + this.api.gfx(), "info"); this.renderTop(); break;
       case "help": this.showHelp(); break;
       case "helpclose": this.help.style.display = "none"; break;

@@ -248,6 +248,7 @@ export function buildLand(ctx: FsCtx, seed: number): Land {
   const shoreTex = new T.DataTexture(shoreData, N, N, T.RedFormat, T.UnsignedByteType);
   shoreTex.magFilter = shoreTex.minFilter = T.LinearFilter; shoreTex.wrapS = shoreTex.wrapT = T.ClampToEdgeWrapping; shoreTex.needsUpdate = true;
   const u = ctx.air.u;
+  u.uShore!.value = shoreTex; (ctx as any).grid = N;   // the weather's rain and splashes find land and water with it
   const uni = {
     uTime: u.uTime, uAmp: { value: 0.1 }, uQ: { value: 2 }, uLight: { value: 1 }, uRain: u.uRain, uSkyQ: { value: 2 },
     uSunDir: u.uSunDir, uSunCol: u.uSunCol, uSunAmt: u.uSunAmt, uZenith: u.uZenith, uHorizon: u.uHorizon, uFogCol: u.uFogCol, uFogRange: u.uFogRange,

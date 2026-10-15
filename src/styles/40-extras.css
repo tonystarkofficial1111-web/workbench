@@ -28,6 +28,62 @@
 .c3d-letter{position:absolute;left:0;right:0;height:11%;background:#000;display:none}
 .c3d-letter.top{top:0}.c3d-letter.bot{bottom:0}
 .c3d-photo.framed .c3d-letter{display:block}
+/* ------------------------------------------------------------------ Block World: photo mode, minimap, daily report (Legacy / Infinite) */
+#bw-photo-btn{padding:8px 14px;font-size:12px;background:var(--panel-2);color:var(--text);border:2px solid var(--line);border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
+.bw-photo-ui{position:absolute;inset:0;z-index:70;display:none;pointer-events:none}
+.bw-photo-ui.on{display:block}
+.bw-pbar{position:absolute;z-index:2;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;padding:9px 12px;border-radius:12px;background:rgba(8,10,16,.84);border:1px solid rgba(255,255,255,.14);pointer-events:auto;max-width:calc(100% - 24px);color:#e9eef5;font:600 12px Inter,sans-serif}
+.bw-prow{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.bw-pbar button{padding:5px 9px!important;border-radius:8px!important;background:rgba(24,30,44,.95)!important;color:#e9eef5!important;border:1px solid rgba(255,255,255,.16)!important;font:600 12px Inter,sans-serif!important;cursor:pointer;box-shadow:none!important}
+.bw-pbar button.on{border-color:#ffd34d!important;color:#ffd34d!important}
+.bw-pbar button.save{background:#1fb6ff!important;color:#06121c!important;border-color:#1fb6ff!important}
+.bw-ptime{display:flex;align-items:center;gap:8px}
+.bw-ptime input{width:min(360px,60vw)}
+.bw-ptime span{font-variant-numeric:tabular-nums;min-width:42px}
+.bw-letter{position:absolute;left:0;right:0;height:11%;background:#000;display:none}
+.bw-letter.top{top:0}.bw-letter.bot{bottom:0}
+.bw-photo-ui.framed .bw-letter{display:block}
+#tab-world.bw-photo-on #hotbar,#tab-world.bw-photo-on #build-panel,#tab-world.bw-photo-on #build-panel-toggle,#tab-world.bw-photo-on #game-hint,#tab-world.bw-photo-on #legacy-hint,
+#tab-world.bw-photo-on #legacy-hud,#tab-world.bw-photo-on #legacy-building-menu,#tab-world.bw-photo-on #legacy-banner,#tab-world.bw-photo-on #bw-right-col,#tab-world.bw-photo-on #bw-left-col,
+#tab-world.bw-photo-on #block-world-back,#tab-world.bw-photo-on #bw-minimap,#tab-world.bw-photo-on #bw-daily,#tab-world.bw-photo-on #bw-rec-btn{visibility:hidden!important}
+body:has(#tab-world.bw-photo-on) #wb-inf-hud{visibility:hidden!important}
+#bw-minimap{position:absolute;left:16px;bottom:16px;z-index:5;width:180px;height:180px;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.25);box-shadow:0 6px 18px rgba(0,0,0,.45);background:#1c4a6e;cursor:crosshair}
+#bw-minimap canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+#bw-minimap .bw-mm-lbl{position:absolute;left:6px;top:4px;font:700 10px Inter,sans-serif;color:#fff;text-shadow:0 1px 2px #000;letter-spacing:.06em;text-transform:uppercase;pointer-events:none}
+#bw-minimap .bw-mm-x{position:absolute;right:4px;top:3px;width:20px;height:18px;padding:0;border-radius:5px;border:0;background:rgba(0,0,0,.5);color:#fff;font-weight:700;cursor:pointer;line-height:16px}
+#bw-minimap.small{width:30px;height:24px}
+#bw-minimap.small canvas,#bw-minimap.small .bw-mm-lbl{display:none}
+#bw-minimap.small .bw-mm-x{right:5px;top:3px}
+#bw-daily{position:absolute;left:16px;top:120px;z-index:8;width:320px;max-width:calc(100% - 32px);padding:10px 12px;border-radius:12px;background:rgba(10,14,22,.92);border:1px solid rgba(255,211,77,.4);color:#e9eef5;font:13px Inter,sans-serif;box-shadow:0 10px 26px rgba(0,0,0,.5);display:none}
+#bw-daily.on{display:block;animation:bwIn .4s ease}
+@keyframes bwIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+#bw-daily .bw-dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#bw-daily .bw-dh b{color:#ffd34d;font-size:15px}
+#bw-daily .bw-dh button{background:none;border:0;color:#cfd8e3;font-size:15px;cursor:pointer}
+#bw-daily .bw-dg{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-bottom:6px}
+#bw-daily .bw-dg div{display:flex;justify-content:space-between;gap:6px}
+#bw-daily em{font-style:normal;color:#9fb0c0;font-size:12px}
+#bw-daily canvas{width:100%;border-radius:6px;display:block}
+#bw-daily .bw-dk{display:flex;gap:8px;font-size:11px;color:#9fb0c0;margin-top:4px}
+#bw-daily .bw-dk i,.fs-rk i{display:inline-block;width:10px;height:4px;border-radius:2px;margin-right:3px;vertical-align:middle}
+#bw-daily .bw-doff{display:block;font-size:11px;color:#9fb0c0;margin-top:6px}
+/* ------------------------------------------------------------------ Free Style: minimap, weather chip, dawn report, photo mode */
+.fs-mm{position:absolute;top:52px;right:10px;width:172px;height:172px;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.25);box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:crosshair}
+.fs-mm canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.fs-panel{top:234px!important}
+.fs-wx{background:rgba(255,255,255,.08);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.fs-wx small{color:#c9c0a9}
+.fs-report{position:absolute;left:258px;top:56px;width:330px;max-width:calc(100% - 270px);padding:10px 12px;border-radius:12px;background:rgba(14,17,24,.94);border:1px solid rgba(243,210,122,.45);box-shadow:0 10px 26px rgba(0,0,0,.5);display:none}
+.fs-report.on{display:block;animation:bwIn .4s ease}
+.fs-rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.fs-rh b{color:#f3d27a;font-size:15px}
+.fs-rg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 10px;margin-bottom:4px}
+.fs-rg div{display:flex;flex-direction:column}
+.fs-rg em{font-style:normal;color:#c9c0a9;font-size:11px}
+.fs-report canvas{width:100%;border-radius:6px;display:block;margin-top:4px}
+.fs-rk{display:flex;gap:8px;font-size:11px;color:#c9c0a9;margin:4px 0}
+.fs-host.bw-photo-on .fs-ui{display:none}
+@media (max-width:760px){.fs-mm{width:120px;height:120px}.fs-report{left:10px;max-width:calc(100% - 20px)}}
 /* in photo mode everything else of the game's screen steps aside */
 .c3d-photo-on > :not(.c3d-view):not(.c3d-photo):not(.c3d-photo-btn){visibility:hidden}
 .c3d-photo-on .c3d-photo-btn{display:none}

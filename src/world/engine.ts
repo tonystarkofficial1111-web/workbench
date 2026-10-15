@@ -5313,6 +5313,7 @@ function __wbBuildEnv(){
   Object.defineProperty(env, "legacyAgents", { get: function(){ return legacyAgents; }, enumerable: true });
   Object.defineProperty(env, "WB_Z_START", { get: function(){ return WB_Z_START; }, enumerable: true });
   Object.defineProperty(env, "legacyShots", { get: function(){ return legacyShots; }, enumerable: true });
+  Object.defineProperty(env, "isRaining", { get: function(){ return isRaining; }, enumerable: true });
   Object.defineProperty(env, "simTime", { get: function(){ return simTime; }, set: function(v){ simTime = v; }, enumerable: true });
   Object.defineProperty(env, "camDistance", { get: function(){ return camDistance; }, set: function(v){ camDistance = v; }, enumerable: true });
   Object.defineProperty(env, "camYaw", { get: function(){ return camYaw; }, set: function(v){ camYaw = v; }, enumerable: true });

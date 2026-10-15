@@ -110,7 +110,7 @@ export function installWeather(ctx: Ctx) {
   const group = new T.Group(); group.name = "wb-weather";
   const center = { value: new T.Vector3(CENTER.x, 0, CENTER.z) };
   const px = { value: Math.min(window.devicePixelRatio || 1, 2) };
-  const common = { uTime: air.u.uTime, uCenter: center, uWind: air.u.uWind, uRain: air.u.uRain, uShore: air.u.uShore, uGrid: { value: GRID } };
+  const common = { uTime: air.u.uTime, uCenter: center, uWind: air.u.uWind, uRain: air.u.uRain, uShore: air.u.uShore, uGrid: { value: (ctx as any).grid || GRID } };   // Free Style passes its own grid size
   const amt = { rain: { value: 0 }, splash: { value: 0 }, leaf: { value: 0 } };
   const light = { value: 1 };
   const MAXR = 2600;
@@ -158,7 +158,8 @@ export function installWeather(ctx: Ctx) {
   }
 
   // ------------------------------------------------------------------ the weather box in the corner
-  const rd = document.getElementById("rain-days"), rp = document.getElementById("rain-pct"), rb = document.getElementById("rain-box");
+  const own = !(ctx as any).noBox;   // Free Style has its own weather display (and must not write into the hidden Block World one)
+  const rd = own ? document.getElementById("rain-days") : null, rp = own ? document.getElementById("rain-pct") : null, rb = own ? document.getElementById("rain-box") : null;
   let lastBox = "";
   function updateBox() {
     if (!rd || !rp) return;
@@ -222,7 +223,7 @@ export function installWeather(ctx: Ctx) {
     if (bolt) { boltT -= dt; bolt.material.opacity = clamp(boltT * 6, 0, 1); if (boltT <= 0) { env.scene.remove(bolt); bolt.geometry.dispose(); bolt.material.dispose(); bolt = null; } }
     updateBox();
     // wind note in the day banner
-    const h = document.getElementById("wb-inf-hud");
+    const h = own ? document.getElementById("wb-inf-hud") : null;
     if (h && air.strength > 0.3 && h.textContent.indexOf("\u{1F4A8}") < 0) h.textContent += " · \u{1F4A8} " + air.windWord + " " + air.kmh + " km/h";
   });
   ctx.cleanup.push(() => {
