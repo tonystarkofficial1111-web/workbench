@@ -40,3 +40,4 @@ import "./styles/37-car3d.css";
 import "./styles/38-typerush.css";
 import "./styles/39-freestyle.css";
 import "./styles/40-extras.css";
+import "./styles/41-workbench.css";

@@ -7,6 +7,8 @@ import { BackupBar } from "./components/BackupBar";
 import { SaveChooser } from "./components/SaveChooser";
 import { PerfHud } from "./components/PerfHud";
 import { OverlayHost } from "./core/overlay";
+import { QuickSearch } from "./components/QuickSearch";
+import { LiveBackground } from "./components/LiveBackground";
 import { StartTab } from "./tabs/StartTab";
 import { DataTab } from "./tabs/DataTab";
 import { DevTab } from "./tabs/DevTab";
@@ -90,6 +92,7 @@ export function App() {
 
   return (
     <>
+      <LiveBackground />
       <div id="app">
         <TopBar />
         <main>
@@ -110,6 +113,7 @@ export function App() {
       <SaveChooser />
       <PerfHud />
       <OverlayHost />
+      <QuickSearch />
     </>
   );
 }

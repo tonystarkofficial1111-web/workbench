@@ -11,6 +11,7 @@ import { BADGES, getBadgeState, getStreak, badgeEvents, evalBadges } from "../fe
 import { ITEMS, buy, equip, getShop, resetShopColors, shopEvents, lastBackup } from "../features/shop";
 import { importSave, openSaveChooser } from "../features/saves";
 import { generateShareCard, ShareCardModal } from "../components/ShareCard";
+import { liveBg } from "../components/LiveBackground";
 
 const THEMES: { id: string; bg: string; title: string; lockSecs?: number }[] = [
   { id: "default", bg: "linear-gradient(135deg,#1a1a24,#5fd4c7)", title: "Default" },
@@ -124,6 +125,7 @@ function ProfilePicture() {
 
 export function DataTab() {
   const tab = useValue(activeTab);
+  const liveOn = useValue(liveBg);
   useEmitter(profileEvents);
   useEmitter(tickEvents);
   useEmitter(badgeEvents);
@@ -421,6 +423,9 @@ export function DataTab() {
                   </div>
                 ))}
               </div>
+              <label className="wb-livebg-toggle" title="A quiet animated layer behind the pages, in your theme's colours (it pauses in games)">
+                <input type="checkbox" checked={liveOn} onChange={(e) => liveBg.set(e.target.checked)} /> ✨ Live background and page transitions
+              </label>
             </div>
 
             <div className="data-card">

@@ -1,0 +1,32 @@
+/* 5.67.0: Quick search (Ctrl+K) and the live background */
+#wb-live-bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:.95}
+@media (prefers-reduced-motion: reduce){#wb-live-bg{opacity:.6}}
+/* page transitions: the page you open fades and rises in */
+body.wb-live-bg main > section.tab.active:not(#tab-world){animation:wbPageIn .38s cubic-bezier(.2,.7,.2,1)}
+@keyframes wbPageIn{from{opacity:0;transform:translateY(10px) scale(.995)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){body.wb-live-bg main > section.tab.active{animation:none}}
+body.wb-live-bg .data-card,body.wb-live-bg .math-card{transition:transform .18s ease,box-shadow .18s ease}
+body.wb-live-bg .data-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.28)}
+.wb-livebg-toggle{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted,#9aa3b2);cursor:pointer}
+
+.qs-btn{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;padding:0 10px!important}
+.qs-hint{font:600 10px Inter,sans-serif;opacity:.6;letter-spacing:.04em}
+@media (max-width:900px){.qs-hint{display:none}}
+.qs-back{position:fixed;inset:0;z-index:100000;background:rgba(4,6,12,.55);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh;animation:qsFade .15s ease}
+@keyframes qsFade{from{opacity:0}to{opacity:1}}
+.qs-box{width:min(640px,92vw);background:rgba(16,18,26,.97);border:1px solid rgba(255,255,255,.12);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.6);overflow:hidden;color:#e9eef5;font-family:Inter,system-ui,sans-serif;animation:qsUp .18s cubic-bezier(.2,.7,.2,1)}
+@keyframes qsUp{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+.qs-in{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.qs-in input{flex:1;background:none;border:0;outline:none;color:#fff;font:500 17px Inter,system-ui,sans-serif}
+.qs-in input::placeholder{color:#7d8798}
+.qs-box kbd{display:inline-block;padding:1px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font:600 11px Inter,sans-serif;color:#cfd8e3;margin:0 2px}
+.qs-list{max-height:min(420px,56vh);overflow:auto;padding:6px}
+.qs-box button.qs-item{display:flex!important;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px!important;border-radius:9px!important;border:0!important;background:none!important;color:#e9eef5!important;font:500 14px Inter,sans-serif!important;cursor:pointer;box-shadow:none!important;text-transform:none!important;letter-spacing:normal!important}
+.qs-box button.qs-item.on{background:rgba(224,164,88,.16)!important;box-shadow:inset 3px 0 0 var(--amber,#e0a458)!important;color:#fff!important}
+.qs-ic{width:24px;text-align:center;font-size:16px}
+.qs-t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qs-k{font-size:11px;color:#9fb0c0;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.06);white-space:nowrap}
+.qs-none{padding:18px;color:#9fb0c0;text-align:center}
+.qs-foot{display:flex;gap:16px;padding:8px 14px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#9fb0c0}
+.qs-flash{animation:qsFlash 1.6s ease}
+@keyframes qsFlash{0%,100%{box-shadow:none}20%,60%{box-shadow:0 0 0 3px var(--amber,#e0a458);border-radius:6px}}

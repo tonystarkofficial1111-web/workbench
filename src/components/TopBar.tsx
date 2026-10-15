@@ -2,6 +2,7 @@ import { TAB_BUTTONS, activeTab, goto } from "../core/nav";
 import { useValue, useEmitter } from "../core/store";
 import { WB_SOUND, soundEvents } from "../core/sound";
 import { getCoins, profileEvents } from "../core/profile";
+import { QuickSearchButton } from "./QuickSearch";
 
 export function TopBar() {
   const tab = useValue(activeTab);
@@ -36,6 +37,7 @@ export function TopBar() {
         ))}
       </nav>
       <div className="topbar-right">
+        <QuickSearchButton />
         <div className="coin-pill" id="coin-pill" title="Arcade coins earned">
           🪙 <span id="coin-count">{getCoins()}</span>
         </div>
