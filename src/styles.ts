@@ -37,3 +37,4 @@ import "./styles/34-062.css";
 import "./styles/35-infinite.css";
 import "./styles/36-saves.css";
 import "./styles/37-car3d.css";
+import "./styles/38-typerush.css";
