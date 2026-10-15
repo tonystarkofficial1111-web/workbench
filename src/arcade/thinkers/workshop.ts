@@ -32,6 +32,68 @@ function track(keys: Array<[number, number[]]>, t: number): [number, number, num
 }
 function num(keys: Array<[number, number]>, t: number) { const v = track(keys.map(([a, b]) => [a, [b, 0, 0]]), t); return v[0]; }
 
+/**
+ * 5.65.0: a fuller workshop, boxes only (no curved shapes): a two-post lift with a covered car on it, wall cabinets, a tool chest with
+ * drawers and a rolling cart, an air compressor and hose reel, a parts washer, a shelving unit of labelled bins, a whiteboard job sheet,
+ * a square wall clock, a fire extinguisher and first-aid box, safety lines and a drain on the floor, ceiling beams and a vent duct,
+ * a side door, window frames, a pallet of boxes, a floor jack, a creeper, a drain pan, a broom and a bin.
+ */
+function garageDetail(T: any, kit: any, f: { shadow: number; amount: number }) {
+  const m = new MB(T, 640); m.jitter = 0.03; m.ao = { y0: 0, h: 1.0, k: 0.22 };
+  const RED = 0xd2262d, BLK = 0x15171b, GRY = 0x6a7078, YEL = 0xe0b020, CH = 0xc9ced6, TAN = 0xc49a62, BLU = 0x2a5ac8;
+  // two-post lift on the left with a covered car raised on it
+  for (const x of [-7.35, -4.25]) { m.box(GRY, 0.28, 3.1, 0.28, x, 1.55, 1.0); m.box(BLK, 0.5, 0.04, 0.5, x, 0.02, 1.0); m.box(YEL, 0.3, 0.06, 0.3, x, 1.42, 1.0, 0, 0, 0, { jit: 0 }); for (const s of [-1, 1]) m.box(GRY, 0.9, 0.06, 0.1, x + (x < -5 ? 0.5 : -0.5), 1.3, 1.0 + s * 0.45, 0, s * (x < -5 ? 0.4 : -0.4), 0); }
+  m.box(GRY, 3.4, 0.16, 0.2, -5.8, 3.12, 1.0); m.box(YEL, 0.2, 0.3, 0.15, -7.35, 2.6, 0.84, 0, 0, 0, { jit: 0 });
+  m.box(0x4a5a6e, 1.95, 0.75, 4.1, -5.8, 1.78, 1.0); m.box(0x4a5a6e, 1.6, 0.42, 2.2, -5.8, 2.35, 0.8); m.box(0x3d4b5c, 2.0, 0.04, 4.15, -5.8, 1.42, 1.0);   // the tarp over the car
+  for (const sx of [-1, 1]) for (const z of [-0.3, 2.3]) m.box(0x121316, 0.22, 0.6, 0.6, -5.8 + sx * 0.92, 1.36, z);                                // tyres under the tarp (square)
+  for (const [x, z, w, d] of [[-5.8, -1.3, 3.8, 0.06], [-5.8, 3.3, 3.8, 0.06], [-7.7, 1.0, 0.06, 4.6], [-3.9, 1.0, 0.06, 4.6]] as Array<[number, number, number, number]>) m.box(YEL, w, 0.006, d, x, 0.004, z, 0, 0, 0, { jit: 0, noAO: true });   // safety lines
+  // wall cabinets over the bench, with doors, seams and handles
+  for (let k = 0; k < 3; k++) { const x = -4.1 + k * 0.85; m.box(0x8a9098, 0.8, 0.6, 0.35, x, 2.95, -4.82); m.box(BLK, 0.006, 0.56, 0.006, x, 2.95, -4.64, 0, 0, 0, { jit: 0 }); for (const s of [-1, 1]) m.box(CH, 0.02, 0.1, 0.02, x + s * 0.06, 2.85, -4.63, 0, 0, 0, { mat: "metal", jit: 0 }); }
+  // tool chest: top box with a lid, drawer fronts with handles; a rolling cart by the engine stand
+  m.box(RED, 0.82, 0.4, 0.48, -5.4, 1.22, -4.6); m.box(0xb01e26, 0.84, 0.05, 0.5, -5.4, 1.44, -4.6);
+  for (let k = 0; k < 7; k++) m.box(CH, 0.5, 0.012, 0.02, -5.4, 0.12 + k * 0.14, -4.335, 0, 0, 0, { mat: "metal", jit: 0 });
+  m.box(RED, 0.62, 0.05, 0.42, 1.1, 0.9, -2.7); m.box(RED, 0.62, 0.05, 0.42, 1.1, 0.5, -2.7); m.box(RED, 0.62, 0.05, 0.42, 1.1, 0.15, -2.7);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { m.box(GRY, 0.03, 0.85, 0.03, 1.1 + sx * 0.29, 0.5, -2.7 + sz * 0.19); m.box(BLK, 0.05, 0.05, 0.05, 1.1 + sx * 0.29, 0.03, -2.7 + sz * 0.19); }
+  for (let k = 0; k < 5; k++) m.box([0x9aa0a8, YEL, 0x2a2d33, BLU, CH][k]!, 0.08, 0.03, 0.03, 0.9 + k * 0.1, 0.94, -2.65, 0, k * 0.4, 0);   // tools on the cart
+  // air compressor (a box tank on box wheels) with a gauge and the hose reel on the wall
+  m.box(RED, 0.95, 0.45, 0.42, -6.9, 0.36, -3.9); m.box(BLK, 0.4, 0.3, 0.3, -6.9, 0.73, -3.9); m.box(0xf2f2f4, 0.08, 0.08, 0.01, -6.65, 0.73, -3.745, 0, 0, 0, { jit: 0 });
+  for (const sx of [-1, 1]) m.box(BLK, 0.12, 0.16, 0.08, -6.9 + sx * 0.4, 0.08, -3.68);
+  m.box(YEL, 0.36, 0.36, 0.14, -7.9, 1.6, -3.0); m.box(BLK, 0.2, 0.2, 0.16, -7.9, 1.6, -3.0); for (let k = 0; k < 6; k++) m.box(YEL, 0.03, 0.03, 0.2, -7.8, 1.35 - k * 0.2, -3.0 + (k % 2) * 0.05);
+  // parts washer
+  m.box(0x2e7a4a, 0.9, 0.85, 0.6, -6.9, 0.43, -1.1); m.box(0x26663e, 0.94, 0.05, 0.64, -6.9, 0.88, -1.1); m.box(CH, 0.03, 0.4, 0.03, -6.6, 1.1, -1.1, 0, 0, 0, { mat: "metal" });
+  // shelving unit of labelled bins on the right
+  for (const z of [3.9, 5.5]) for (const x of [7.3, 7.75]) m.box(GRY, 0.05, 2.2, 0.05, x, 1.1, z);
+  for (let k = 0; k < 4; k++) { m.box(GRY, 0.5, 0.03, 1.65, 7.52, 0.3 + k * 0.6, 4.7); for (let b = 0; b < 4; b++) { m.box([BLU, RED, YEL, 0x2e8a4e][(b + k) % 4]!, 0.36, 0.22, 0.34, 7.5, 0.43 + k * 0.6, 4.05 + b * 0.42); m.box(0xf2f2f4, 0.01, 0.06, 0.16, 7.315, 0.45 + k * 0.6, 4.05 + b * 0.42, 0, 0, 0, { jit: 0 }); } }
+  // whiteboard job sheet over the shelves, square clock, fire extinguisher, first aid box
+  m.box(0xf6f8fa, 1.9, 0.9, 0.03, 5.2, 2.95, -4.97); m.box(GRY, 1.96, 0.04, 0.06, 5.2, 2.5, -4.95);
+  for (let k = 0; k < 6; k++) m.box(k === 0 ? RED : 0x2a3a5a, 0.4 + (k * 37) % 70 / 100, 0.02, 0.005, 4.55 + ((k * 13) % 5) * 0.05, 3.3 - k * 0.12, -4.95, 0, 0, 0, { jit: 0 });
+  for (let k = 0; k < 5; k++) m.box(0x2fbf7a, 0.04, 0.04, 0.005, 5.9, 3.3 - k * 0.12, -4.95, 0, 0, 0, { jit: 0 });
+  m.box(0xf2f2f4, 0.4, 0.4, 0.04, 0, 3.35, -4.97); m.box(BLK, 0.42, 0.42, 0.02, 0, 3.35, -4.99); m.box(BLK, 0.02, 0.15, 0.01, 0, 3.41, -4.94, 0, 0, 0, { jit: 0 }); m.box(BLK, 0.11, 0.02, 0.01, 0.05, 3.35, -4.94, 0, 0, 0, { jit: 0 });
+  for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; m.box(BLK, 0.012, 0.03, 0.006, Math.sin(a) * 0.16, 3.35 + Math.cos(a) * 0.16, -4.945, 0, 0, -a, { jit: 0 }); }
+  m.box(RED, 0.16, 0.5, 0.16, 7.8, 0.75, -4.4); m.box(BLK, 0.06, 0.08, 0.06, 7.8, 1.04, -4.4); m.box(GRY, 0.06, 0.2, 0.06, 7.92, 0.8, -4.4);   // extinguisher and bracket
+  m.box(0x2e8a4e, 0.4, 0.3, 0.12, 7.88, 1.55, -3.6); m.box(0xf2f2f4, 0.14, 0.04, 0.13, 7.88, 1.55, -3.6, 0, 0, 0, { jit: 0 }); m.box(0xf2f2f4, 0.04, 0.14, 0.13, 7.88, 1.55, -3.6, 0, 0, 0, { jit: 0 });
+  // ceiling beams and a vent duct
+  for (const z of [-3.5, -0.5, 2.5, 5.0]) m.box(0x3a3e45, 16, 0.22, 0.14, 0, 4.1, z);
+  for (let k = 0; k < 7; k++) { m.box(0x9aa0a8, 2.0, 0.34, 0.34, -6 + k * 2.05, 3.75, 4.6); m.box(0x7a8088, 0.06, 0.38, 0.38, -7 + k * 2.05, 3.75, 4.6); }
+  for (const x of [-4, 0, 4]) m.box(0x4a4f57, 0.5, 0.06, 0.4, x, 3.56, 4.6);
+  // side door with a window, window frames on the back wall
+  m.box(0x8a9098, 0.12, 2.2, 1.1, -7.93, 1.1, 4.5); m.box(0x3a3e45, 0.14, 2.3, 0.08, -7.92, 1.15, 3.92); m.box(0x3a3e45, 0.14, 2.3, 0.08, -7.92, 1.15, 5.08); m.box(0x3a3e45, 0.14, 0.08, 1.2, -7.92, 2.3, 4.5);
+  m.box(0xcfe6ff, 0.13, 0.5, 0.6, -7.92, 1.65, 4.5, 0, 0, 0, { mat: "lamp", jit: 0 }); m.box(CH, 0.06, 0.04, 0.16, -7.84, 1.05, 4.15, 0, 0, 0, { mat: "metal", jit: 0 });
+  for (const x of [-5.5, -1.5, 2.5]) { m.box(0x3a3e45, 1.72, 0.06, 0.08, x, 3.78, -4.96); m.box(0x3a3e45, 1.72, 0.06, 0.08, x, 3.02, -4.96); for (const dx of [-0.83, 0, 0.83]) m.box(0x3a3e45, 0.06, 0.8, 0.08, x + dx, 3.4, -4.96); }
+  // floor: drain grate, a pallet of boxes, floor jack, creeper, drain pan, broom, bin
+  m.box(0x2a2d33, 0.6, 0.012, 0.3, 0.5, 0.006, 2.6, 0, 0, 0, { jit: 0, noAO: true }); for (let k = 0; k < 6; k++) m.box(0x101114, 0.04, 0.014, 0.26, 0.28 + k * 0.09, 0.008, 2.6, 0, 0, 0, { jit: 0, noAO: true });
+  for (let k = 0; k < 5; k++) m.box(0xa07848, 1.2, 0.03, 0.12, 6.6, 0.13, 4.0 + k * 0.25); for (const z of [3.95, 4.5, 5.05]) m.box(0x8a6438, 1.2, 0.1, 0.1, 6.6, 0.05, z);
+  for (const [x, y, z, s] of [[6.35, 0.36, 4.2, 0.5], [6.85, 0.36, 4.25, 0.45], [6.55, 0.36, 4.8, 0.5], [6.6, 0.82, 4.45, 0.42]] as Array<[number, number, number, number]>) { m.box(TAN, s, s * 0.85, s, x, y + (s * 0.85 - 0.45) / 2, z); m.box(0xa07a48, s + 0.005, 0.03, 0.06, x, y + s * 0.85 / 2 + 0.01 + (s * 0.85 - 0.45) / 2, z, 0, 0, 0, { jit: 0 }); }
+  m.box(RED, 0.32, 0.14, 0.8, 1.7, 0.1, -0.1); m.box(RED, 0.04, 0.04, 1.0, 1.7, 0.3, -0.85, 0.35, 0, 0); m.box(BLK, 0.16, 0.05, 0.16, 1.7, 0.2, 0.25);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.box(BLK, 0.06, 0.06, 0.06, 1.7 + sx * 0.14, 0.03, -0.1 + sz * 0.34);
+  m.box(0x3a3e45, 0.5, 0.06, 1.0, -1.6, 0.11, 1.8); m.box(0x2a2d33, 0.36, 0.04, 0.2, -1.6, 0.16, 2.2); for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.box(BLK, 0.05, 0.05, 0.05, -1.6 + sx * 0.2, 0.04, 1.8 + sz * 0.42);
+  m.box(BLK, 0.6, 0.06, 0.5, 2.1, 0.03, 1.4); m.box(0x2a2018, 0.54, 0.02, 0.44, 2.1, 0.055, 1.4, 0, 0, 0, { jit: 0 });
+  m.box(0x8a5a2c, 0.03, 1.3, 0.03, -0.9, 0.65, -4.85, 0.12, 0, 0); m.box(BLK, 0.32, 0.06, 0.08, -0.9, 0.06, -4.78);
+  m.box(GRY, 0.4, 0.6, 0.4, -1.55, 0.3, -4.6); m.box(0x4a4f57, 0.44, 0.04, 0.44, -1.55, 0.62, -4.6);
+  const root = m.build(kit, f.shadow > 0);
+  return root;
+}
+
 export function createWorkshop(T: any, scene: any, f: { shadow: number; amount: number }) {
   const kit = makeKit(T), own: any[] = [];
   const mine = <A>(a: A): A => { own.push(a); return a; };
@@ -66,6 +128,7 @@ export function createWorkshop(T: any, scene: any, f: { shadow: number; amount: 
   for (let k = 0; k < 4; k++) room.cyl(0x141417, 0.32, 0.32, 0.22, 6.6, 0.11 + k * 0.23, -2.8, 14);                        // tyre stack
   room.box(0xf2f2f4, 0.9, 1.2, 0.02, 2.4, 2.4, -4.98); room.box(0xd2262d, 0.8, 0.3, 0.025, 2.4, 2.75, -4.97);             // a poster
   group.add(room.build(kit, f.shadow > 0));
+  group.add(garageDetail(T, kit, f));
   // windows (daylight) and the fluorescent tubes
   const winMat = mine(new T.MeshBasicMaterial({ color: 0xcfe6ff, toneMapped: false }));
   for (const x of [-5.5, -1.5, 2.5]) { const w = new T.Mesh(mine(new T.PlaneGeometry(1.6, 0.7)), winMat); w.position.set(x, 3.4, -4.98); group.add(w); }

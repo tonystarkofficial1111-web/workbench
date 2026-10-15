@@ -204,12 +204,63 @@ export function projectCar(T: any, kit: any, color = 0x2e8a4e) {
     for (const s of [-1, 1]) for (const z of [1.25, -1.25]) { m.box(0xd2262d, 0.1, 0.3, 0.1, s * 0.6, 0.15, z); }   // axle stands
   }, false, 32);
   g.add(shell);
+  // 5.65.0 detail, boxes only (no curves): lights with bezels and reflectors, grille slats, plates, door seams and handles, mirrors,
+  // skirts, arch liners, tail lights, exhaust, spoiler, roof rails, and a full engine bay (battery, reservoirs, strut towers, fuse box,
+  // fan shroud, hoses, airbox, washer bottle, wiring), brake calipers behind the wheels
+  g.add(build(T, kit, (m) => {
+    const CH = 0xc9ced6, BLK = 0x15171b, RED = 0xd2262d, AMB = 0xe0a020;
+    // front
+    m.box(BLK, 0.92, 0.24, 0.03, 0, 0.66, 2.0); for (let k = 0; k < 5; k++) m.box(CH, 0.86, 0.016, 0.02, 0, 0.57 + k * 0.045, 2.02, 0, 0, 0, { jit: 0 });
+    m.box(CH, 0.16, 0.05, 0.01, 0, 0.66, 2.035, 0, 0, 0, { jit: 0 });                                       // badge
+    for (const s of [-1, 1]) {
+      m.box(CH, 0.36, 0.16, 0.03, s * 0.55, 0.78, 1.952, 0, 0, 0, { jit: 0 });                              // headlight bezel
+      for (const k of [-1, 1]) m.box(0xfdfdf2, 0.1, 0.07, 0.01, s * 0.55 + k * 0.08, 0.78, 1.995, 0, 0, 0, { mat: "lamp", jit: 0 });
+      m.box(AMB, 0.07, 0.05, 0.03, s * 0.76, 0.78, 1.97, 0, 0, 0, { mat: "lamp", jit: 0 });                // indicator
+      m.box(0xfdfdf2, 0.09, 0.06, 0.02, s * 0.6, 0.42, 2.09, 0, 0, 0, { mat: "lamp", jit: 0 });            // fog light
+      m.box(BLK, 0.16, 0.08, 0.02, s * 0.36, 0.36, 2.09);                                                   // bumper intake
+    }
+    for (let k = 0; k < 4; k++) m.box(0x2a2d33, 0.5, 0.012, 0.02, 0, 0.33 + k * 0.025, 2.085, 0, 0, 0, { jit: 0 });
+    m.box(0xf2f2f4, 0.34, 0.1, 0.012, 0, 0.47, 2.085, 0, 0, 0, { jit: 0 }); for (let k = 0; k < 6; k++) m.box(BLK, 0.03, 0.05, 0.004, -0.12 + k * 0.048, 0.47, 2.092, 0, 0, 0, { jit: 0 });
+    // sides
+    for (const s of [-1, 1]) {
+      for (const z of [0.15, -0.95]) m.box(BLK, 0.008, 0.46, 0.008, s * 0.873, 0.68, z, 0, 0, 0, { jit: 0 });                 // door seams
+      m.box(BLK, 0.008, 0.008, 1.1, s * 0.873, 0.45, -0.4, 0, 0, 0, { jit: 0 });
+      m.box(CH, 0.02, 0.03, 0.12, s * 0.88, 0.8, -0.62, 0, 0, 0, { mat: "metal", jit: 0 });                                       // handle
+      m.box(color, 0.1, 0.09, 0.16, s * 0.94, 1.0, 0.22); m.box(0x8aa0b8, 0.006, 0.07, 0.13, s * 0.993, 1.0, 0.22, 0, 0, 0, { jit: 0 });   // mirror
+      m.box(BLK, 0.06, 0.08, 3.2, s * 0.86, 0.4, 0);                                                                               // skirt
+      for (const z of [1.25, -1.25]) { m.box(0x08090b, 0.3, 0.06, 0.78, s * 0.74, 0.72, z); m.box(RED, 0.06, 0.12, 0.1, s * 0.6, 0.36, z + 0.12); m.box(0x8f959d, 0.02, 0.26, 0.26, s * 0.63, 0.34, z, 0, 0, 0, { mat: "metal" }); }   // arch liners, calipers, discs
+      m.box(BLK, 0.05, 0.42, 0.08, s * 0.76, 1.15, -0.5);                                                                           // B-pillar
+      m.box(CH, 0.03, 0.03, 1.1, s * 0.6, 1.47, -0.6, 0, 0, 0, { mat: "metal" });                                                   // roof rails
+      m.box(RED, 0.3, 0.14, 0.03, s * 0.62, 0.8, -1.92, 0, 0, 0, { mat: "lamp", jit: 0 }); m.box(0xf2f2f4, 0.08, 0.05, 0.03, s * 0.42, 0.8, -1.92, 0, 0, 0, { mat: "lamp", jit: 0 });   // tail, reverse lights
+    }
+    m.box(color, 0.14, 0.1, 0.01, 0.875, 0.82, -1.32, 0, 0, 0, { jit: 0 });                                                         // fuel flap
+    m.box(BLK, 1.68, 0.2, 0.2, 0, 0.42, -1.98); m.box(0xf2f2f4, 0.34, 0.1, 0.012, 0, 0.62, -1.915, 0, 0, 0, { jit: 0 });
+    m.box(CH, 0.09, 0.07, 0.16, 0.5, 0.3, -2.05, 0, 0, 0, { mat: "metal" }); m.box(0x101114, 0.06, 0.04, 0.02, 0.5, 0.3, -2.13, 0, 0, 0, { jit: 0 });   // exhaust tip
+    m.box(color, 1.3, 0.04, 0.26, 0, 1.45, -1.38, 0.12, 0, 0); m.box(BLK, 0.3, 0.015, 0.02, 0, 1.2, -1.42, 0.5, 0, 0);               // spoiler, rear wiper
+    m.box(BLK, 0.015, 0.2, 0.015, -0.3, 1.55, -1.1, 0.3, 0, 0);                                                                       // antenna
+    // engine bay
+    m.box(0x1a1a1c, 0.26, 0.18, 0.18, -0.55, 0.62, 0.55); m.box(RED, 0.04, 0.03, 0.04, -0.62, 0.725, 0.5, 0, 0, 0, { jit: 0 }); m.box(BLK, 0.04, 0.03, 0.04, -0.48, 0.725, 0.5, 0, 0, 0, { jit: 0 });   // battery
+    m.box(0x8f959d, 0.14, 0.1, 0.1, 0.5, 0.72, 0.36, 0, 0, 0, { mat: "metal" }); m.box(0xe6e1c8, 0.1, 0.07, 0.07, 0.5, 0.8, 0.36);                // brake master cylinder and reservoir
+    m.box(0xe6e1c8, 0.16, 0.14, 0.12, 0.62, 0.7, 1.62); m.box(0x1a1a1c, 0.05, 0.03, 0.05, 0.62, 0.785, 1.62);                                      // coolant tank and cap
+    m.box(0x2a6ad2, 0.14, 0.16, 0.12, -0.66, 0.66, 1.72); m.box(0x1a1a1c, 0.04, 0.03, 0.04, -0.66, 0.755, 1.72);                                    // washer bottle
+    for (const s of [-1, 1]) { m.box(0x3a3e45, 0.2, 0.22, 0.22, s * 0.66, 0.74, 1.25); m.box(0x8f959d, 0.06, 0.04, 0.06, s * 0.66, 0.87, 1.25, 0, 0, 0, { mat: "metal" }); }   // strut towers
+    m.box(0x1a1a1c, 0.2, 0.1, 0.16, -0.6, 0.68, 1.0); m.box(0xd2262d, 0.06, 0.02, 0.02, -0.6, 0.735, 1.0, 0, 0, 0, { jit: 0 });                     // fuse box
+    m.box(0x2a2d33, 0.9, 0.36, 0.05, 0, 0.66, 1.86); m.box(BLK, 0.7, 0.04, 0.03, 0, 0.66, 1.83, 0, 0, 0.6); m.box(BLK, 0.7, 0.04, 0.03, 0, 0.66, 1.83, 0, 0, -0.6);   // fan shroud and blades
+    for (const s of [-1, 1]) { m.box(BLK, 0.05, 0.05, 0.28, s * 0.3, 0.74, 1.68); m.box(BLK, 0.05, 0.12, 0.05, s * 0.3, 0.7, 1.52); }                       // radiator hoses (straight runs)
+    m.box(0x1a1a1c, 0.26, 0.14, 0.2, 0.52, 0.76, 1.72); for (let k = 0; k < 3; k++) m.box(0x1a1a1c, 0.08, 0.08, 0.1, 0.4 - k * 0.08, 0.76, 1.56 - k * 0.07);   // airbox and intake duct
+    for (let k = 0; k < 5; k++) m.box(BLK, 0.24, 0.018, 0.018, -0.36 + k * 0.18, 0.84, 0.28, 0, 0, 0, { jit: 0 });                                       // wiring loom on the firewall
+  }, false, 37));
   const glass = build(T, kit, (m) => { m.box(0x1b2836, 1.4, 0.04, 0.6, 0, 1.18, 0.35, -0.9, 0, 0); for (const s of [-1, 1]) m.box(0x1b2836, 0.03, 0.34, 1.3, s * 0.755, 1.15, -0.6); }, true, 33);
   g.add(glass);
   // wheels off the ground on the stands
   const wheels: any[] = [];
   for (const s of [-1, 1]) for (const z of [1.25, -1.25]) {
-    const w = build(T, kit, (m) => { m.cyl(0x121316, 0.31, 0.31, 0.2, 0, 0, 0, 12, 0, 0, Math.PI / 2); m.cyl(0xa0a6ae, 0.2, 0.2, 0.21, 0, 0, 0, 10, 0, 0, Math.PI / 2); }, false, 34);
+    const w = build(T, kit, (m) => {
+      m.cyl(0x121316, 0.31, 0.31, 0.2, 0, 0, 0, 12, 0, 0, Math.PI / 2); m.cyl(0xa0a6ae, 0.2, 0.2, 0.21, 0, 0, 0, 10, 0, 0, Math.PI / 2);
+      // square spokes, a hub and four lug nuts (boxes)
+      for (let k = 0; k < 4; k++) m.box(0xd8dce2, 0.215, 0.05, 0.3, 0, 0, 0, (k * Math.PI) / 4, 0, 0, { jit: 0 });
+      m.box(0x2a2d33, 0.22, 0.09, 0.09, 0, 0, 0); for (const [y, z] of [[0.05, 0], [-0.05, 0], [0, 0.05], [0, -0.05]]) m.box(0xc9ced6, 0.23, 0.02, 0.02, 0, y!, z!, 0, 0, 0, { jit: 0 });
+    }, false, 34);
     w.position.set(s * 0.74, 0.34, z); g.add(w); wheels.push(w);
   }
   // bonnet on a hinge at the windscreen end: up 1.2 rad
