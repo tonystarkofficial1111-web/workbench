@@ -12,6 +12,7 @@ import { disposeAnimalCache } from "./models";
 import { clamp } from "../infinite/rng";
 import { BUILD, type BType } from "./data";
 import { FsUi } from "./ui";
+import { FsRaid } from "./raid";
 
 declare const __WB_DBG__: boolean;
 
@@ -185,6 +186,7 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
 
   function click(cx: number, cy: number) {
     if (ghost) { tryPlace(); return; }
+    if (raid.battle) { const q = groundAt(cx, cy); q && raid.battleClick(q.x, q.z); return; }
     const v = villagerAt(cx, cy);
     if (v && !(v.leader && game.sel === -1 && false)) { game.sel = v.id; ui.select(v); return; }
     const L = game.leader && game.leader.collapsed <= 0 ? game.leader : null;
@@ -275,6 +277,8 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     gfxName: () => ctx.gfx.name(),
     screenOf, villagerAt,
   });
+  const raid = new FsRaid(game, land, field, ui, { focus: (x: number, z: number) => focus(x, z), save: () => writeSave(false) });
+  if (typeof __WB_DBG__ !== "undefined" && __WB_DBG__) (window as any).__fs.raid = raid;
 
   // ------------------------------------------------------------------------------------------------ the loop
   let raf = 0, last = performance.now(), saveT = 0, stopped = false;
@@ -290,12 +294,12 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
       const sim = rdt * speed * (ui.skipNight && game.isNight() ? 6 : 1);
       if (ui.skipNight && !game.isNight()) ui.skipNight = false;
       let left = sim;
-      while (left > 1e-6) { const st = Math.min(0.1, left); game.update(st); left -= st; }
+      while (left > 1e-6) { const st = Math.min(0.1, left); if (raid.battle) raid.battleUpdate(st); else { game.update(st); raid.homeUpdate(st); } left -= st; }
       ctx.time = S.time;
       ctx.air.update(rdt, ctx.rtime);
       for (let i = 0; i < ctx.frame.length; i++) ctx.frame[i]!(rdt);
       updateCamera(rdt);
-      game.draw(rdt, cam.tx, cam.tz);
+      if (raid.battle) raid.battleDraw(rdt); else { game.draw(rdt, cam.tx, cam.tz); raid.attackDraw(rdt); }
       if (mkT > 0) { mkT = Math.max(0, mkT - rdt * 1.4); mk.material.opacity = mkT; mk.scale.setScalar(1 + (1 - mkT) * 0.8); }
       ui.frame(rdt);
       ctx.renderer.render(ctx.scene, ctx.camera);
@@ -312,6 +316,7 @@ function runGame(host: HTMLElement, saved: FsState | null, close: () => void) {
     window.removeEventListener("keydown", kd); window.removeEventListener("keyup", ku); window.removeEventListener("blur", blur);
     document.removeEventListener("visibilitychange", onHide); window.removeEventListener("beforeunload", onUnload);
     cancelGhost();
+    raid.dispose();
     ui.dispose();
     for (const f of ctx.cleanup.splice(0)) { try { f(); } catch (e) { console.error(e); } }
     game.dispose();

@@ -307,10 +307,23 @@ export class FsGame {
   }
 
   makeRig(v: Villager) {
+    const T = this.T;
+    if (v.r) { this.vGroup.remove(v.r.g); untrack(this.ctx, v.r.g); }
+    const R = this.person({ seed: v.seed, tunic: v.leader ? 0x2f5fb8 : TUNICS[v.seed % TUNICS.length]!, crown: !!v.leader, armour: v.armour, tool: this.toolFor(v) });
+    const g = R.g;
+    const ic = new T.Sprite(this.icon("💤")); ic.scale.set(0.42, 0.42, 1); ic.position.y = 1.42; ic.visible = false; g.add(ic);
+    const ring = new T.Mesh(this.ringGeo, this.ringMat); ring.position.y = 0.04; ring.visible = false; ring.renderOrder = 3; g.add(ring);
+    g.traverse((o: any) => { if (o.isMesh) o.userData.vill = v; });
+    g.position.set(v.x, 1, v.z); g.rotation.y = v.yaw;
+    this.vGroup.add(g);
+    v.r = { ...R, ic, icTxt: "", ring, loadKey: "", key: R.toolKind + (v.armour ? "A" : "") };
+  }
+
+  /** A person: body parts on pivots (walk / work animation), optional armour and a tool or spear in the right hand. Raiders use it too. */
+  person(o: { seed: number; tunic: number; crown?: boolean; armour?: boolean; tool?: string; plume?: number; pennant?: number }) {
     const T = this.T, ctx = this.ctx;
-    if (v.r) { this.vGroup.remove(v.r.g); untrack(ctx, v.r.g); }
-    const rnd = new Rng(v.seed);
-    const L = randomLook(rnd, v.leader ? 0x2f5fb8 : TUNICS[v.seed % TUNICS.length]!, v.leader ? { crown: true, cape: true } : {});
+    const rnd = new Rng(o.seed);
+    const L = randomLook(rnd, o.tunic, o.crown ? { crown: true, cape: true } : {});
     const parts = humanParts(ctx, L), tiers: any[] = [];
     const g = new T.Group(), P = (x: number, y: number, z = 0) => { const p = new T.Group(); p.position.set(x, y, z); return p; };
     const body = P(0, 0.4), headP = P(0, 0.4), armLP = P(-0.205 * L.build, 0.33), armRP = P(0.205 * L.build, 0.33), legLP = P(-0.085, 0.4), legRP = P(0.085, 0.4);
@@ -319,21 +332,31 @@ export class FsGame {
     armLP.add(instantiate(ctx, parts.armL, tiers)); armRP.add(instantiate(ctx, parts.armR, tiers)); body.add(armLP, armRP);
     legLP.add(instantiate(ctx, parts.legL, tiers)); legRP.add(instantiate(ctx, parts.legR, tiers));
     const inner = new T.Group(); inner.add(body, legLP, legRP); g.add(inner);
-    if (v.armour) {
-      const set = armourSet(ctx, L, 0xc03030);
+    if (o.armour) {
+      const set = armourSet(ctx, L, o.plume ?? 0xc03030);
       torso.add(instantiate(ctx, set.torso, tiers)); headP.add(instantiate(ctx, set.head, tiers)); armLP.add(instantiate(ctx, set.armL, tiers)); armRP.add(instantiate(ctx, set.armR, tiers)); legLP.add(instantiate(ctx, set.legL, tiers)); legRP.add(instantiate(ctx, set.legR, tiers));
     }
-    const tk = this.toolFor(v);
+    const tk = o.tool || "";
     let tool: any = null;
-    if (tk) { tool = instantiate(ctx, tk === "spear" ? spearParts(ctx, 0x2f5fb8) : this.tool(tk), tiers); tool.position.set(0, -0.33, 0.03); tool.rotation.x = tk === "spear" ? 0.15 : 0.6; armRP.add(tool); }
+    if (tk) { tool = instantiate(ctx, tk === "spear" ? spearParts(ctx, o.pennant ?? 0x2f5fb8) : this.tool(tk), tiers); tool.position.set(0, -0.33, 0.03); tool.rotation.x = tk === "spear" ? 0.15 : 0.6; armRP.add(tool); }
     const load = new T.Group(); load.position.set(0, 0.62, -0.17); body.add(load);   // what they carry (a bundle on the back)
-    const ic = new T.Sprite(this.icon("💤")); ic.scale.set(0.42, 0.42, 1); ic.position.y = 1.42; ic.visible = false; g.add(ic);
-    const ring = new T.Mesh(this.ringGeo, this.ringMat); ring.position.y = 0.04; ring.visible = false; ring.renderOrder = 3; g.add(ring);
-    g.traverse((o: any) => { if (o.isMesh) { o.userData.vill = v; if (o !== ring) { o.castShadow = this.ctx.gfx.level === 2 && o.castShadow !== false; } } });
-    g.position.set(v.x, 1, v.z); g.rotation.y = v.yaw;
-    this.vGroup.add(g);
-    v.r = { g, inner, body, headP, armLP, armRP, legLP, legRP, tool, toolKind: tk, load, loadKey: "", ic, icTxt: "", ring, tiers, key: tk + (v.armour ? "A" : "") , ph: 0, amp: 0 };
+    g.traverse((m: any) => { if (m.isMesh) m.castShadow = this.ctx.gfx.level === 2 && m.castShadow !== false; });
     tiers.forEach((t) => setTier(t, ctx.gfx.f.tier));
+    return { g, inner, body, headP, armLP, armRP, legLP, legRP, tool, toolKind: tk, load, tiers, ph: 0, amp: 0 };
+  }
+
+  /** walk cycle + a swing while `work` (shared by villagers and raiders) */
+  static anim(R: any, moved: number, rdt: number, t: number, seed: number, swing: number) {
+    const sp = moved / Math.max(rdt, 0.001);
+    R.amp += ((sp > 0.2 ? 1 : 0) - R.amp) * Math.min(1, rdt * 10);
+    R.ph += moved * 5.5;
+    const sw = Math.sin(R.ph) * R.amp;
+    R.legLP.rotation.x = sw * 0.85; R.legRP.rotation.x = -sw * 0.85;
+    R.armLP.rotation.x = -sw * 0.6; R.armRP.rotation.x = sw * 0.6;
+    R.armLP.rotation.z = 0.06; R.armRP.rotation.z = -0.06;
+    R.body.rotation.x = 0.07 * R.amp; R.body.rotation.y = 0;
+    R.headP.rotation.y = Math.sin(t * 0.55 + seed) * 0.28 * (1 - R.amp);
+    if (swing > 0) { const k = 1 - swing; R.armRP.rotation.x = -2.2 + 2.0 * Math.sin(k * Math.PI); R.body.rotation.x = 0.1 + Math.sin(k * Math.PI) * 0.22; }
   }
   refreshGfx() { this.S.villagers.forEach((v) => v.r && v.r.tiers.forEach((t: any) => setTier(t, this.ctx.gfx.f.tier))); }
 
