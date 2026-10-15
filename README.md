@@ -1,4 +1,4 @@
-# Workbench 5.65.0 — React + TypeScript rewrite
+# Workbench 5.66.0 — React + TypeScript rewrite
 
 A from-the-ground-up React/TypeScript rewrite of the single-file Workbench app. It builds to **one self-contained HTML file**
 (`dist/Workbench.html`, ~14 MB) that runs straight from `file://` in Chrome: JS, CSS, fonts, both screensaver videos and three.js are all inlined.
@@ -64,10 +64,27 @@ default on Chromebooks and slow machines) and *Low* (fewer pixels, plain shapes,
 (0 = shape, 1 = extra detail, 2 = props and fine detail); the level only decides which tiers are visible.
 **Camera**: Z flattens the view (to watch the sun set), X tilts back down, zoom reaches 150.
 
+## Block World: Free Style
+
+The third mode card. It runs on its own canvas and renderer over the Block World tab (`#tab-world.fs-on`; the engine's `worldActive()`
+is patched by `tools/convert-world.ts` to sleep meanwhile) and reuses the Infinite world's sky, trees, plants, people, buildings, flags and
+water through a small env shim (`src/world/freestyle/ctx.ts`). Saved to localStorage as `wb-freestyle-v1` (part of the Block World saves).
+
+| File (`src/world/freestyle/`) | What it does |
+|---|---|
+| `ctx.ts` | renderer, scene, lights, the env shim the Infinite modules expect, graphics levels |
+| `land.ts` | the 256 x 256 land: coast, lakes, river with bridges, forests, rocky hills, stone / iron deposits, walk grid and A* |
+| `data.ts` | every number: needs, food, roles, buildings and costs, production, animals, trades |
+| `models.ts` | tent, campfire, well, tower, building sites, chickens, sheep and cows |
+| `game.ts` | the simulation: villagers (needs, jobs, collapse in front of the tent, death), animals, buildings, trees, leader orders, save data |
+| `ui.ts` | top bar, villager side bar, food bar (drag onto a villager), tent menu, building panels, help |
+| `raid.ts` | 15 raid villages with pictures, the battle map, the counter-raid |
+| `index.ts` | start / continue screen, camera and input, frame loop, saving |
+
 ### Driving it from a script
 
 `bun run build.ts --dev` and `PORT=5191 bun run serve.ts` give `/new-dbg` (state hooks: `window.__dbg`, `__dbg2`, and `__wbInf` for the Infinite
-context) and `/harness.js`. `tools/cdp.ts` starts headless Chrome over the DevTools protocol (GPU WebGL, screenshots, evals), which is how the
+context, `__fs` for Free Style) and `/harness.js`. `tools/cdp.ts` starts headless Chrome over the DevTools protocol (GPU WebGL, screenshots, evals), which is how the
 screenshots and the placement / mode-switch checks were made.
 
 ## Saving: Block World or User saves

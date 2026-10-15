@@ -195,3 +195,11 @@ Requested: bigger letters, nicer drawings, TypingClub-like, minimal; keep the li
 - **Interiors**: `src/arcade/car3d/interior.ts` (box-only cabins and the canvas cluster). Eye points moved back 0.23-0.27 m so the binnacle sits under the windscreen; the R34 is right-hand drive (eye x < 0).
 - **F1 springs**: one `InstancedMesh` of 4 x 56 short bars laid on a helix between the lower wishbone and the chassis, rebuilt in `setSuspension`; travel follows `comp[i]`.
 - **Garage**: `garageDetail()` in `thinkers/workshop.ts` and the extra box layer in `props.projectCar`; the user asked for no curves, so new detail is boxes only.
+
+## Block World: Free Style (session 8, version 5.66.0)
+- **Mode**: a third card in the Block World picker (`tools/gen-world-markup.ts`). `WorldTab` opens `openFreeStyle()` instead of sending `world:mode-selected`; closing it shows the picker again. The engine's `worldActive()` also checks `!tab-world.fs-on` (patched in `tools/convert-world.ts`), so only one renderer runs.
+- **Reuse**: Free Style has its own renderer but uses the Infinite modules (sky, TreeField, Foliage, Fx, anim, humans, BUILDERS) through the env shim in `ctx.ts`. Two small hooks were added to them: `foliage.ts` reads `island.density` / `island.spread` (defaults keep the Infinite island the same), and `water.ts` exports its shaders and the Low water picture.
+- **Land**: 256 x 256 (about five times the Infinite island). Bridges are placed where the river is narrow; the walk grid treats them as land.
+- **Rules**: hunger lasts about 1.6 days, thirst 1.1; at zero, health drains; at zero health a villager lies in front of the tent for one day (300 s) and dies unless fed. Raw meat and lake water can cause sickness; cooks fix both. New villagers join at dawn when a bed is free and food is in store. Hunting without a spear or armour hurts the hunter.
+- **Raids**: one counter-raid per raid, 7-12 days later; nobody attacks a village that has not raided. Battle maps are built at the same coordinates as the home land, which is hidden during the fight.
+- **Checked** (headless Chrome, `--dbg`): new game, a day at 4x, building a house and tower, a guard on the tower, starving to collapse and feeding back, save / reload / continue, the Raid tab and pictures, a medium raid won, the warning, the counter-raid won and lost.
