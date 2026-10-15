@@ -25,10 +25,12 @@ export class Foliage {
     const M = new T.Matrix4(), Q = new T.Quaternion(), V = new T.Vector3(), S = new T.Vector3(), E = new T.Euler();
     this.tmp = { M, Q, V, S, E };
 
-    const mk = (key: string, build: (mb: MB, r: Rng) => void, mat: string, count: number, share: number, accept: (x: number, z: number, rr: Rng) => boolean, scaleRange: [number, number], tint?: [number, number]) => {
-      const mb = new MB(T, seed + count);
+    const dens = (island as any).density || 1;   // Free Style's land is five times bigger: more plants
+    const mk = (key: string, build: (mb: MB, r: Rng) => void, mat: string, count0: number, share: number, accept: (x: number, z: number, rr: Rng) => boolean, scaleRange: [number, number], tint?: [number, number]) => {
+      const count = Math.round(count0 * dens);
+      const mb = new MB(T, seed + count0);
       mb.ao = { y0: 0, h: 0.3, k: 0.4 };
-      build(mb, rnd.fork(count));
+      build(mb, rnd.fork(count0));
       const root = mb.build(ctx.mats, false);
       const parts = root.children;
       // all parts of one plant share its instances
@@ -41,7 +43,7 @@ export class Foliage {
       const tmpC = new T.Color();
       let tries = 0;
       while (s.x.length < count && tries++ < count * 30) {
-        const a = rnd.range(0, Math.PI * 2), rr = Math.sqrt(rnd.next()) * 56;
+        const a = rnd.range(0, Math.PI * 2), rr = Math.sqrt(rnd.next()) * ((island as any).spread || 56);   // Free Style passes a bigger spread
         const x = island.cx + Math.cos(a) * rr, z = island.cz + Math.sin(a) * rr;
         if (!island.isLand(x, z)) continue;
         if (!accept(x, z, rnd)) continue;

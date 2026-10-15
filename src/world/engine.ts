@@ -638,7 +638,7 @@ function selectVillager(v){
 }
 
 function worldActive(){
-  return document.getElementById('tab-world').classList.contains('active');
+  const tw=document.getElementById('tab-world'); return tw.classList.contains('active') && !tw.classList.contains('fs-on');
 }
 
 function resizeGame(){

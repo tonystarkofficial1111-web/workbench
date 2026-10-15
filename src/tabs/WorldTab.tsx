@@ -7,6 +7,7 @@ import { initRecorder } from "../world/recorder";
 import { worldUi } from "./ArcadeTab";
 import { worldBridge } from "../core/bridge";
 import { InfiniteGuide } from "../components/InfiniteGuide";
+import { openFreeStyle } from "../world/freestyle";
 
 /**
  * Block World tab. The markup is handed to the engine as plain DOM (the three.js engine owns it, like the
@@ -28,6 +29,8 @@ export function WorldTab() {
       const modeBtn = t.closest("[data-mode]") as HTMLElement | null;
       if (modeBtn && root.contains(modeBtn)) {
         overlay()?.classList.remove("show");
+        // Free Style runs on its own canvas over the tab; leaving it brings the mode picker back
+        if (modeBtn.dataset.mode === "freestyle") { openFreeStyle(() => overlay()?.classList.add("show")); return; }
         window.dispatchEvent(new CustomEvent("world:mode-selected", { detail: { mode: modeBtn.dataset.mode } }));
         return;
       }

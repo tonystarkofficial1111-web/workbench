@@ -24,6 +24,15 @@ const rainBox = take(/<div id="rain-box">[\s\S]*?<\/div>\s*<div id="rain-pct">[^
 const followKing = take(/<button id="follow-king-btn"[^>]*>[^<]*<\/button>\s*/);
 const saveLoad = take(/<div id="save-load">[\s\S]*?<\/div>\s*/);
 
+// Free Style (5.66.0): a third mode card, run by src/world/freestyle (its own renderer over the tab)
+const freestyle =
+  `<div class="mode-option"><div class="mode-icon">&#9978;</div><h3>Free Style</h3>` +
+  `<p>Strategy on a wide land five times bigger, with forests, lakes, a river and rocky hills. Lead your villagers from a tent: give them jobs, hunt, farm, mine, cook and boil water, build, raid other villages and defend your own. Saved as you play.</p>` +
+  `<button class="mode-btn" data-mode="freestyle" type="button">Start Free Style</button></div>`;
+const optEnd = /<\/div>(\s*<button class="mode-resume")/;
+if (!optEnd.test(inner)) throw new Error("mode options end not found");
+inner = inner.replace(optEnd, freestyle + "</div>$1");
+
 const out =
   inner.trim() +
   `<div id="bw-right-col">${perfBox}${shaderToggle}${rainBox}${followKing}<button id="bw-instr-btn" type="button">Instructions</button></div>` +

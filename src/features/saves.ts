@@ -27,7 +27,7 @@ const MAGIC_BYTES = new TextEncoder().encode(MAGIC);
 const HEAD = MAGIC_BYTES.length + 4;
 
 /** Keys the Block World itself writes (rare-ore bank, best wave, Infinite day, most defenses built, its graphics level). They travel with the Block World save and are left out of User saves. */
-export const BLOCK_WORLD_KEYS = ["wb-rare-bank", "wb-inf-best", "wb-inf-day", "wb-bw-maxdefs", "wb-inf-gfx"];
+export const BLOCK_WORLD_KEYS = ["wb-rare-bank", "wb-inf-best", "wb-inf-day", "wb-bw-maxdefs", "wb-inf-gfx", "wb-freestyle-v1"];
 export const isBlockWorldKey = (k: string) => BLOCK_WORLD_KEYS.indexOf(k) >= 0;
 /** Everything this app stores starts with one of these; other pages on the same origin (file:// is one origin) are never touched. */
 const isAppKey = (k: string) => /^(wb[-_]|stark_)/.test(k);

@@ -7,7 +7,7 @@ import { WATER_Y, CENTER, GRID } from "./terrain";
  * that washes up the beach and fades with depth). Medium: the same waves without foam and ripples. Low: a gently scrolling picture
  * on a flat plane (almost free). The shore picture (distance to the coast) comes from the terrain.
  */
-const VERT = `
+export const VERT = `
 uniform float uTime; uniform float uAmp;
 varying vec3 vWorld;
 void main(){
@@ -21,7 +21,7 @@ void main(){
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`;
 
-const FRAG = `
+export const FRAG = `
 precision highp float;
 varying vec3 vWorld;
 uniform float uTime; uniform float uAmp; uniform float uQ; uniform float uLight; uniform float uRain; uniform float uSkyQ;
@@ -75,7 +75,7 @@ void main(){
   #include <colorspace_fragment>
 }`;
 
-function waterPicture(T: any) {
+export function waterPicture(T: any) {
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d")!;
   g.fillStyle = "#2f7f9a"; g.fillRect(0, 0, 256, 256);

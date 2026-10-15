@@ -14,6 +14,8 @@ function rep(from: string | RegExp, to: string, label: string) {
 }
 
 rep(/^\s*import \* as THREE from '[^']+';\s*/m, "", "three import");
+// Free Style runs its own renderer over the tab: the engine sleeps while it is open
+rep("return document.getElementById('tab-world').classList.contains('active');", "const tw=document.getElementById('tab-world'); return tw.classList.contains('active') && !tw.classList.contains('fs-on');", "free style pause");
 
 // --- complete-save bundle: route profile / assistant / memory through the app's modules ---
 rep("if(bundle.arcade && typeof wbProfile!=='undefined'){ wbProfile=bundle.arcade; wbSaveProfile(); }", "if(bundle.arcade){ replaceProfile(bundle.arcade); }", "profile restore");
