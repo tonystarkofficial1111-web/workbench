@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { MB } from "../../world/infinite/mb";
 import type { Vehicle } from "./vehicle";
+import { buildInterior, type Gauges } from "./interior";
 
 /**
  * Blocky road and rally cars for the 3D car games, built from boxes with MB (merged per material) so each car is a handful of draw calls.
@@ -24,6 +25,8 @@ export interface CarModel {
   wheelPos: Array<[number, number, number]>;
   /** interior pieces only seen from the driver's seat (rally): steering wheel group */
   steeringWheel: any | null;
+  /** live instrument cluster (only with an interior) */
+  gauges: Gauges | null;
   eye: [number, number, number];
   update(v: Vehicle, dt: number, braking: boolean): void;
   dispose(): void;
@@ -48,7 +51,7 @@ const SHAPES: Record<CarKind, Shape> = {
   // Nissan Skyline GT-R (R34): a boxy wedge, long bonnet, four round-ish tail lights, a tall rear wing, front lip
   skyline: {
     len: 4.6, width: 1.79, wheelZ: [1.33, -1.33], track: 0.76, wheelR: 0.33, wheelW: 0.25, rim: 0x5b6068,
-    exhausts: [[0.42, 0.3, -2.32]], eye: [0.36, 1.08, -0.15],
+    exhausts: [[0.42, 0.3, -2.32]], eye: [-0.36, 1.08, -0.42],
     build(mb, col, acc, mbl, mbg) {
       mb.box(DK, 1.62, 0.14, 4.3, 0, 0.27, 0);                                       // floor
       mb.box(col, 1.78, 0.48, 4.48, 0, 0.56, 0);                                      // lower body
@@ -90,7 +93,7 @@ const SHAPES: Record<CarKind, Shape> = {
   // Ford Mustang GT 5.0 (2021): long bonnet with a power dome, shark-nose grille, fastback roof, tri-bar tail lights, quad exhausts
   mustang: {
     len: 4.8, width: 1.92, wheelZ: [1.38, -1.34], track: 0.81, wheelR: 0.35, wheelW: 0.27, rim: 0x202328,
-    exhausts: [[0.62, 0.3, -2.42], [0.5, 0.3, -2.42], [-0.5, 0.3, -2.42], [-0.62, 0.3, -2.42]], eye: [0.38, 1.1, -0.25],
+    exhausts: [[0.62, 0.3, -2.42], [0.5, 0.3, -2.42], [-0.5, 0.3, -2.42], [-0.62, 0.3, -2.42]], eye: [0.38, 1.1, -0.52],
     build(mb, col, acc, mbl, mbg) {
       mb.box(DK, 1.72, 0.14, 4.5, 0, 0.28, 0);
       mb.box(col, 1.9, 0.52, 4.66, 0, 0.6, 0);
@@ -130,7 +133,7 @@ const SHAPES: Record<CarKind, Shape> = {
   // Subaru Impreza WRX STI, rally spec: big bonnet scoop, roof vent, tall wing, mud flaps, a light pod on the bonnet
   impreza: {
     len: 4.4, width: 1.77, wheelZ: [1.26, -1.26], track: 0.76, wheelR: 0.34, wheelW: 0.24, rim: 0xd4a72c, tyre: 0x1a1a1e,
-    exhausts: [[-0.55, 0.32, -2.22]], eye: [0.36, 1.14, -0.1],
+    exhausts: [[-0.55, 0.32, -2.22]], eye: [0.36, 1.14, -0.38],
     build(mb, col, acc, mbl, mbg) {
       mb.box(DK, 1.6, 0.16, 4.1, 0, 0.32, 0);
       mb.box(0x6d737b, 1.4, 0.06, 1.2, 0, 0.24, 1.2);                                   // sump guard
@@ -166,7 +169,7 @@ const SHAPES: Record<CarKind, Shape> = {
   // Toyota GR Yaris Rally1: short hatch, huge wing and arches, white with red and black
   yaris: {
     len: 4.1, width: 1.88, wheelZ: [1.28, -1.28], track: 0.8, wheelR: 0.34, wheelW: 0.26, rim: 0xf2f2f4, tyre: 0x1a1a1e,
-    exhausts: [[0.0, 0.34, -2.08]], eye: [0.36, 1.12, -0.25],
+    exhausts: [[0.0, 0.34, -2.08]], eye: [0.36, 1.12, -0.48],
     build(mb, col, acc, mbl, mbg) {
       mb.box(DK, 1.66, 0.16, 3.8, 0, 0.32, 0);
       mb.box(0x6d737b, 1.4, 0.06, 1.1, 0, 0.24, 1.15);
@@ -232,7 +235,7 @@ const SHAPES: Record<CarKind, Shape> = {
 export const CAR_SHAPES = SHAPES;
 
 /** Build a car. `kit` is the shared material kit (makeKit); `col` the paint, `acc` the trim / livery colour. */
-export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: number, opts: { interior?: boolean; lights?: boolean } = {}): CarModel {
+export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: number, opts: { interior?: boolean | "street" | "rally"; lights?: boolean } = {}): CarModel {
   const S = SHAPES[kind];
   const group = new T.Group(), body = new T.Group();
   group.add(body);
@@ -299,56 +302,18 @@ export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: numb
     group.add(spot); group.add(spot.target);
   }
 
-  let steeringWheel: any = null;
+  let steeringWheel: any = null, gauges: any = null, interior: any = null;
   if (opts.interior) {
-    // seats, dash, roll cage and a steering wheel (rally cockpit view)
-    const im = new MB(T, 320); im.jitter = 0.02; im.ao = { y0: 0.3, h: 1, k: 0.3 };
-    const [ex, ey, ez] = S.eye;
-    im.box(0x202227, 1.4, 0.2, 0.5, 0, ey - 0.36, ez + 0.98);                          // dashboard
-    im.box(0x2a2d33, 1.4, 0.06, 0.3, 0, ey - 0.24, ez + 1.12, 0.4, 0, 0);
-    for (const s of [-1, 1]) { im.box(0x1d1f23, 0.48, 0.5, 0.1, s * 0.36, ey - 0.35, ez - 0.32); im.box(0x1d1f23, 0.48, 0.1, 0.5, s * 0.36, ey - 0.62, ez - 0.05); im.box(0xc8102e, 0.08, 0.5, 0.02, s * 0.36, ey - 0.3, ez - 0.26, 0, 0, 0, { jit: 0 }); }
-    // roll cage: hoops and diagonal
-    const cage = 0xd8dce2;
-    for (const z of [ez + 0.72, ez - 0.45]) { for (const s of [-1, 1]) im.beam(cage, 0.045, s * 0.66, 0.5, z, s * 0.62, ey + 0.2, z - (z > ez ? 0.18 : 0)); im.beam(cage, 0.045, -0.62, ey + 0.2, z - (z > ez ? 0.18 : 0), 0.62, ey + 0.2, z - (z > ez ? 0.18 : 0)); }
-    for (const s of [-1, 1]) im.beam(cage, 0.045, s * 0.62, ey + 0.2, ez + 0.54, s * 0.62, ey + 0.2, ez - 0.45);
-    im.beam(cage, 0.04, -0.62, ey + 0.2, ez - 0.45, 0.62, 0.55, ez - 0.45);
-    // centre console with the gear lever and the handbrake
-    im.box(0x202227, 0.24, 0.3, 0.7, 0, ey - 0.55, ez + 0.4); im.box(0x9aa0a8, 0.03, 0.3, 0.03, 0, ey - 0.3, ez + 0.4, 0.3, 0, 0, { mat: "metal" }); im.box(0xc8102e, 0.04, 0.4, 0.04, -0.1, ey - 0.28, ez + 0.1, -0.5, 0, 0);
-    // co-driver's notes on the passenger side
-    im.box(0xf2f2f4, 0.22, 0.02, 0.3, -ex, ey - 0.42, ez + 0.3, 0.6, 0, 0);
-    // A-pillars, roof lining and door cards frame the view from the seat (the body's own boxes are invisible from inside)
-    for (const s of [-1, 1]) {
-      im.beam(0x202227, 0.07, s * 0.7, ey - 0.3, ez + 0.98, s * 0.64, ey + 0.21, ez + 0.36);
-      im.box(0x24262b, 0.06, 0.5, 1.3, s * 0.74, ey - 0.46, ez + 0.2);
-      im.box(0x1b1d22, 0.04, 0.05, 1.2, s * 0.72, ey - 0.2, ez + 0.2);
-    }
-    im.box(0x5c6068, 1.46, 0.04, 1.3, 0, ey + 0.2, ez - 0.25);                        // roof lining (fabric)
-    im.box(0x16181c, 1.36, 0.06, 0.08, 0, ey + 0.2, ez + 0.32);
-    // rally dash: a data screen and a row of switches
-    im.box(0x0e1014, 0.26, 0.14, 0.04, 0, ey - 0.24, ez + 0.88, -0.5, 0, 0);
-    for (let k = 0; k < 6; k++) im.box(k % 2 ? 0xd2262d : 0xe9e9ee, 0.03, 0.04, 0.03, -0.25 + k * 0.05 - ex * 0.2, ey - 0.27, ez + 0.83, 0, 0, 0, { jit: 0 });
-    body.add(im.build(kit, false));            // matte (Lambert): seen from inside there is no sky to reflect
-    // instruments: two dials and a shift light bar
-    const dm = new MB(T, 321); dm.jitter = 0; dm.ao = { y0: -9, h: 1, k: 0 };
-    for (const k of [-0.09, 0.09]) dm.cyl(0x0a0b0d, 0.07, 0.07, 0.02, ex + k, ey - 0.24, ez + 0.8, 12, Math.PI / 2 - 0.5, 0, 0);
-    body.add(dm.build(kit, false));
-    steeringWheel = new T.Group();
-    const sw = new MB(T, 322); sw.jitter = 0; sw.ao = { y0: -9, h: 1, k: 0 };
-    sw.torus(0x16181c, 0.18, 0.024, 0, 0, 0, 0, 0, 0, 6, 16);
-    sw.box(0x2a2d33, 0.3, 0.03, 0.03, 0, 0, 0); sw.box(0x2a2d33, 0.03, 0.14, 0.03, 0, -0.08, 0);
-    sw.box(0xc8102e, 0.03, 0.04, 0.03, 0, 0.18, 0, 0, 0, 0, { jit: 0 });
-    steeringWheel.add(sw.build({ ...kit, lit: kit.rubber }, false));
-    steeringWheel.position.set(ex, ey - 0.25, ez + 0.58); steeringWheel.rotation.x = -0.35;
-    // the rotation order makes the tilt apply first, then the turn around the column
-    steeringWheel.rotation.order = "XYZ";
-    body.add(steeringWheel);
+    const style = opts.interior === "street" || kind === "skyline" || kind === "mustang" ? "street" : "rally";
+    interior = buildInterior(T, kit, body, S.eye, style, col);
+    steeringWheel = interior.steeringWheel; gauges = interior.gauges;
   }
 
   const exhausts = S.exhausts.map((e) => new T.Vector3(e[0], e[1], e[2]));
   for (const e of exhausts) { const ex = new MB(T, 330); ex.jitter = 0; ex.ao = { y0: -9, h: 1, k: 0 }; ex.cyl(0x6d7178, 0.045, 0.05, 0.16, e.x, e.y, e.z, 8, Math.PI / 2, 0, 0, { mat: "metal" }); body.add(ex.build(kit, false)); }
 
   return {
-    kind, group, body, wheels, tail, head, exhausts, wheelPos: pos, steeringWheel, eye: S.eye,
+    kind, group, body, wheels, tail, head, exhausts, wheelPos: pos, steeringWheel, gauges, eye: S.eye,
     update(v: Vehicle, dt: number, braking: boolean) {
       group.position.set(v.x, v.y, v.z);
       group.rotation.set(v.slopeX, v.h, v.slopeZ, "YXZ");
@@ -367,7 +332,7 @@ export function buildCar(T: any, kit: any, kind: CarKind, col: number, acc: numb
     },
     dispose() {
       group.traverse((o: any) => { if (o.geometry) o.geometry.dispose(); });
-      glassMat.dispose(); head.dispose(); tail.dispose();
+      glassMat.dispose(); head.dispose(); tail.dispose(); if (interior) interior.dispose();
     },
   };
 }

@@ -55,6 +55,8 @@ export class Vehicle {
   x = 0; z = 0; y = 0; h = 0;
   /** forward and rightward speed in the car's frame, yaw rate (positive = turning right), vertical speed */
   u = 0; w = 0; om = 0; vy = 0;
+  /** the ground's smoothed climb rate under the car (m/s) */
+  vyS = 0;
   steer = 0;
   gear = 1; rpm = 800; shiftT = 0;
   airborne = false; airT = 0;
@@ -83,7 +85,7 @@ export class Vehicle {
   get driftDeg() { return this.speed < 1.5 ? 0 : Math.abs(Math.atan2(this.w, Math.abs(this.u))) * 180 / Math.PI; }
 
   place(x: number, z: number, h: number, y = 0) {
-    this.x = x; this.z = z; this.h = h; this.y = y; this.u = this.w = this.om = this.vy = 0; this.steer = 0; this.gear = 1; this.rpm = this.spec.idle;
+    this.x = x; this.z = z; this.h = h; this.y = y; this.u = this.w = this.om = this.vy = this.vyS = 0; this.steer = 0; this.gear = 1; this.rpm = this.spec.idle;
     this.roll = this.rollV = this.pitch = this.pitchV = this.heave = this.heaveV = 0; this.airborne = false; this.slide = [0, 0, 0, 0]; this.spin = 0;
   }
 
@@ -119,21 +121,26 @@ export class Vehicle {
     this.surface = surf;
     // ---- steering: quicker at low speed, gentler at high speed
     const sp = this.speed;
-    const lim = S.steerMax * (1 - 0.55 * clamp(sp / 45, 0, 1));
+    // keyboard steering is all-or-nothing, so the wheel is turned smoothly: slower (and less far) the faster the car goes, quicker back to centre
+    const lim = S.steerMax * (1 - 0.62 * clamp(sp / 40, 0, 1));
     const want = clamp(inp.steer, -1, 1) * lim;
-    const rate = (Math.abs(want) < Math.abs(this.steer) ? 5 : 3.2) * S.steerMax;
+    const back = Math.abs(want) < Math.abs(this.steer) || Math.sign(want) !== Math.sign(this.steer);
+    const rate = (back ? 4.2 : 1.9 + 1.6 * (1 - clamp(sp / 30, 0, 1))) * S.steerMax;
     this.steer += clamp(want - this.steer, -rate * dt, rate * dt);
 
-    // ---- vertical: follow the ground, fly off crests, land with a thump
+    // ---- vertical: follow the ground, fly off crests, land with a thump.
+    // The ground's climb rate is smoothed (a single bumpy sample must not launch the car), and the car only takes off when the ground drops
+    // clearly below where a falling car would be: that is a real crest, not noise.
     const groundY = gr.h;
     if (this.airborne) {
       this.vy -= G * dt; this.y += this.vy * dt; this.airT += dt;
-      if (this.y <= groundY) { this.landed = Math.max(0, -this.vy); this.y = groundY; this.airborne = false; this.vy = 0; this.heaveV -= this.landed * 0.6; this.pitchV += this.landed * 0.15; }
+      if (this.y <= groundY + 0.01 || this.airT > 3.5) { this.landed = Math.max(0, -this.vy); this.y = groundY; this.airborne = false; this.vy = 0; this.vyS = 0; this.heaveV -= this.landed * 0.5; this.pitchV += this.landed * 0.12; }
     } else {
-      const vyG = (groundY - this.y) / dt;
-      // on a crest the ground falls away faster than gravity can pull the car down: it takes off
-      if (vyG < this.vy - G * dt - 0.15 && sp > 8) { this.airborne = true; this.airT = 0; this.vy -= G * dt; this.y += this.vy * dt; }
-      else { this.vy = clamp(vyG, -30, 30); this.y = groundY; }
+      const vyG = clamp((groundY - this.y) / dt, -40, 40);
+      this.vyS += (vyG - this.vyS) * (1 - Math.exp(-dt / 0.04));
+      const ballistic = this.y + this.vy * dt - 0.5 * G * dt * dt;
+      if (sp > 9 && this.vy > -2 && groundY < ballistic - 0.012) { this.airborne = true; this.airT = 0; this.vy -= G * dt; this.y = ballistic; }
+      else { this.vy = clamp(this.vyS, -20, 20); this.y = groundY; }
     }
     const onGround = !this.airborne;
 
@@ -212,6 +219,11 @@ export class Vehicle {
       const ex = Math.abs(beta) - 0.78;
       if (ex > 0) dom += Math.sign(beta) * ex * 40 * S.assist - this.om * ex * 6 * S.assist;
       dom -= this.om * 0.6 * S.assist * clamp(1 - Math.abs(inp.steer), 0, 1);
+      // once the car is sliding, its rotation follows the steering: steer into the slide for more angle, counter-steer to catch it
+      if (Math.abs(beta) > 0.12) {
+        const omSteer = (this.u * Math.tan(this.steer)) / L * 1.6;
+        dom += (omSteer - this.om) * 2.4 * S.assist * clamp((Math.abs(beta) - 0.12) / 0.25, 0, 1);
+      }
     }
     // slow speeds: blend toward rolling without slip so the car does not shimmy when parking
     if (sp < 3 && onGround) {
@@ -236,9 +248,9 @@ export class Vehicle {
     const rollT = clamp(-this.ay * S.lean * 0.012, -0.12, 0.12);
     const pitchT = clamp(-this.ax * S.lean * 0.008, -0.08, 0.08);
     const bump = onGround ? surf.rough * clamp(sp / 20, 0, 1) : 0;
-    this.rollV += (-wn * wn * (this.roll - rollT) - 2 * zeta * wn * this.rollV + this.rnd() * bump * 60) * dt; this.roll += this.rollV * dt;
-    this.pitchV += (-wn * wn * (this.pitch - pitchT) - 2 * zeta * wn * this.pitchV + this.rnd() * bump * 40) * dt; this.pitch += this.pitchV * dt;
-    this.heaveV += (-wn * wn * 1.3 * this.heave - 2 * zeta * wn * this.heaveV + this.rnd() * bump * 30) * dt; this.heave += this.heaveV * dt;
+    this.rollV += (-wn * wn * (this.roll - rollT) - 2 * zeta * wn * this.rollV + this.rnd() * bump * 24) * dt; this.roll += this.rollV * dt;
+    this.pitchV += (-wn * wn * (this.pitch - pitchT) - 2 * zeta * wn * this.pitchV + this.rnd() * bump * 16) * dt; this.pitch += this.pitchV * dt;
+    this.heaveV += (-wn * wn * 1.3 * this.heave - 2 * zeta * wn * this.heaveV + this.rnd() * bump * 12) * dt; this.heave += this.heaveV * dt;
     this.heave = clamp(this.heave, -0.12, 0.12);
 
     // ---- what the wheels show

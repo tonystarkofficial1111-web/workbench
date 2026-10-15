@@ -154,6 +154,24 @@ export class TrackPath {
     return o;
   }
 
+  /**
+   * Nearest sample to a world point, searched only within `range` samples of `hint` (where the car was a moment ago). Where two stretches of
+   * road pass close to each other (switchbacks, a bridge) this keeps the car on its own stretch instead of jumping to the other one's height.
+   * Falls back to the plain search when the hint is clearly stale.
+   */
+  nearestFrom(x: number, z: number, hint: number, range: number, out = { d: 1e9, h: 0, i: 0, side: 1 }) {
+    const n = this.n;
+    let best = 1e18, bi = ((hint % n) + n) % n;
+    for (let k = -range; k <= range; k++) {
+      const m = (((hint + k) % n) + n) % n, dx = this.px[m]! - x, dz = this.pz[m]! - z, d2 = dx * dx + dz * dz;
+      if (d2 < best) { best = d2; bi = m; }
+    }
+    if (best > 60 * 60) return this.nearest(x, z, out);
+    out.d = Math.sqrt(best); out.h = this.py[bi]!; out.i = bi;
+    out.side = (x - this.px[bi]!) * (-this.fz[bi]!) + (z - this.pz[bi]!) * this.fx[bi]! >= 0 ? 1 : -1;
+    return out;
+  }
+
   /** Nearest samples around a world point: the closest distance, and the lowest road height among samples about as close. */
   nearest(x: number, z: number, out = { d: 1e9, h: 0, i: 0, side: 1 }) {
     const cx = Math.floor(x / this.cell), cz = Math.floor(z / this.cell);

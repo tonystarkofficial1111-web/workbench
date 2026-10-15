@@ -21,12 +21,12 @@ export const DRIFT_CARS: Array<{ id: "skyline" | "mustang"; name: string; sub: s
   {
     id: "skyline", name: "Nissan Skyline GT-R (R34)", sub: "2.6 L twin-turbo straight six · 480 hp · rear-biased all-wheel drive", col: 0x1f4fbf, acc: 0x1a1c20, sound: "i6",
     stats: [7, 9, 8],
-    spec: { name: "Skyline", mass: 1480, a: 1.28, b: 1.39, halfTrack: 0.76, cgH: 0.5, power: 358000, maxForce: 11500, front: 0.18, tyreB: 9, grip: 1.04, rearGrip: 0.95, steerMax: 0.68, brake: 15500, gears: [13, 22, 31, 40, 50, 62], idle: 950, redline: 8000, inertia: 1.0, spring: 1.8, lean: 0.9, wheelR: 0.33, wheelZ: [1.33, -1.33], assist: 0.85 },
+    spec: { name: "Skyline", mass: 1480, a: 1.28, b: 1.39, halfTrack: 0.76, cgH: 0.5, power: 358000, maxForce: 11500, front: 0.18, tyreB: 9, grip: 1.05, rearGrip: 0.97, steerMax: 0.66, brake: 15500, gears: [13, 22, 31, 40, 50, 62], idle: 950, redline: 8000, inertia: 1.0, spring: 1.8, lean: 0.9, wheelR: 0.33, wheelZ: [1.33, -1.33], assist: 0.95 },
   },
   {
     id: "mustang", name: "Ford Mustang GT 5.0 (2021)", sub: "5.0 L Coyote V8 · 460 hp · rear-wheel drive", col: 0xb3131a, acc: 0x111214, sound: "v8",
     stats: [9, 6, 7],
-    spec: { name: "Mustang", mass: 1720, a: 1.32, b: 1.4, halfTrack: 0.81, cgH: 0.52, power: 343000, maxForce: 13500, front: 0, tyreB: 8.5, grip: 1.0, rearGrip: 0.9, steerMax: 0.64, brake: 16500, gears: [14, 24, 34, 44, 55, 68], idle: 750, redline: 7500, inertia: 1.08, spring: 1.6, lean: 1.1, wheelR: 0.35, wheelZ: [1.38, -1.34], assist: 0.7 },
+    spec: { name: "Mustang", mass: 1720, a: 1.32, b: 1.4, halfTrack: 0.81, cgH: 0.52, power: 343000, maxForce: 12200, front: 0, tyreB: 8.5, grip: 1.02, rearGrip: 0.93, steerMax: 0.64, brake: 16500, gears: [14, 24, 34, 44, 55, 68], idle: 750, redline: 7500, inertia: 1.08, spring: 1.6, lean: 1.1, wheelR: 0.35, wheelZ: [1.38, -1.34], assist: 0.85 },
   },
 ];
 
@@ -63,7 +63,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   let map: DriftMap = DRIFT_MAPS.find((m) => m.id === save.map) || DRIFT_MAPS[0]!;
   let carDef = DRIFT_CARS.find((c) => c.id === save.car) || DRIFT_CARS[0]!;
   let world: DriftWorld = buildDriftWorld(T, scene, map, f);
-  let car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true });
+  let car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true, interior: "street" });
   scene.add(car.group);
   let v = new Vehicle(carDef.spec);
   let audio: any = null;
@@ -122,14 +122,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
 
   function swapCar() {
     scene.remove(car.group); car.dispose();
-    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true }); scene.add(car.group);
+    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true, interior: "street" }); scene.add(car.group); fitCabin();
     v = new Vehicle(carDef.spec); placeAtStart();
     if (audio) { audio.dispose(); audio = null; }
   }
   function swapMap() {
     scene.remove(car.group); car.dispose(); world.dispose(); mini.el.remove(); marks.clear(); smoke.clear();
     world = buildDriftWorld(T, scene, map, f);
-    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true }); scene.add(car.group);
+    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true, interior: "street" }); scene.add(car.group); fitCabin();
     mini = createMinimap(root, world.path, { width: map.width });
     v = new Vehicle(carDef.spec); placeAtStart();
   }
@@ -184,9 +184,15 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   }
 
   // ---------------------------------------------------------------- camera
-  const CAMS = ["Chase", "Far chase", "Bonnet", "High"];
+  const CAMS = ["Chase", "Far chase", "Bonnet", "High", "Cockpit"];
   let camMode = 0, camYaw = 0, camInit = false, orbit = 0;
   const camPos = new T.Vector3(), look = new T.Vector3(), tmpV = new T.Vector3(), camNear = { d: 0, h: 0, i: 0, side: 1 };
+  const eyeV = new T.Vector3(), qBody = new T.Quaternion(), flipY = new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), Math.PI);
+  // a soft light inside the cabin so the dash and the seats read at night
+  const cabin = new T.PointLight(0xffe2c0, 0.9, 1.8, 1.5);
+  const fitCabin = () => { car.body.add(cabin); cabin.position.set(car.eye[0] * 0.3, car.eye[1] - 0.22, car.eye[2] + 0.45); };
+  fitCabin();
+  let odo = carDef.id === "skyline" ? 48213 : 12087, trip = 0;
   function updateCamera(dt: number) {
     if (state === "menu" || state === "result") {
       orbit += dt * 0.18;
@@ -200,7 +206,13 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
     if (!camInit) { camYaw = target; camInit = true; }
     camYaw += wrap(target - camYaw) * (1 - Math.exp(-dt * 5));
     const fx = Math.sin(camYaw), fz = Math.cos(camYaw);
-    if (camMode === 2) {
+    if (camMode === 4) {
+      // from the driver's seat: rides on the body (roll, dive, bumps); the head sways with the g-forces
+      car.group.updateMatrixWorld(true);
+      const e = car.eye; eyeV.set(e[0] + Math.max(-0.05, Math.min(0.05, -v.ay * 0.005)), e[1] + 0.03, e[2] + 0.1);
+      car.body.localToWorld(eyeV); camera.position.copy(eyeV);
+      car.body.getWorldQuaternion(qBody); camera.quaternion.copy(qBody).multiply(flipY); camera.rotateX(0.02);
+    } else if (camMode === 2) {
       // on the bonnet, looking where the car points
       const hx = Math.sin(v.h), hz = Math.cos(v.h);
       camera.position.set(v.x + hx * 0.6, v.y + 1.28 + v.heave, v.z + hz * 0.6);
@@ -347,6 +359,12 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
     const lat = rules(dt);
     if (state === "run") { run.time += dt; scoring(dt, lat); }
     car.update(v, dt, inp.brake > 0 || (state === "run" && inp.handbrake));
+    // from the seat the glass would sit in front of the eyes; the dashboard instruments run while you can see them
+    const inCab = camMode === 4 && (state === "run" || state === "count");
+    car.body.children[1].visible = !inCab; cabin.visible = inCab;
+    if (camera.near !== (inCab ? 0.04 : 0.1)) { camera.near = inCab ? 0.04 : 0.1; camera.updateProjectionMatrix(); }
+    if (state === "run") { odo += (v.speed * dt) / 1609; trip += (v.speed * dt) / 1609; }
+    if (inCab && car.gauges) car.gauges.update({ mph: v.speed * 2.237, rpm: v.rpm, redline: carDef.spec.redline, gear: v.gear, odo, trip, fuel: 0.82 - trip * 0.05, temp: 0.45 + (v.rpm / carDef.spec.redline) * 0.3 });
     effects(dt);
     world.update(dt, now / 1000, camera, { x: v.x, z: v.z });
     show.visible = state === "menu" || state === "result";

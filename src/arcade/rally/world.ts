@@ -19,7 +19,8 @@ export interface RallyWorld {
   kit: any;
   /** distance from the centre line where the solid scenery starts */
   edge: number;
-  ground(x: number, z: number): Ground & { lat: number; i: number; water: boolean };
+  /** `hint`: the path sample the car was last on (keeps it on its own stretch where two pass close by) */
+  ground(x: number, z: number, hint?: number): Ground & { lat: number; i: number; water: boolean };
   sunDir: any;
   start(slot: number): { x: number; z: number; h: number; y: number };
   update(dt: number, cam: any, focus: { x: number; z: number }): void;
@@ -302,8 +303,8 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
   const wildS = { mu: map.muVerge * 0.9, drag: 0.03, rough: 0.8, kind: "rough" };
   const waterS = { mu: map.mu * 0.8, drag: 0.09, rough: 0.3, kind: "water" };
   const out: any = { h: 0, s: roadS, lat: 0, i: 0, water: false };
-  const ground = (x: number, z: number) => {
-    path.nearest(x, z, near);
+  const ground = (x: number, z: number, hint = -1) => {
+    if (hint >= 0) path.nearestFrom(x, z, hint, 90, near); else path.nearest(x, z, near);
     const i = near.i, j = (i + 1) % n, rx = -path.fz[i]!, rz = path.fx[i]!;
     const lat = (x - path.px[i]!) * rx + (z - path.pz[i]!) * rz;
     const seg = Math.hypot(path.px[j]! - path.px[i]!, path.pz[j]! - path.pz[i]!) || 1;

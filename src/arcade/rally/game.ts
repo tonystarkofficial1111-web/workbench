@@ -98,8 +98,8 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   let car: CarModel = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { interior: true });
   scene.add(car.group);
   // a soft light inside the cabin so the dash, the cage and the roof lining are not black from the seat
-  const cabin = new T.PointLight(0xfff2e0, 3, 2.2, 1.5); cabin.castShadow = false;
-  const fitCabin = () => { car.body.add(cabin); cabin.position.set(car.eye[0] * 0.5, car.eye[1] + 0.05, car.eye[2] + 0.35); };
+  const cabin = new T.PointLight(0xfff2e0, 1.3, 1.8, 1.5); cabin.castShadow = false;
+  const fitCabin = () => { car.body.add(cabin); cabin.position.set(car.eye[0] * 0.3, car.eye[1] - 0.2, car.eye[2] + 0.45); };
   fitCabin();
   let v = new Vehicle(carDef.spec);
   let audio: any = null;
@@ -142,6 +142,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   const menu = el("div", "c3d-menu", root), result = el("div", "c3d-result", root), countdown = el("div", "c3d-count", root);
   let state: "menu" | "count" | "run" | "result" = "menu";
   let voice = true;
+  let odo = 1254;
 
   function renderMenu() {
     const stars = (k: number) => "★".repeat(k) + "☆".repeat(4 - k);
@@ -248,7 +249,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
       // from inside: the camera rides on the body (roll, pitch, bumps) at the driver's eyes; the head sways with the g-forces
       car.group.updateMatrixWorld(true);
       const e = car.eye, sway = clamp(-v.ay * 0.006, -0.06, 0.06);
-      if (camMode === 0) eyeV.set(e[0] + sway, e[1] + 0.02, e[2] + 0.12 + clamp(-v.ax * 0.004, -0.05, 0.05));
+      if (camMode === 0) eyeV.set(e[0] + sway, e[1] + 0.03, e[2] + 0.1 + clamp(-v.ax * 0.004, -0.05, 0.05));
       else eyeV.set(0, 1.45, 1.1);
       car.body.localToWorld(eyeV);
       camera.position.copy(eyeV);
@@ -263,10 +264,10 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
       tmpV.set(v.x - fx * dist, 0, v.z - fz * dist);
       // stay inside the stage's edge (behind the car on a bend the camera would be in the trees or the canyon wall)
       {
-        const cg = world.ground(tmpV.x, tmpV.z), lim = world.edge - 1.5;
+        const cg = world.ground(tmpV.x, tmpV.z, race.lastI), lim = world.edge - 1.5;
         if (Math.abs(cg.lat) > lim) { const i = cg.i, sd = cg.lat >= 0 ? 1 : -1, pull = Math.abs(cg.lat) - lim; tmpV.x -= -path.fz[i]! * sd * pull; tmpV.z -= path.fx[i]! * sd * pull; }
       }
-      const gy = world.ground(tmpV.x, tmpV.z).h;
+      const gy = world.ground(tmpV.x, tmpV.z, race.lastI).h;
       tmpV.y = Math.max(v.y + hgt, gy + 1.2);
       camPos.lerp(tmpV, 1 - Math.exp(-dt * 8)); if (camPos.distanceTo(tmpV) > 25) camPos.copy(tmpV);
       camera.position.copy(camPos); look.set(v.x + fx * 3, v.y + 0.9, v.z + fz * 3); camera.lookAt(look);
@@ -277,14 +278,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   }
 
   // ---------------------------------------------------------------- the player's car on the stage
-  const groundFn = (x: number, z: number) => world.ground(x, z);
+  const groundFn = (x: number, z: number) => world.ground(x, z, race.lastI);
   function rules(dt: number) {
-    const g = world.ground(v.x, v.z), i = g.i, lat = g.lat;
+    const g = { ...world.ground(v.x, v.z, race.lastI) }, i = g.i, lat = g.lat;   // a copy: the ground function reuses its result object
     // the car's tilt follows the ground under it (front-back and side to side)
     const fx = Math.sin(v.h), fz = Math.cos(v.h), rx = -Math.cos(v.h), rz = Math.sin(v.h);
     if (!v.airborne) {
-      const hf = world.ground(v.x + fx * 1.3, v.z + fz * 1.3).h, hb = world.ground(v.x - fx * 1.3, v.z - fz * 1.3).h;
-      const hr = world.ground(v.x + rx * 0.8, v.z + rz * 0.8).h, hl = world.ground(v.x - rx * 0.8, v.z - rz * 0.8).h;
+      const hf = world.ground(v.x + fx * 1.3, v.z + fz * 1.3, race.lastI).h, hb = world.ground(v.x - fx * 1.3, v.z - fz * 1.3, race.lastI).h;
+      const hr = world.ground(v.x + rx * 0.8, v.z + rz * 0.8, race.lastI).h, hl = world.ground(v.x - rx * 0.8, v.z - rz * 0.8, race.lastI).h;
       const px = -Math.atan2(hf - hb, 2.6), pz = Math.atan2(hl - hr, 1.6);       // + about z lifts the car's left side (+x in the model)
       v.slopeX += (px - v.slopeX) * (1 - Math.exp(-dt * 12)); v.slopeZ += (pz - v.slopeZ) * (1 - Math.exp(-dt * 12));
       // gravity along the slope: uphill slows, downhill speeds up
@@ -326,7 +327,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     return g;
   }
   function backOnRoad() {
-    world.ground(v.x, v.z); const i = world.ground(v.x, v.z).i, s = path.at(i / path.n);
+    world.ground(v.x, v.z, race.lastI); const i = world.ground(v.x, v.z, race.lastI).i, s = path.at(i / path.n);
     v.place(s.x, s.z, Math.atan2(s.fx, s.fz), s.y + 0.3); camInit = false; marks.lift();
   }
 
@@ -344,7 +345,18 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
         const ahead = P.at(r.u + 0.01);
         r.latT = clamp(-Math.sign(ahead.kap) * Math.min(1, Math.abs(ahead.kap) * 30) * map.width * 0.28 + Math.sin(k * 3 + r.u * 20) * 0.6, -map.width * 0.38, map.width * 0.38);
       } else if (r.finishT) { r.sp = Math.max(0, r.sp - 6 * dt); r.u += (r.sp * dt) / P.total; }
-      r.lat += (r.latT - r.lat) * (1 - Math.exp(-dt * 1.2));
+      // give the player room: alongside, move over; right behind, lift and follow
+      if (racing && !r.finishT) {
+        let gapM = ((((r.u - race.prog / n) % 1) + 1.5) % 1 - 0.5) * P.total;   // + = the rival is ahead of you
+        const pLat = (() => { const i = race.lastI, rx = -P.fz[i]!, rz = P.fx[i]!; return (v.x - P.px[i]!) * rx + (v.z - P.pz[i]!) * rz; })();
+        if (Math.abs(gapM) < 9 && Math.abs(r.lat - pLat) < 3.2) {
+          const side = r.lat >= pLat ? 1 : -1;
+          r.latT = clamp(pLat + side * 3.4, -map.width * 0.45, map.width * 0.45);
+          if (Math.abs(r.latT - pLat) < 3 ) r.latT = clamp(pLat - side * 3.4, -map.width * 0.45, map.width * 0.45);
+          if (gapM < 0 && gapM > -6) r.sp = Math.min(r.sp, v.speed * 0.95);
+        }
+      }
+      r.lat += (r.latT - r.lat) * (1 - Math.exp(-dt * 1.6));
       const s = P.at(r.u), x = s.x + s.rx * r.lat, z = s.z + s.rz * r.lat;
       // ballistic over crests
       const gy = s.y;
@@ -376,7 +388,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     const sp = v.speed, dirx = sp > 0.5 ? v.vx / sp : 0, dirz = sp > 0.5 ? v.vz / sp : 0;
     const markCol = map.surface === "snow" ? 0x9aa6b4 : map.surface === "mud" ? 0x2a2018 : map.surface === "sand" ? 0x9a7a52 : 0x6a5e50;
     for (let k = 0; k < 4; k++) {
-      const w = wheelWorld(k), gy = world.ground(w.x, w.z).h;
+      const w = wheelWorld(k), gy = world.ground(w.x, w.z, race.lastI).h;
       marks.add(k, w.x, gy + 0.05, w.z, dirx, dirz, 0.14, v.airborne ? 0 : Math.min(1, 0.35 + v.slide[k]! + sp / 60), markCol);
       if (k >= 2 && !v.airborne && sp > 5 && Math.random() < (0.25 + v.slide[k]! + sp / 50) * f.amount * 0.7) {
         dust.spawn(w.x + (Math.random() - 0.5) * 0.4, gy + 0.3, w.z + (Math.random() - 0.5) * 0.4, -dirx * sp * 0.15 + (Math.random() - 0.5) * 2, 0.5 + Math.random() * 1.2, -dirz * sp * 0.15 + (Math.random() - 0.5) * 2, 0.3 + Math.random() * 0.3, 1.0 + Math.random() * 1.0, dustColor(), { grow: 1.3, drag: 1.4 });
@@ -433,6 +445,8 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     rivalStep(dt, state === "run");
     if (state === "run") { race.time += dt; paceNotes(); }
     car.update(v, dt, inp.brake > 0 || inp.handbrake);
+    if (state === "run") { odo += (v.speed * dt) / 1609; }
+    if (camMode === 0 && car.gauges && state !== "menu") car.gauges.update({ mph: v.speed * 2.237, rpm: v.rpm, redline: carDef.spec.redline, gear: v.gear, odo, trip: (Math.max(0, race.prog) / path.n) * path.total / 1609, fuel: 0.9 - race.time / 900, temp: 0.5 + (v.rpm / carDef.spec.redline) * 0.3 });
     // from the seat the paint and glass would sit in front of the eyes: hide the shell, keep the bonnet visible
     car.body.children.forEach((c: any, k: number) => { if (k === 1) c.visible = !(camMode === 0 && state === "run" || camMode === 0 && state === "count"); });
     effects(dt, g);
