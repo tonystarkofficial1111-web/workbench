@@ -27,11 +27,15 @@ varying vec3 vWorld;
 uniform float uTime; uniform float uAmp; uniform float uQ; uniform float uLight; uniform float uRain; uniform float uSkyQ;
 uniform vec3 uSunDir; uniform vec3 uSunCol; uniform float uSunAmt; uniform vec3 uZenith; uniform vec3 uHorizon; uniform vec3 uFogCol; uniform vec2 uFogRange;
 uniform vec4 uWind; uniform sampler2D uNoise; uniform sampler2D uShore; uniform float uGrid;
+float twi(){ return smoothstep(0.38, 0.03, uSunDir.y) * smoothstep(-0.12, 0.0, uSunDir.y); }   // golden hour, from the sun's height
 vec3 skyAt(vec3 r){
   float h = clamp(r.y, 0.0, 1.0);
   vec3 c = mix(uHorizon, uZenith, pow(h, 0.55));
   float sd = max(dot(r, uSunDir), 0.0);
   c += uSunCol * (pow(sd, 6.0) * 0.3 + pow(sd, 48.0) * 0.55) * uSunAmt;
+  // the hot horizon under the sun shows in the water too
+  float side = max(dot(normalize(r.xz + 1e-5), normalize(uSunDir.xz + 1e-5)), 0.0);
+  c += uSunCol * exp(-pow(r.y * 5.0, 2.0)) * pow(side, 3.0) * 0.55 * twi();
   return c;
 }
 void main(){
@@ -57,6 +61,9 @@ void main(){
   vec3 H = normalize(uSunDir + V);
   float nh = max(dot(N, H), 0.0);
   col += uSunCol * (pow(nh, 260.0) * 2.4 + pow(nh, 28.0) * 0.16) * uSunAmt;
+  // golden hour: a long glittering path of light across the water towards the low sun
+  float tw = twi();
+  col += uSunCol * (pow(nh, 70.0) * 1.1 + pow(nh, 12.0) * 0.12) * tw * uSunAmt * (0.6 + 0.4 * step(1.5, uQ));
   float foam = 0.0;
   if (uQ > 1.5) {
     float nz = texture2D(uNoise, q * 0.5 + vec2(uTime * 0.02, 0.0)).a;

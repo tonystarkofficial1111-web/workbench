@@ -39,3 +39,4 @@ import "./styles/36-saves.css";
 import "./styles/37-car3d.css";
 import "./styles/38-typerush.css";
 import "./styles/39-freestyle.css";
+import "./styles/40-extras.css";

@@ -9,6 +9,7 @@ import { lsGet, lsSet } from "../../core/store";
 import { WB_SOUND } from "../../core/sound";
 import { RALLY_MAPS, rallyPath, type RallyMap } from "./maps";
 import { buildRallyWorld, type RallyWorld } from "./world";
+import { createExtras } from "../car3d/extras";
 
 declare const __WB_DBG__: boolean;
 
@@ -87,15 +88,19 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   const T = stage.THREE, scene = stage.scene, camera = stage.camera, f = stage.f;
   const keys = createKeys();
   const banner = createBanner(root);
+  // 5.67.0 extras: paint shop, ghost car, telemetry, photo mode, Day / Sunset light
+  const ex = createExtras({ game: "rally", T, scene, stage, root, better: "low" });
+  let tod = ex.time.get("day") as "day" | "sunset";
 
   let map: RallyMap = RALLY_MAPS.find((m) => m.id === save.map) || RALLY_MAPS[0]!;
   let carDef = RALLY_CARS.find((c) => c.id === save.car) || RALLY_CARS[0]!;
   let path = rallyPath(map);
-  let world: RallyWorld = buildRallyWorld(T, scene, map, path, f);
+  let world: RallyWorld = buildRallyWorld(T, scene, map, path, f, tod);
   let notes = buildNotes(map, path);
-  const skyEnv = () => setEnvironment(stage, "sky", [map.sky[0], map.sky[1], "#" + map.ground[0].toString(16).padStart(6, "0")]);
+  const skyEnv = () => setEnvironment(stage, "sky", tod === "sunset" ? ["#2a3266", "#e07a48", "#" + map.ground[0].toString(16).padStart(6, "0")] : [map.sky[0], map.sky[1], "#" + map.ground[0].toString(16).padStart(6, "0")]);
   let envTex = skyEnv();
-  let car: CarModel = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { interior: true });
+  const paintOf = () => ex.paint.get(carDef.id, carDef);
+  let car: CarModel = buildCar(T, world.kit, carDef.id, paintOf().col, paintOf().acc, { interior: true });
   scene.add(car.group);
   // a soft light inside the cabin so the dash, the cage and the roof lining are not black from the seat
   const cabin = new T.PointLight(0xfff2e0, 1.3, 1.8, 1.5); cabin.castShadow = false;
@@ -151,13 +156,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
       `<div class="c3d-sec">Car</div><div class="c3d-cars">` +
       RALLY_CARS.map((c) => `<button type="button" class="c3d-pick${c.id === carDef.id ? " on" : ""}" data-car="${c.id}"><b>${c.name}</b><small>${c.sub}</small>` +
         `<span class="c3d-stat"><em>Power</em><i style="width:${c.stats[0] * 10}%"></i></span><span class="c3d-stat"><em>Stability</em><i style="width:${c.stats[1] * 10}%"></i></span><span class="c3d-stat"><em>Grip</em><i style="width:${c.stats[2] * 10}%"></i></span></button>`).join("") +
-      `</div><div class="c3d-sec">Stage <small>each one is harder than the last</small></div><div class="c3d-maps">` +
+      `</div>` + ex.paint.html(carDef.id, carDef) + ex.time.html(tod, [["day", "☀️ Day"], ["sunset", "🌅 Sunset"]]) +
+      `<div class="c3d-sec">Stage <small>each one is harder than the last</small></div><div class="c3d-maps">` +
       RALLY_MAPS.map((m, i) => {
         const best = (save.best[m.id] || {})[carDef.id] || 0;
         return `<button type="button" class="c3d-pick${m.id === map.id ? " on" : ""}" data-map="${m.id}"><b>${i + 1}. ${m.name}</b><span class="c3d-stars">${stars(m.stars)}</span><small>${m.blurb}</small>` +
           `<small class="c3d-best">Best ${best ? fmtTime(best) : "—"}${save.wins[m.id] ? " · 🏆 won" : ""}</small></button>`;
       }).join("") +
-      `</div><div class="c3d-row"><button type="button" class="c3d-go" data-act="go">▶ Race · ${map.laps} laps vs 3 crews</button><button type="button" class="c3d-gfx" data-act="gfx">◐ Graphics: ${LEVEL_NAMES[level]}</button></div>` +
+      `</div><div class="c3d-row"><button type="button" class="c3d-go" data-act="go">▶ Race · ${map.laps} laps vs 3 crews</button><button type="button" class="c3d-gfx" data-act="gfx">◐ Graphics: ${LEVEL_NAMES[level]}</button><button type="button" data-act="ghost">👻 Ghost: ${ex.ghost.on ? "On" : "Off"}${ex.ghost.has(map.id, carDef.id) ? "" : " (none yet)"}</button></div>` +
       `<p class="c3d-note">You start from the driver's seat (C changes the camera). The co-driver reads the pace notes: the bend's direction and how tight it is (6 = flat out, 1 = hairpin), crests, jumps and water, with a countdown. Off the road the ground is rough and slippery; further out the trees and rocks damage the car.</p></div>`;
   }
   menu.addEventListener("click", (e) => {
@@ -167,6 +173,11 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     else if (t.dataset.map && t.dataset.map !== map.id) { map = RALLY_MAPS.find((m) => m.id === t.dataset.map)!; save.map = map.id; store(save); swapMap(); renderMenu(); }
     else if (t.dataset.act === "go") begin();
     else if (t.dataset.act === "gfx") relaunch(((level + 1) % 3) as Level);
+    else if (t.dataset.act === "ghost") { ex.ghost.toggle(); renderMenu(); }
+    else if (t.dataset.time && t.dataset.time !== tod) { tod = t.dataset.time as any; ex.time.set(tod); swapMap(); renderMenu(); }
+    else if (t.dataset.paint) { ex.paint.set(carDef.id, +t.dataset.paint, null, carDef); swapCar(); renderMenu(); }
+    else if (t.dataset.livery) { ex.paint.set(carDef.id, null, +t.dataset.livery, carDef); swapCar(); renderMenu(); }
+    else if (t.dataset.paintreset) { ex.paint.reset(carDef.id); swapCar(); renderMenu(); }
   });
   result.addEventListener("click", (e) => {
     const t = (e.target as HTMLElement).closest("button") as HTMLElement; if (!t) return;
@@ -177,15 +188,16 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   });
   function swapCar() {
     scene.remove(car.group); car.dispose();
-    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { interior: true }); scene.add(car.group); fitCabin();
+    car = buildCar(T, world.kit, carDef.id, paintOf().col, paintOf().acc, { interior: true }); scene.add(car.group); fitCabin();
     v = new Vehicle(carDef.spec); placeAtStart();
     if (audio) { audio.dispose(); audio = null; }
   }
   function swapMap() {
     scene.remove(car.group); car.dispose(); rivals.forEach((r) => { scene.remove(r.model.group); r.model.dispose(); }); rivals = [];
     world.dispose(); mini.el.remove(); marks.clear(); dust.clear(); bits.clear();
-    path = rallyPath(map); world = buildRallyWorld(T, scene, map, path, f); notes = buildNotes(map, path); speedProfile(); envTex.dispose(); envTex = skyEnv();
-    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { interior: true }); scene.add(car.group); fitCabin();
+    ex.ghost.clear();
+    path = rallyPath(map); world = buildRallyWorld(T, scene, map, path, f, tod); notes = buildNotes(map, path); speedProfile(); envTex.dispose(); envTex = skyEnv();
+    car = buildCar(T, world.kit, carDef.id, paintOf().col, paintOf().acc, { interior: true }); scene.add(car.group); fitCabin();
     mini = createMinimap(root, path, { width: map.width * 1.6, color: "rgba(224,164,88,.95)" });
     v = new Vehicle(carDef.spec); placeAtStart(); makeRivals();
   }
@@ -199,13 +211,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     Object.assign(race, { time: 0, lapStart: 0, laps: 0, prog: 0, lastI: 0, best: Infinity, damage: 0, air: 0, maxAir: 0, hits: 0, finishT: 0, noteIdx: -1, said: -1 });
     marks.clear(); dust.clear(); bits.clear();
     placeAtStart(); makeRivals();
+    ex.ghost.start(world.kit, map.id, carDef.id, paintOf().col, paintOf().acc); ex.telemetry.start();
     path.nearest(v.x, v.z, near); race.lastI = near.i; race.prog = near.i - path.n;   // the grid is behind the line: the first crossing starts lap 1
     menu.classList.remove("on"); result.classList.remove("on");
     state = "count"; countT = 4.2;
     if (!audio) audio = createCarAudio("rally"); audio.resume();
     stage.canvas.focus();
   }
-  function toMenu() { state = "menu"; renderMenu(); menu.classList.add("on"); result.classList.remove("on"); countdown.classList.remove("on"); pace.classList.remove("on"); placeAtStart(); makeRivals(); }
+  function toMenu() { ex.ghost.clear(); state = "menu"; renderMenu(); menu.classList.add("on"); result.classList.remove("on"); countdown.classList.remove("on"); pace.classList.remove("on"); placeAtStart(); makeRivals(); }
   function standings() {
     const me = { name: "YOU", prog: race.prog / path.n, you: true, t: race.finishT };
     const list = [me, ...rivals.map((r) => ({ name: r.def.name, prog: r.prog, you: false, t: r.finishT }))];
@@ -221,15 +234,16 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     if (!prev || t < prev) save.best[map.id] = { ...(save.best[map.id] || {}), [carDef.id]: t };
     if (pos === 1) save.wins[map.id] = (save.wins[map.id] || 0) + 1;
     store(save);
+    const newGhost = ex.ghost.finish(map.id, carDef.id, t);
     if (pos === 1) WB_SOUND.win();
     const score = Math.round(100000 / Math.max(10, t) * (1 + (4 - pos) * 0.15) * (1 - race.damage / 300));
     result.innerHTML = `<div class="c3d-menu-card"><div class="c3d-title"><span>${map.name.toUpperCase()}</span> · RESULT</div>` +
       `<div class="c3d-score">P${pos}</div><div class="c3d-medal">${pos === 1 ? "🏆 Stage win!" : pos === 2 ? "🥈 Second" : pos === 3 ? "🥉 Third" : "Fourth"} · ${fmtTime(t)}${!prev || t < prev ? " · new best!" : ""}</div>` +
       `<div class="c3d-grid">${list.map((e, i) => `<div style="${e.you ? "border-color:#ffd34d" : ""}"><em>P${i + 1} · ${e.name}</em><b>${fmtTime(e.t || 0)}</b></div>`).join("")}` +
       `<div><em>Best lap</em><b>${isFinite(race.best) ? fmtTime(race.best) : "—"}</b></div><div><em>Longest jump</em><b>${race.maxAir.toFixed(2)} s</b></div></div>` +
-      `<p class="c3d-note">Car damage ${Math.round(race.damage)}% · hits ${race.hits} · score ${score.toLocaleString()}</p>` +
+      `<p class="c3d-note">Car damage ${Math.round(race.damage)}% · hits ${race.hits} · score ${score.toLocaleString()}${newGhost ? " · 👻 this run is your new ghost" : ""}</p>` + ex.telemetry.html(map.id, carDef.id) +
       `<div class="c3d-row"><button type="button" class="c3d-go" data-act="again">↻ Again</button><button type="button" data-act="next">Next stage ▶</button><button type="button" data-act="menu">☰ Cars & stages</button></div></div>`;
-    result.classList.add("on");
+    result.classList.add("on"); ex.telemetry.draw(result, map.id, carDef.id);
     try { opts.done && opts.done(score, map.id, carDef.id, pos, t); } catch { /* ignore */ }
   }
 
@@ -319,7 +333,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     if (Math.abs(di) < path.n / 6) race.prog += di;
     race.lastI = i;
     if (state === "run" && race.prog >= path.n * (race.laps + 1)) {
-      race.laps++;
+      race.laps++; ex.telemetry.lapDone(race.time);
       const lt = race.time - race.lapStart; race.lapStart = race.time; race.best = Math.min(race.best, lt);
       if (race.laps >= map.laps) finish();
       else banner.show(`<b>LAP ${race.laps + 1} / ${map.laps}</b><small>${fmtTime(lt)}</small>`, 1500);
@@ -422,6 +436,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   // ---------------------------------------------------------------- frame
   let hudT = 0;
   stage.onFrame((dt, now) => {
+    if (ex.photo.open) { keys.taps(); car.body.children.forEach((c: any) => (c.visible = true)); ex.photo.camera(camera); world.update(dt, camera, { x: v.x, z: v.z }); return; }   // photo mode: everything holds still
     for (const k of keys.taps()) {
       if (k === "KeyC" && state !== "menu") { camMode = (camMode + 1) % CAMS.length; banner.show(`<b>${CAMS[camMode]}</b>`, 700); camInit = false; }
       if (k === "KeyR" && state === "run") { backOnRoad(); race.time += 3; banner.show("<b>BACK ON THE ROAD</b><small>+3 s</small>", 1200, "warn"); }
@@ -443,7 +458,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
     if (v.airborne) { race.air += dt; race.maxAir = Math.max(race.maxAir, race.air); } else race.air = 0;
     const g = rules(dt);
     rivalStep(dt, state === "run");
-    if (state === "run") { race.time += dt; paceNotes(); }
+    if (state === "run") { race.time += dt; paceNotes(); ex.ghost.frame(race.time, v); const n = path.n; ex.telemetry.frame(race.time, v, inp, (((race.prog - n * race.laps) / n) % 1 + 1) % 1, race.laps); }
     car.update(v, dt, inp.brake > 0 || inp.handbrake);
     if (state === "run") { odo += (v.speed * dt) / 1609; }
     if (camMode === 0 && car.gauges && state !== "menu") car.gauges.update({ mph: v.speed * 2.237, rpm: v.rpm, redline: carDef.spec.redline, gear: v.gear, odo, trip: (Math.max(0, race.prog) / path.n) * path.total / 1609, fuel: 0.9 - race.time / 900, temp: 0.5 + (v.rpm / carDef.spec.redline) * 0.3 });
@@ -469,16 +484,17 @@ function run(host: HTMLElement, level: Level, save: Save, opts: RallyGameOpts, r
   });
 
   makeRivals(); renderMenu(); menu.classList.add("on"); placeAtStart();
+  ex.photo.attach(() => ({ x: v.x, y: v.y, z: v.z, h: v.h }));
   const dbg = typeof __WB_DBG__ !== "undefined" && __WB_DBG__;
   let disposed = false;
   const api = {
     get v() { return v; }, get race() { return race; }, get state() { return state; }, get world() { return world; }, get path() { return path; }, get rivals() { return rivals; }, get notes() { return notes; },
-    stage, keys, begin, toMenu, finish, setCam(k: number) { camMode = k; camInit = false; },
+    stage, keys, begin, toMenu, finish, ex, setCam(k: number) { camMode = k; camInit = false; },
     pick(carId: string, mapId: string) { carDef = RALLY_CARS.find((c) => c.id === carId) || carDef; map = RALLY_MAPS.find((m) => m.id === mapId) || map; save.car = carDef.id; save.map = map.id; swapMap(); renderMenu(); },
     dispose() {
       if (disposed) return; disposed = true;
       try { speechSynthesis.cancel(); } catch { /* ignore */ }
-      stage.dispose(); keys.dispose(); pad && pad.dispose(); audio && audio.dispose(); world.dispose(); car.dispose(); rivals.forEach((r) => r.model.dispose()); dust.dispose(); bits.dispose(); marks.dispose();
+      ex.dispose(); stage.dispose(); keys.dispose(); pad && pad.dispose(); audio && audio.dispose(); world.dispose(); car.dispose(); rivals.forEach((r) => r.model.dispose()); dust.dispose(); bits.dispose(); marks.dispose();
       host.innerHTML = "";
       if (dbg && (window as any).__rl3 === api) (window as any).__rl3 = null;
     },

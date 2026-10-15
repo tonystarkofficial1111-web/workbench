@@ -7,6 +7,7 @@ import type { Features } from "../car3d/stage";
 import type { Ground } from "../car3d/vehicle";
 import { groundTexture, checkerTexture, asphaltTexture } from "../car3d/tex";
 import type { RallyMap } from "./maps";
+import { createCarSky, SUNSET } from "../car3d/sky";
 
 /**
  * The scenery of a rally stage and the ground the cars drive on: terrain that follows the road, the road with its wheel ruts and verges,
@@ -34,7 +35,7 @@ const TREES: Record<string, Array<{ trunk: number; leaf: number[]; kind: string 
   jungle: [{ trunk: 0x4a3a24, leaf: [0x2e5a22, 0x3a6a26, 0x24481c], kind: "broad" }, { trunk: 0x5a4a2a, leaf: [0x4a7a2a], kind: "palm" }],
 };
 
-export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPath, f: Features): RallyWorld {
+export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPath, f: Features, time: "day" | "sunset" = "day"): RallyWorld {
   const kit = makeKit(T), rnd = new Rng(map.seed * 13 + 1), own: any[] = [];
   const mine = <A>(a: A): A => { own.push(a); return a; };
   const group = new T.Group(); scene.add(group);
@@ -43,18 +44,23 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
   const tmp = { d: 0, h: 0, i: 0, side: 1 };
 
   // ------------------------------------------------------------------ sky, sun, fog, light
-  const skyC = document.createElement("canvas"); skyC.width = 4; skyC.height = 256;
-  { const g = skyC.getContext("2d")!; const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, map.sky[0]); gr.addColorStop(0.62, map.sky[1]); gr.addColorStop(1, map.sky[2]); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); }
-  const skyT = mine(new T.CanvasTexture(skyC)); skyT.colorSpace = T.SRGBColorSpace;
-  const sky = new T.Mesh(mine(new T.SphereGeometry(1500, 24, 12)), mine(new T.MeshBasicMaterial({ map: skyT, side: T.BackSide, fog: false, depthWrite: false })));
-  sky.renderOrder = -10; group.add(sky);
-  scene.background = new T.Color(map.sky[2]);
-  scene.fog = new T.FogExp2(map.fog, map.fogDensity);
+  // 5.67.0: a Forza-style shader sky (glowing sun, clouds, rays, flares); "sunset" turns the stage to golden hour with the sun low ahead
+  const sunset = time === "sunset";
+  const hex = (s: string) => parseInt(s.replace("#", ""), 16);
   const sunDir = new T.Vector3(map.sun[0], map.sun[1], map.sun[2]).normalize();
-  const sunDisc = new T.Mesh(mine(new T.CircleGeometry(40, 20)), mine(new T.MeshBasicMaterial({ color: map.sunColor, fog: false, transparent: true, opacity: map.weather === "rain" ? 0.15 : 0.95, toneMapped: false })));
-  group.add(sunDisc);
-  const hemi = new T.HemisphereLight(map.hemiSky, map.hemiGround, map.hemiI); scene.add(hemi);
-  const sun = new T.DirectionalLight(map.sunColor, map.sunI);
+  if (sunset) { const az = Math.atan2(sunDir.x, sunDir.z); sunDir.set(Math.sin(az) * 0.995, 0.075, Math.cos(az) * 0.995).normalize(); }
+  const sunColor = sunset ? SUNSET.sun : map.sunColor;
+  const clouds = map.weather === "rain" ? 0.95 : map.weather === "snow" ? 0.75 : map.weather === "dust" ? 0.15 : 0.42;
+  const sky = createCarSky(T, scene, {
+    top: sunset ? SUNSET.top : hex(map.sky[0]), mid: sunset ? SUNSET.mid : hex(map.sky[1]), low: sunset ? SUNSET.low : hex(map.sky[2]),
+    sunDir, sunColor, gold: sunset ? 1 : 0, clouds, quality: f.amount >= 1 ? 1 : 0, radius: 1500,
+  });
+  sky.uni.uDim.value = map.weather === "rain" ? 0.15 : map.weather === "snow" ? 0.6 : 1;
+  const fogCol = new T.Color(map.fog); if (sunset) fogCol.lerp(new T.Color(SUNSET.fog), 0.65);
+  scene.background = sunset ? new T.Color(SUNSET.low) : new T.Color(map.sky[2]);
+  scene.fog = new T.FogExp2(fogCol, map.fogDensity * (sunset ? 0.85 : 1));
+  const hemi = sunset ? new T.HemisphereLight(SUNSET.hemiSky, SUNSET.hemiGround, map.hemiI * 0.75) : new T.HemisphereLight(map.hemiSky, map.hemiGround, map.hemiI); scene.add(hemi);
+  const sun = new T.DirectionalLight(sunColor, map.sunI * (sunset ? 1.05 : 1));
   if (f.shadow) {
     sun.castShadow = true; sun.shadow.mapSize.set(f.shadow, f.shadow);
     const c = sun.shadow.camera; c.left = -55; c.right = 55; c.top = 55; c.bottom = -55; c.near = 1; c.far = 400; sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03;
@@ -336,8 +342,7 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
     start: startH,
     update(dt: number, cam: any, focus: { x: number; z: number }) {
       t0 += dt;
-      sky.position.copy(cam.position);
-      sunDisc.position.copy(cam.position).addScaledVector(sunDir, 1200); sunDisc.lookAt(cam.position);
+      sky.update(dt, cam);
       sun.position.set(focus.x + sunDir.x * 160, sunDir.y * 160 + 10, focus.z + sunDir.z * 160); sun.target.position.set(focus.x, 0, focus.z); sun.target.updateMatrixWorld();
       for (const w of rivers) w.offset.x -= dt * 0.25;
       if (wx && wxPos) {
@@ -355,7 +360,7 @@ export function buildRallyWorld(T: any, scene: any, map: RallyMap, path: TrackPa
       }
     },
     dispose() {
-      scene.remove(group); scene.remove(hemi); scene.remove(sun); scene.remove(sun.target);
+      scene.remove(group); scene.remove(hemi); scene.remove(sun); scene.remove(sun.target); sky.dispose();
       group.traverse((o: any) => { if (o.geometry) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });
       own.forEach((o) => o && o.dispose && o.dispose());
       kit.list().forEach((m: any) => m.dispose());

@@ -1,0 +1,33 @@
+/* 5.67.0 car game extras: paint shop, light choice, telemetry, photo mode */
+.c3d-paint{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.c3d-sw-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.c3d-sw-row em{font-style:normal;font-size:11px;color:#9fb0c0;width:42px}
+.c3d-root button.c3d-sw{width:24px!important;height:24px!important;min-width:0!important;padding:0!important;border-radius:6px!important;border:2px solid rgba(255,255,255,.18)!important;cursor:pointer;box-shadow:inset 0 -6px 8px rgba(0,0,0,.25)}
+.c3d-root button.c3d-sw.on{border-color:#ffd34d!important;box-shadow:0 0 0 2px rgba(255,211,77,.45)}
+.c3d-root button.c3d-sw-reset{padding:3px 9px!important;border-radius:6px!important;background:rgba(18,24,36,.9)!important;color:#cfd8e3!important;border:1px solid rgba(255,255,255,.18)!important;font:600 11px Inter,sans-serif!important;cursor:pointer;margin-left:4px}
+.c3d-time{display:flex;gap:6px}
+.c3d-root button.c3d-tb{flex:1;padding:8px 10px!important;border-radius:9px!important;background:rgba(18,24,36,.9)!important;color:#e9eef5!important;border:1px solid rgba(255,255,255,.16)!important;font:700 13px Inter,sans-serif!important;cursor:pointer}
+.c3d-root button.c3d-tb.on{border-color:#ff9a4a!important;background:linear-gradient(90deg,rgba(80,40,30,.95),rgba(30,26,52,.95))!important;box-shadow:0 0 0 2px rgba(255,154,74,.35) inset}
+.c3d-tele{margin-top:8px}
+.c3d-tele-cv{width:100%;height:auto;border-radius:8px;border:1px solid rgba(255,255,255,.1);display:block}
+.c3d-tele-key{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:#9fb0c0;margin:4px 0}
+.c3d-tele-key i{display:inline-block;width:10px;height:4px;border-radius:2px;margin-right:3px;vertical-align:middle}
+.c3d-sectors{width:100%;border-collapse:collapse;font-size:12px;color:#e9eef5;margin-top:4px}
+.c3d-sectors th{font-weight:600;color:#9fb0c0;text-align:left;padding:3px 6px}
+.c3d-sectors td{padding:3px 6px;border-top:1px solid rgba(255,255,255,.06)}
+.c3d-sectors td small{display:block;font-size:10px;color:#9fb0c0}
+.c3d-sectors td.pb{color:#c58aff;font-weight:700}
+.c3d-root button.c3d-photo-btn{position:absolute;right:12px;bottom:88px;z-index:6;padding:7px 12px!important;border-radius:9px!important;background:rgba(10,14,22,.82)!important;color:#e9eef5!important;border:1px solid rgba(255,255,255,.2)!important;font:700 12px Inter,sans-serif!important;cursor:pointer}
+.c3d-photo{position:absolute;inset:0;z-index:20;display:none;pointer-events:none}
+.c3d-photo.on{display:block}
+.c3d-photo-bar{position:absolute;z-index:2;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;padding:8px 12px;border-radius:12px;background:rgba(8,10,16,.82);border:1px solid rgba(255,255,255,.14);pointer-events:auto;max-width:calc(100% - 24px);color:#e9eef5;font:600 12px Inter,sans-serif}
+.c3d-photo-bar span{color:#9fb0c0;font-weight:500;margin-right:6px}
+.c3d-root .c3d-photo-bar button{padding:6px 10px!important;border-radius:8px!important;background:rgba(24,30,44,.95)!important;color:#e9eef5!important;border:1px solid rgba(255,255,255,.16)!important;font:600 12px Inter,sans-serif!important;cursor:pointer}
+.c3d-root .c3d-photo-bar button.on{border-color:#ffd34d!important;color:#ffd34d!important}
+.c3d-root .c3d-photo-bar button.save{background:#1fb6ff!important;color:#06121c!important;border-color:#1fb6ff!important}
+.c3d-letter{position:absolute;left:0;right:0;height:11%;background:#000;display:none}
+.c3d-letter.top{top:0}.c3d-letter.bot{bottom:0}
+.c3d-photo.framed .c3d-letter{display:block}
+/* in photo mode everything else of the game's screen steps aside */
+.c3d-photo-on > :not(.c3d-view):not(.c3d-photo):not(.c3d-photo-btn){visibility:hidden}
+.c3d-photo-on .c3d-photo-btn{display:none}

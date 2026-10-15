@@ -28,6 +28,7 @@ export function createFsCtx(host: HTMLElement): FsCtx {
   const T = THREE;
   const gfx = new Gfx();
   const air = new Air(T);
+  air.cover = 0.42;   // some clouds to catch the sunsets (the weather changes this)
   const mats = makeMats(T, air);
   const canvas = document.createElement("canvas");
   canvas.className = "fs-canvas"; canvas.tabIndex = 0;

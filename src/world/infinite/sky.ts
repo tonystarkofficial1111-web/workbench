@@ -19,53 +19,128 @@ void main(){
   gl_Position = p.xyww;
 }`;
 
+/*
+ * 5.67.0 "golden hour" sky: on top of the original gradient, square sun and pixel clouds, the dome now has
+ * - a deep forward-scattering glow round the sun (three lobes), a square corona ring and a bigger, redder sun low in the sky;
+ * - blocky crepuscular rays: the angle round the sun is cut into wedges, each lit or shaded, slowly turning;
+ * - a hot orange horizon line under the sun, a rose and violet belt above it, the Earth's blue shadow and pink "belt of Venus" opposite;
+ * - two cloud layers in square cells: thick clouds with dark bellies and bright sun-side edges (a second look-up towards the sun fakes
+ *   their shading), lit orange-pink from below at sunset and still glowing for a while after the sun has gone (afterglow),
+ *   and high streaky cirrus that catches the last light;
+ * - pixel stars that twinkle at night.
+ * Low graphics keeps the original look (no rays, one cloud layer).
+ */
 const DOME_FRAG = `
 precision highp float;
 varying vec3 vDir;
 uniform vec3 uSunDir; uniform vec3 uMoonDir; uniform vec3 uSunCol; uniform vec3 uZenith; uniform vec3 uHorizon;
 uniform float uSunAmt; uniform float uTwilight; uniform float uNight; uniform float uCover; uniform float uCloudDark; uniform float uFlash; uniform float uQ;
+uniform float uAfter; uniform float uTime;
 uniform vec2 uWindOff; uniform sampler2D uNoise;
+float sqDist(vec3 rd, vec3 c, out vec2 uv){
+  vec3 up = abs(c.y) > 0.98 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+  vec3 r = normalize(cross(up, c)); vec3 u = cross(c, r);
+  uv = vec2(dot(rd, r), dot(rd, u));
+  return max(abs(uv.x), abs(uv.y));
+}
 void main(){
   vec3 rd = normalize(vDir);
   float e = rd.y;
   float h = clamp(e, 0.0, 1.0);
-  vec3 col = mix(uHorizon, uZenith, pow(h, mix(0.46, 0.4, uTwilight)));
+  float gold = max(uTwilight, uAfter * 0.8);
+  // base gradient: a little more saturated and with a tighter horizon band at golden hour
+  vec3 col = mix(uHorizon, uZenith, pow(h, mix(0.46, 0.34, uTwilight)));
   col = mix(col, uHorizon * 0.62, smoothstep(0.0, -0.3, e));
   float sd = max(dot(rd, uSunDir), 0.0);
-  // the sun is a square block (soft glow round it, a hard-edged square disc in the middle)
-  vec3 sup = abs(uSunDir.y) > 0.98 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
-  vec3 sright = normalize(cross(sup, uSunDir)); vec3 sup2 = cross(uSunDir, sright);
-  float sq = max(abs(dot(rd, sright)), abs(dot(rd, sup2)));
-  float sunDisc = smoothstep(0.0375, 0.0345, sq) * step(0.0, dot(rd, uSunDir));
-  col += uSunCol * (pow(sd, 5.0) * 0.2 + pow(sd, 40.0) * 0.36 + sunDisc * 2.8) * uSunAmt;
+  vec2 suv; float sq = sqDist(rd, uSunDir, suv);
+  float front = step(0.0, dot(rd, uSunDir));
+  // the sun: a square block, bigger and redder near the horizon, with a square corona ring
+  float size = 0.0375 * (1.0 + 0.55 * uTwilight);
+  float sunDisc = smoothstep(size, size - 0.003, sq) * front;
+  float ring = (smoothstep(size * 1.9, size * 1.75, sq) - smoothstep(size * 1.6, size * 1.45, sq)) * front;
+  vec3 discCol = mix(uSunCol, vec3(1.0, 0.45, 0.18), uTwilight * 0.5);
+  col += discCol * sunDisc * 2.9 * uSunAmt;
+  col += uSunCol * ring * 0.22 * uTwilight * uSunAmt * step(1.5, uQ);
+  // forward scattering: wide haze, a hot halo and a tight core
+  col += uSunCol * (pow(sd, 5.0) * (0.12 + 0.1 * uTwilight) + pow(sd, 28.0) * (0.24 + 0.22 * uTwilight) + pow(sd, 300.0) * 0.7) * uSunAmt;
   vec2 sxz = normalize(vec2(uSunDir.x, uSunDir.z) + 1e-5), rxz = normalize(rd.xz + 1e-5);
   float side = max(dot(rxz, sxz), 0.0);
-  float band = exp(-pow(max(e, 0.0) * 3.6, 2.0));
-  col += uSunCol * band * (0.08 + 0.55 * pow(side, 3.0)) * uTwilight * 0.55;
-  // sunset belt: rose and violet bands above the glow, and a lilac band low on the opposite side
+  float band = exp(-pow(max(e, 0.0) * 4.2, 2.0));
+  // golden hour: the sky low down turns deep orange towards the sun and stays blue-violet higher up (multiplied in, so it saturates
+  // instead of washing out to white)
+  vec3 warm = mix(vec3(1.0, 0.2, 0.035), vec3(1.0, 0.42, 0.1), pow(sd, 8.0));   // linear light: these show as deep orange
+  col = mix(col, col * 0.35 + warm * 0.85, band * pow(side, 2.0) * gold * 0.75);
+  col += uSunCol * band * (0.04 + 0.22 * pow(side, 4.0)) * gold * 0.4;
+  col = mix(col, col * vec3(0.55, 0.42, 0.9), smoothstep(0.2, 0.75, e) * gold * 0.65);   // deeper zenith
+  // a hot thin line right on the horizon under the sun
+  col += vec3(1.0, 0.3, 0.05) * exp(-pow(e * 26.0, 2.0)) * pow(side, 6.0) * gold * 0.7;
+  // sunset belt: rose and violet bands above the glow; opposite the sun the pink belt of Venus over the blue shadow of the Earth
   float belt = exp(-pow((e - 0.2) * 3.4, 2.0));
-  col = mix(col, mix(vec3(0.9, 0.36, 0.46), vec3(0.5, 0.3, 0.72), smoothstep(0.08, 0.5, e)), belt * uTwilight * (0.1 + 0.4 * side));
-  col = mix(col, vec3(0.58, 0.42, 0.74), exp(-pow(e * 4.5, 2.0)) * uTwilight * 0.34 * (1.0 - side));
-  float md = max(dot(rd, uMoonDir), 0.0);
-  vec3 mup = abs(uMoonDir.y) > 0.98 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
-  vec3 mright = normalize(cross(mup, uMoonDir)); vec3 mup2 = cross(uMoonDir, mright);
-  float mq = max(abs(dot(rd, mright)), abs(dot(rd, mup2)));
-  float moonDisc = smoothstep(0.035, 0.032, mq) * step(0.0, dot(rd, uMoonDir));
-  col += vec3(0.78, 0.85, 1.0) * (moonDisc * 2.2 + pow(md, 28.0) * 0.09) * uNight;
-  if (uQ > 0.5 && uCover > 0.02 && e > 0.005) {
-    vec2 cp = floor(rd.xz / (e + 0.2) * 9.0 + 0.5) / 9.0;   // clouds are built from square cells, like pixels
-    float n = texture2D(uNoise, cp * 0.1 + uWindOff).r * 0.5 + texture2D(uNoise, cp * 0.23 + uWindOff * 1.7).g * 0.3;
-    if (uQ > 1.5) n += texture2D(uNoise, cp * 0.55 + uWindOff * 2.4).b * 0.2; else n += 0.1;
-    float thr = 1.0 - uCover * 0.8;
-    float c = smoothstep(thr, thr + 0.07, n) * smoothstep(0.0, 0.16, e);
-    float lit = pow(sd, 2.6) * 0.65 + 0.35;
-    vec3 base = mix(vec3(0.97), vec3(0.4, 0.43, 0.48), uCloudDark);
-    vec3 cc = base * mix(0.5, 1.08, lit);
-    cc = mix(cc, uSunCol * 1.25, uTwilight * (0.3 + 0.7 * pow(sd, 1.6)) * (1.0 - uCloudDark));
-    cc = mix(cc, uHorizon * 0.9, 0.16);
-    cc *= mix(1.0, 0.18, uNight);
-    col = mix(col, cc, c * 0.93);
+  col = mix(col, mix(vec3(0.9, 0.16, 0.2), vec3(0.28, 0.1, 0.55), smoothstep(0.08, 0.5, e)), belt * gold * (0.15 + 0.5 * side));
+  float anti = 1.0 - side;
+  col = mix(col, vec3(0.75, 0.26, 0.4), exp(-pow((e - 0.14) * 7.0, 2.0)) * gold * 0.45 * anti);
+  col = mix(col, vec3(0.07, 0.1, 0.32), exp(-pow(e * 9.0, 2.0)) * gold * 0.45 * anti);
+  // blocky light rays fanning out from the sun (golden hour, Medium and High)
+  if (uQ > 0.5) {
+    float ang = atan(suv.y, suv.x);
+    float wedge = floor((ang + 3.14159) / 6.28318 * 36.0);
+    float rnd = texture2D(uNoise, vec2(wedge / 36.0 * 0.37 + uTime * 0.0012, 0.61)).r;
+    float rays = smoothstep(0.42, 0.62, rnd) * front;
+    float fall = pow(sd, 3.0) * (1.0 - smoothstep(0.86, 0.995, sd));
+    col += uSunCol * rays * fall * (0.1 + 0.65 * uTwilight) * uSunAmt * smoothstep(-0.05, 0.12, e + 0.05);
+    col -= col * (1.0 - rays) * fall * 0.28 * uTwilight;   // the shaded wedges between (behind clouds)
   }
+  // moon
+  float md = max(dot(rd, uMoonDir), 0.0);
+  vec2 muv; float mq = sqDist(rd, uMoonDir, muv);
+  float moonDisc = smoothstep(0.035, 0.032, mq) * step(0.0, dot(rd, uMoonDir));
+  col += vec3(0.78, 0.85, 1.0) * (moonDisc * 2.2 + pow(md, 28.0) * 0.09 + pow(md, 6.0) * 0.04) * uNight;
+  // pixel stars (High), twinkling
+  if (uQ > 1.5 && uNight > 0.05 && e > 0.02) {
+    vec2 sp = floor(rd.xz / (e + 0.35) * 180.0);
+    float s = texture2D(uNoise, sp / 256.0).r;
+    float tw = 0.6 + 0.4 * sin(uTime * 3.0 + s * 60.0);
+    col += vec3(0.9, 0.93, 1.0) * step(0.985, s) * tw * uNight * smoothstep(0.02, 0.2, e) * (1.0 - uCover * 0.8) * 0.9;
+  }
+  // clouds, built from square cells
+  if (uQ > 0.5 && e > 0.005) {
+    float lightDark = mix(1.0, 0.18, uNight * (1.0 - uAfter));
+    // high cirrus: long thin streaks in bigger cells that catch the last light
+    if (uQ > 1.5) {
+      vec2 hp = floor(rd.xz / (e + 0.12) * 5.0 + 0.5) / 5.0;
+      float hn = texture2D(uNoise, vec2(hp.x * 0.05, hp.y * 0.22) + uWindOff * 0.6).g;
+      float hc = smoothstep(0.62, 0.72, hn) * smoothstep(0.08, 0.3, e) * (0.25 + 0.75 * (1.0 - uCover * 0.6));
+      vec3 hcol = mix(vec3(0.95, 0.96, 1.0), mix(vec3(1.0, 0.3, 0.08), vec3(0.85, 0.2, 0.42), smoothstep(0.1, 0.5, e)), gold * 0.9);
+      hcol += uSunCol * pow(sd, 3.0) * 0.4 * gold;
+      col = mix(col, hcol * lightDark, hc * 0.55);
+    }
+    if (uCover > 0.02) {
+      vec2 cp = floor(rd.xz / (e + 0.2) * 9.0 + 0.5) / 9.0;
+      float n = texture2D(uNoise, cp * 0.1 + uWindOff).r * 0.5 + texture2D(uNoise, cp * 0.23 + uWindOff * 1.7).g * 0.3;
+      if (uQ > 1.5) n += texture2D(uNoise, cp * 0.55 + uWindOff * 2.4).b * 0.2; else n += 0.1;
+      float thr = 1.0 - uCover * 0.8;
+      float c = smoothstep(thr, thr + 0.07, n) * smoothstep(0.0, 0.16, e);
+      // self-shadow: look again a few cells towards the sun; thick there means this side is in shade
+      vec2 toward = cp + sxz * 0.22;
+      float n2 = texture2D(uNoise, toward * 0.1 + uWindOff).r * 0.5 + texture2D(uNoise, toward * 0.23 + uWindOff * 1.7).g * 0.3 + 0.1;
+      float shade = smoothstep(thr - 0.05, thr + 0.25, n2);
+      float edge = (1.0 - smoothstep(thr + 0.02, thr + 0.2, n));          // thin cloud edges glow
+      float lit = pow(sd, 2.6) * 0.65 + 0.35;
+      vec3 base = mix(vec3(0.97), vec3(0.4, 0.43, 0.48), uCloudDark);
+      vec3 cc = base * mix(0.5, 1.08, lit) * mix(1.0, 0.72, shade * (1.0 - uCloudDark));
+      // golden hour: bellies lit orange and pink from below, the sun side hot, the far side violet
+      vec3 under = mix(vec3(1.0, 0.22, 0.05), vec3(0.85, 0.16, 0.32), smoothstep(0.05, 0.4, e));
+      vec3 sunset = mix(mix(vec3(0.2, 0.09, 0.32), under, 0.35 + 0.65 * pow(side, 1.5)), vec3(1.0, 0.55, 0.2) * 1.4, pow(sd, 6.0));
+      cc = mix(cc, sunset * (1.0 - 0.35 * shade), gold * (1.0 - uCloudDark));
+      cc += uSunCol * edge * pow(sd, 4.0) * (0.35 + 0.9 * gold) * uSunAmt * (1.0 - uCloudDark);   // silver lining
+      cc = mix(cc, uHorizon * 0.9, 0.12);
+      cc *= lightDark;
+      col = mix(col, cc, c * 0.93);
+    }
+  }
+  // golden hour colour grade: more saturation, so the oranges and violets stay rich after tone mapping
+  float L = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  col = max(mix(vec3(L), col, 1.0 + 0.5 * gold), 0.0);
   col += vec3(0.8, 0.86, 1.0) * uFlash * 0.55;
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>
@@ -91,7 +166,8 @@ export function installSky(ctx: Ctx) {
   const sunDir = u.uSunDir!.value, moonDir = u.uMoonDir!.value;
   const cSun = u.uSunCol!.value, cZen = u.uZenith!.value, cHor = u.uHorizon!.value, cFog = u.uFogCol!.value;
   const tmp = new T.Color(), tmp2 = new T.Color(), grey = new T.Color(), blood = new T.Color(), v3 = new T.Vector3();
-  let dome: any = null, moonLight: any = null, uQ = { value: 2 };
+  let dome: any = null, moonLight: any = null, uQ = { value: 2 }, uAfter = { value: 0 };
+  let flare: any = null;
   const focus = new T.Vector3();
   const state = { elev: 30, golden: 0, night: 0, light: 1 };
   ctx.x.sky = state;
@@ -103,6 +179,7 @@ export function installSky(ctx: Ctx) {
       uniforms: {
         uSunDir: u.uSunDir, uMoonDir: u.uMoonDir, uSunCol: u.uSunCol, uZenith: u.uZenith, uHorizon: u.uHorizon, uSunAmt: u.uSunAmt, uTwilight: u.uTwilight,
         uNight: u.uNight, uCover: u.uCover, uCloudDark: u.uCloudDark, uFlash: u.uFlash, uQ, uWindOff: u.uWindOff, uNoise: u.uNoise,
+        uAfter, uTime: u.uTime || { value: 0 },
       },
     });
     dome = new T.Mesh(geo, mat);
@@ -113,6 +190,43 @@ export function installSky(ctx: Ctx) {
     env.scene.add(moonLight); env.scene.add(moonLight.target);
     // the engine's own sun and moon discs are replaced by the dome's
     env.sunMesh.visible = false; env.moonMesh.visible = false;
+    flare = makeFlare();
+  }
+
+  /** Square lens flares (blocky, like the sun): a soft glow on the sun and ghosts along the line through the middle of the screen. */
+  function makeFlare() {
+    const tex = (draw: (g: CanvasRenderingContext2D, s: number) => void) => { const c = document.createElement("canvas"); c.width = c.height = 64; draw(c.getContext("2d")!, 64); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; };
+    const soft = tex((g, s) => { for (let i = 1; i < 16; i++) { const k = i / 16, a = 0.11 * k * k; g.fillStyle = `rgba(255,255,255,${a})`; const w = s * (1 - k * 0.92); g.fillRect((s - w) / 2, (s - w) / 2, w, w); } });   // stepped square glow fading to nothing at the edge
+    const block = tex((g, s) => { g.fillStyle = "rgba(255,255,255,0.9)"; g.fillRect(s * 0.18, s * 0.18, s * 0.64, s * 0.64); g.fillStyle = "rgba(255,255,255,0.35)"; g.fillRect(s * 0.06, s * 0.06, s * 0.88, s * 0.88); });
+    const ring = tex((g, s) => { g.strokeStyle = "rgba(255,255,255,0.85)"; g.lineWidth = s * 0.09; g.strokeRect(s * 0.14, s * 0.14, s * 0.72, s * 0.72); g.strokeStyle = "rgba(255,255,255,0.25)"; g.lineWidth = s * 0.2; g.strokeRect(s * 0.14, s * 0.14, s * 0.72, s * 0.72); });
+    const spec: Array<[number, number, number, number, any]> = [   // [position along the line (0 = sun, 1 = centre), size, colour, opacity, texture]
+      [0, 0.3, 0xffb070, 0.35, soft], [0, 0.1, 0xfff0d0, 0.4, soft], [0.32, 0.04, 0xff9a50, 0.26, block], [0.55, 0.08, 0x6ad0ff, 0.16, ring],
+      [0.78, 0.028, 0xffd070, 0.24, block], [1.15, 0.13, 0xb070ff, 0.11, ring], [1.42, 0.055, 0x60ffb0, 0.13, block], [1.75, 0.2, 0xff8a40, 0.07, soft],
+    ];
+    const sprites = spec.map(([t, size, color, op, map]) => {
+      const m = new T.SpriteMaterial({ map, color, transparent: true, opacity: 0, depthTest: false, depthWrite: false, blending: T.AdditiveBlending, fog: false });
+      const sp = new T.Sprite(m); sp.renderOrder = 999; sp.frustumCulled = false; sp.visible = false; env.scene.add(sp);
+      return { sp, t, size, op };
+    });
+    return { sprites, textures: [soft, block, ring], v: new T.Vector3(), w: new T.Vector3() };
+  }
+  function updateFlare(e: number, dark: number) {
+    if (!flare) return;
+    const cam = env.camera, f = flare;
+    const on = ctx.gfx.f.sky >= 1 && e > -1;
+    f.v.copy(cam.position).addScaledVector(sunDir, 200).project(cam);
+    const sx = f.v.x, sy = f.v.y, inView = f.v.z < 1 && Math.abs(sx) < 1.25 && Math.abs(sy) < 1.25;
+    const edge = 1 - smoothstep(0.75, 1.25, Math.max(Math.abs(sx), Math.abs(sy)));
+    const k = on && inView ? edge * clamp((e + 1) / 4, 0, 1) * (1 - air.cover * 0.75) * (1 - dark) * (0.55 + 0.6 * state.golden) : 0;
+    for (const s of f.sprites) {
+      s.sp.visible = k > 0.01;
+      if (!s.sp.visible) continue;
+      f.w.set(sx * (1 - s.t), sy * (1 - s.t), 0.2).unproject(cam).sub(cam.position).normalize();
+      s.sp.position.copy(cam.position).addScaledVector(f.w, 3);
+      const sc = s.size * 3 * Math.tan((cam.fov * Math.PI) / 360) * 2;
+      s.sp.scale.set(sc, sc, 1);
+      s.sp.material.opacity = s.op * k;
+    }
   }
 
   function update(dt: number) {
@@ -146,6 +260,9 @@ export function installSky(ctx: Ctx) {
     state.golden = tw; state.night = night;
     const daylight = smoothstep(-6, 22, e);
     state.light = daylight;
+    // afterglow: for a while after sunset (and before sunrise) the clouds still glow pink and orange
+    uAfter.value = smoothstep(3, -1.5, e) * smoothstep(-12, -3.5, e) * (1 - dark * 0.8);
+    state.after = uAfter.value;
 
     // dome follows the camera
     dome.position.copy(cam.position);
@@ -163,6 +280,7 @@ export function installSky(ctx: Ctx) {
     near *= 1 - 0.4 * mist; far *= 1 - 0.5 * mist;
     state.mist = mist;
     cFog.copy(cHor).lerp(cZen, 0.12).multiplyScalar(0.92);
+    cFog.lerp(tmp2.setRGB(0.95, 0.3, 0.12), tw * 0.32 * (1 - wd));   // golden haze on the far land (linear: a rich orange)
     env.worldFog.color.copy(cFog); env.worldFog.near = near; env.worldFog.far = far;
     u.uFogRange!.value.set(near, far);
     env.scene.fog = env.worldFog;
@@ -193,7 +311,7 @@ export function installSky(ctx: Ctx) {
     // golden hour: the shaded sides of trees and walls pick up a warm bounce from the glowing horizon
     tmp.setRGB(0.62, 0.34, 0.15); H.groundColor.lerp(tmp, tw * 0.55 * (1 - dark));
     H.intensity = (lerp(0.8, 1.0, Math.sqrt(daylight))) * (1 - 0.2 * dark) * (1 + 0.5 * air.flash) * (1 + 0.5 * tw * (1 - dark));
-    env.renderer.toneMappingExposure = env.shadersOn ? 1.02 + 0.5 * tw : 1;
+    env.renderer.toneMappingExposure = env.shadersOn ? 1.02 + 0.22 * tw : 1;
     // engine meshes that follow the sun and moon (the post-effects read the sun's position)
     env.sunMesh.position.copy(focus).addScaledVector(sunDir, 160);
     env.moonMesh.position.copy(focus).addScaledVector(moonDir, 160);
@@ -204,11 +322,13 @@ export function installSky(ctx: Ctx) {
     st.material.opacity = clamp(night * (1 - air.cover * 0.85) * (1 - dark), 0, 1);
     st.visible = ctx.gfx.f.sky >= 2 && st.material.opacity > 0.02;
     // the glow overlay of the engine's post effects tracks the sun on its own; keep it gentle
+    updateFlare(e, dark);
   }
 
   build();
   ctx.cleanup.push(() => {
     if (dome) { env.scene.remove(dome); dome.geometry.dispose(); dome.material.dispose(); dome = null; }
+    if (flare) { flare.sprites.forEach((s: any) => { env.scene.remove(s.sp); s.sp.material.dispose(); }); flare.textures.forEach((t: any) => t.dispose()); flare = null; }
     if (moonLight) { env.scene.remove(moonLight); env.scene.remove(moonLight.target); moonLight.dispose && moonLight.dispose(); moonLight = null; }
     env.sunMesh.visible = true; env.moonMesh.visible = true;
     env.stars.position.set(0, 0, 0);

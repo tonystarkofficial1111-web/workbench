@@ -136,6 +136,21 @@ export function installInfinite(env: Env) {
   // ---------------------------------------------------------------------------------------------------------------- per-frame loop
   const renderer = env.renderer, origRender = renderer.render.bind(renderer);
   let last = performance.now(), lastMode = "";
+  // 5.67.0: Legacy and the classic sandbox get the same golden-hour sky (a second copy of the sky module on this ctx's air and graphics level)
+  let otherSky: any = null;
+  function startOtherSky() {
+    // fair weather with some clouds to catch the sunset (the Weather feature sets real weather in these modes)
+    air.cover = 0.42; air.dark = air.rain = air.storm = air.fog = air.blood = air.flash = 0;
+    const sctx: any = { ...ctx, frame: [], cleanup: [], x: {}, started: [], gfxChanged: [] };
+    installSky(sctx);
+    otherSky = sctx;
+  }
+  function stopOtherSky() {
+    if (!otherSky) return;
+    for (const f of otherSky.cleanup.splice(0)) { try { f(); } catch (e) { console.error(e); } }
+    otherSky = null;
+  }
+  (ctx as any).stopOtherSky = stopOtherSky;
   renderer.render = function (s: any, c: any) {
     const now = performance.now();
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
@@ -144,10 +159,16 @@ export function installInfinite(env: Env) {
       if (mode !== lastMode) { lastMode = mode; worldBridge.mode.set(mode); }
       gfxBtn.style.display = mode === "infinite" && active() ? "" : "none";
       if (mode === "infinite" && active()) {
+        stopOtherSky();
         ctx.dt = dt; ctx.rtime += dt;
         tilt(dt);
         air.update(dt, ctx.rtime);
         for (let i = 0; i < ctx.frame.length; i++) ctx.frame[i]!(dt);
+      } else if (mode !== "infinite" && active() && !env.wbInf.starting) {
+        if (!otherSky) startOtherSky();
+        ctx.rtime += dt;
+        air.update(dt, ctx.rtime);
+        for (let i = 0; i < otherSky.frame.length; i++) otherSky.frame[i]!(dt);
       }
     } catch (e) { console.error("infinite frame", e); }
     return origRender(s, c);
@@ -165,6 +186,7 @@ export function installInfinite(env: Env) {
   }
 
   env.wbBuildInfiniteTerrain = function () {
+    stopOtherSky();
     disposeRun();
     const seed = (Math.random() * 1e9) | 0;
     const island = (ctx.island = buildIsland(ctx, seed));

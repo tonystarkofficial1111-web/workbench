@@ -6,6 +6,7 @@ import { makeKit } from "../f1/car";
 import type { Features } from "../car3d/stage";
 import type { DriftMap } from "./maps";
 import { concreteTexture, asphaltTexture, lightPoolTexture, streakTexture, containerTexture, windowsTexture, dashTexture, nightSkyTexture, checkerTexture } from "../car3d/tex";
+import { createCarSky, SUNSET } from "../car3d/sky";
 
 /**
  * The night docks around a Drift King course: quay slab, harbour water, the course with its painted edges, barriers / container walls / tyre
@@ -29,7 +30,7 @@ export interface DriftWorld {
 
 const CONT = ["#b5332a", "#2a5aa8", "#2e8a4e", "#d48a1e", "#6c6f75", "#7b2d6e", "#c9c3b5", "#1e6f78", "#a8402a", "#25407a"];
 
-export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features): DriftWorld {
+export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features, time: "night" | "sunset" = "night"): DriftWorld {
   const kit = makeKit(T), rnd = new Rng(map.seed * 7 + 3), own: any[] = [];
   const mine = <A>(a: A): A => { own.push(a); return a; };
   const group = new T.Group(); scene.add(group);
@@ -43,11 +44,15 @@ export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features):
   const amount = f.amount;
 
   // ------------------------------------------------------------------ sky, fog, moon, stars, lights
-  scene.fog = new T.FogExp2(0x0a0e18, 0.0065);
-  scene.background = new T.Color(0x05070d);
+  // 5.67.0: "sunset" swaps the night for golden hour over the harbour (Forza-style sky, low orange sun, the lamps just coming on)
+  const sunset = time === "sunset";
+  scene.fog = sunset ? new T.FogExp2(0x9a5a48, 0.0042) : new T.FogExp2(0x0a0e18, 0.0065);
+  scene.background = new T.Color(sunset ? 0x3a2228 : 0x05070d);
+  const sunDir = new T.Vector3(-0.62, 0.07, -0.78).normalize();
+  const goldSky = sunset ? createCarSky(T, scene, { top: SUNSET.top, mid: SUNSET.mid, low: SUNSET.low, sunDir, sunColor: SUNSET.sun, gold: 1, clouds: 0.45, quality: amount >= 1 ? 1 : 0 }) : null;
   const sky = new T.Mesh(mine(new T.SphereGeometry(1400, 24, 12)), mine(new T.MeshBasicMaterial({ map: nightSkyTexture(T), side: T.BackSide, fog: false, depthWrite: false })));
-  sky.renderOrder = -10; group.add(sky);
-  {
+  sky.renderOrder = -10; if (!sunset) group.add(sky);
+  if (!sunset) {
     const N = Math.round(900 * amount), sp = new Float32Array(N * 3), r = new Rng(5);
     for (let i = 0; i < N; i++) { const a = r.range(0, Math.PI * 2), e = r.range(0.12, 1.45); sp[i * 3] = Math.cos(a) * Math.cos(e) * 1300; sp[i * 3 + 1] = Math.sin(e) * 1300; sp[i * 3 + 2] = Math.sin(a) * Math.cos(e) * 1300; }
     const g = mine(new T.BufferGeometry()); g.setAttribute("position", new T.BufferAttribute(sp, 3));
@@ -55,9 +60,10 @@ export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features):
     group.add(stars);
   }
   const moon = new T.Mesh(mine(new T.CircleGeometry(38, 24)), mine(new T.MeshBasicMaterial({ color: 0xf2eedd, fog: false })));
-  moon.position.set(-700, 520, -900); moon.lookAt(0, 0, 0); group.add(moon);
-  const hemi = new T.HemisphereLight(0x3a4a78, 0x0c0c12, 0.55); scene.add(hemi);
-  const moonL = new T.DirectionalLight(0xa8bcff, 0.5); moonL.position.set(-70, 60, -90);
+  moon.position.set(-700, 520, -900); moon.lookAt(0, 0, 0); if (!sunset) group.add(moon);
+  const hemi = sunset ? new T.HemisphereLight(SUNSET.hemiSky, SUNSET.hemiGround, 0.85) : new T.HemisphereLight(0x3a4a78, 0x0c0c12, 0.55); scene.add(hemi);
+  const moonL = sunset ? new T.DirectionalLight(SUNSET.sun, 2.6) : new T.DirectionalLight(0xa8bcff, 0.5);   // at sunset this is the low sun
+  if (sunset) moonL.position.copy(sunDir).multiplyScalar(150); else moonL.position.set(-70, 60, -90);
   if (f.shadow) {
     moonL.castShadow = true; moonL.shadow.mapSize.set(f.shadow, f.shadow);
     const c = moonL.shadow.camera; c.left = -45; c.right = 45; c.top = 45; c.bottom = -45; c.near = 1; c.far = 260; moonL.shadow.bias = -0.0006;
@@ -69,7 +75,7 @@ export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features):
   const slabMat = mine(new T.MeshStandardMaterial({ map: cTex, roughness: 0.82, metalness: 0.05, color: 0x9a9ca2 }));
   const slab = new T.Mesh(mine(new T.BoxGeometry(q.x1 - q.x0, 3, q.z1 - q.z0)), slabMat);
   slab.position.set((q.x0 + q.x1) / 2, -1.5, (q.z0 + q.z1) / 2); slab.receiveShadow = true; group.add(slab);
-  const water = new T.Mesh(mine(new T.PlaneGeometry(4000, 4000, 1, 1)), mine(new T.MeshStandardMaterial({ color: 0x050d16, roughness: 0.18, metalness: 0.7 })));
+  const water = new T.Mesh(mine(new T.PlaneGeometry(4000, 4000, 1, 1)), mine(new T.MeshStandardMaterial({ color: sunset ? 0x1a2a3c : 0x050d16, roughness: sunset ? 0.12 : 0.18, metalness: 0.7 })));
   water.rotation.x = -Math.PI / 2; water.position.y = -1.7; group.add(water);
 
   // quay edge: yellow-and-black kerb, bollards, rubber fenders hanging over the water
@@ -336,8 +342,11 @@ export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features):
     start: { x: s0.x, z: s0.z, h: Math.atan2(s0.fx, s0.fz) },
     update(dt: number, t: number, cam: any, focus: { x: number; z: number }) {
       t0 += dt;
-      moonL.position.set(focus.x - 70, 60, focus.z - 90); moonL.target.position.set(focus.x, 0, focus.z); moonL.target.updateMatrixWorld();
+      if (sunset) moonL.position.set(focus.x + sunDir.x * 150, sunDir.y * 150 + 6, focus.z + sunDir.z * 150);
+      else moonL.position.set(focus.x - 70, 60, focus.z - 90);
+      moonL.target.position.set(focus.x, 0, focus.z); moonL.target.updateMatrixWorld();
       sky.position.copy(cam.position);
+      if (goldSky) goldSky.update(dt, cam);
       blinkRoot.visible = Math.floor(t0 * 1.1) % 2 === 0;
       // streaks lie on the water and point from the light toward the camera
       for (const m of streaks) {
@@ -353,7 +362,7 @@ export function buildDriftWorld(T: any, scene: any, map: DriftMap, f: Features):
       for (const c of clips) { c.lit = Math.max(0, c.lit - dt * 1.5); c.mark.material.opacity = 0.32 + c.lit * 0.6 + Math.sin(t0 * 4) * 0.05; }
     },
     dispose() {
-      scene.remove(group); realLights.forEach((l) => scene.remove(l)); scene.remove(hemi); scene.remove(moonL); scene.remove(moonL.target);
+      scene.remove(group); realLights.forEach((l) => scene.remove(l)); scene.remove(hemi); scene.remove(moonL); scene.remove(moonL.target); goldSky && goldSky.dispose();
       group.traverse((o: any) => { if (o.geometry) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); });
       own.forEach((o) => o && o.dispose && o.dispose());
       kit.list().forEach((m: any) => m.dispose());

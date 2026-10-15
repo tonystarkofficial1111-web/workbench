@@ -9,6 +9,7 @@ import { lsGet, lsSet } from "../../core/store";
 import { WB_SOUND } from "../../core/sound";
 import { DRIFT_MAPS, type DriftMap } from "./maps";
 import { buildDriftWorld, type DriftWorld } from "./world";
+import { createExtras } from "../car3d/extras";
 
 declare const __WB_DBG__: boolean;
 
@@ -52,8 +53,16 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   const view = el("div", "c3d-view", root);
   const stage = createStage(view, level);
   const T = stage.THREE, scene = stage.scene, camera = stage.camera, f = stage.f;
-  stage.renderer.toneMappingExposure = 1.35;     // a night scene: lift the picture a little so the cars read against the dark
-  setEnvironment(stage, "night");               // warm lamps in the paint and the glass
+  // 5.67.0 extras: paint shop, ghost car, telemetry, photo mode, Night / Sunset light
+  const ex = createExtras({ game: "drift", T, scene, stage, root, better: "high" });
+  let tod = ex.time.get("night") as "night" | "sunset";
+  let envTex: any = null;
+  const lightUp = () => {
+    stage.renderer.toneMappingExposure = tod === "sunset" ? 1.05 : 1.35;     // a night scene: lift the picture a little so the cars read against the dark
+    if (envTex && envTex.dispose) envTex.dispose();
+    envTex = tod === "sunset" ? setEnvironment(stage, "sky", ["#2a3266", "#e07a48", "#3a2a26"]) : setEnvironment(stage, "night");   // warm lamps (or the sunset) in the paint and the glass
+  };
+  lightUp();
   // a showroom light over the car while the menu or the result is up
   const show = new T.SpotLight(0xffffff, 260, 30, 0.55, 0.6, 1.6);
   scene.add(show); scene.add(show.target);
@@ -62,8 +71,9 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
 
   let map: DriftMap = DRIFT_MAPS.find((m) => m.id === save.map) || DRIFT_MAPS[0]!;
   let carDef = DRIFT_CARS.find((c) => c.id === save.car) || DRIFT_CARS[0]!;
-  let world: DriftWorld = buildDriftWorld(T, scene, map, f);
-  let car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true, interior: "street" });
+  let world: DriftWorld = buildDriftWorld(T, scene, map, f, tod);
+  const paintOf = () => ex.paint.get(carDef.id, carDef);
+  let car = buildCar(T, world.kit, carDef.id, paintOf().col, paintOf().acc, { lights: true, interior: "street" });
   scene.add(car.group);
   let v = new Vehicle(carDef.spec);
   let audio: any = null;
@@ -95,13 +105,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
       `<div class="c3d-sec">Car</div><div class="c3d-cars">` +
       DRIFT_CARS.map((c) => `<button type="button" class="c3d-pick${c.id === carDef.id ? " on" : ""}" data-car="${c.id}"><b>${c.name}</b><small>${c.sub}</small>` +
         `<span class="c3d-stat"><em>Power</em><i style="width:${c.stats[0] * 10}%"></i></span><span class="c3d-stat"><em>Balance</em><i style="width:${c.stats[1] * 10}%"></i></span><span class="c3d-stat"><em>Grip</em><i style="width:${c.stats[2] * 10}%"></i></span></button>`).join("") +
-      `</div><div class="c3d-sec">Course <small>each one is harder than the last</small></div><div class="c3d-maps">` +
+      `</div>` + ex.paint.html(carDef.id, carDef) + ex.time.html(tod, [["night", "🌙 Night"], ["sunset", "🌅 Sunset"]]) +
+      `<div class="c3d-sec">Course <small>each one is harder than the last</small></div><div class="c3d-maps">` +
       DRIFT_MAPS.map((m, i) => {
         const best = (save.best[m.id] || {})[carDef.id] || 0, md = save.medals[m.id] || 0;
         return `<button type="button" class="c3d-pick${m.id === map.id ? " on" : ""}" data-map="${m.id}"><b>${i + 1}. ${m.name}</b><span class="c3d-stars">${stars(m.stars)}</span><small>${m.blurb}</small>` +
           `<small class="c3d-best">Best ${best ? best.toLocaleString() : "—"}${md ? " · " + MEDAL[md] : ""} · Gold ${m.medals[2].toLocaleString()}</small></button>`;
       }).join("") +
-      `</div><div class="c3d-row"><button type="button" class="c3d-go" data-act="go">▶ Start · ${map.laps} laps</button><button type="button" class="c3d-gfx" data-act="gfx">◐ Graphics: ${LEVEL_NAMES[level]}</button></div>` +
+      `</div><div class="c3d-row"><button type="button" class="c3d-go" data-act="go">▶ Start · ${map.laps} laps</button><button type="button" class="c3d-gfx" data-act="gfx">◐ Graphics: ${LEVEL_NAMES[level]}</button><button type="button" data-act="ghost">👻 Ghost: ${ex.ghost.on ? "On" : "Off"}${ex.ghost.has(map.id, carDef.id) ? "" : " (none yet)"}</button></div>` +
       `<p class="c3d-note">Slide the car sideways and hold it there: points build while you drift, faster and at a bigger angle is worth more. Keep the slide going to raise the multiplier, and slide through the blue clipping zones for a bonus. Touching a wall or spinning out loses the points you have not banked.</p></div>`;
   }
   menu.addEventListener("click", (e) => {
@@ -111,6 +122,11 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
     else if (t.dataset.map && t.dataset.map !== map.id) { map = DRIFT_MAPS.find((m) => m.id === t.dataset.map)!; save.map = map.id; store(save); swapMap(); renderMenu(); }
     else if (t.dataset.act === "go") begin();
     else if (t.dataset.act === "gfx") relaunch(((level + 1) % 3) as Level);
+    else if (t.dataset.act === "ghost") { ex.ghost.toggle(); renderMenu(); }
+    else if (t.dataset.time && t.dataset.time !== tod) { tod = t.dataset.time as any; ex.time.set(tod); lightUp(); swapMap(); renderMenu(); }
+    else if (t.dataset.paint) { ex.paint.set(carDef.id, +t.dataset.paint, null, carDef); swapCar(); renderMenu(); }
+    else if (t.dataset.livery) { ex.paint.set(carDef.id, null, +t.dataset.livery, carDef); swapCar(); renderMenu(); }
+    else if (t.dataset.paintreset) { ex.paint.reset(carDef.id); swapCar(); renderMenu(); }
   });
   result.addEventListener("click", (e) => {
     const t = (e.target as HTMLElement).closest("button") as HTMLElement; if (!t) return;
@@ -122,14 +138,15 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
 
   function swapCar() {
     scene.remove(car.group); car.dispose();
-    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true, interior: "street" }); scene.add(car.group); fitCabin();
+    car = buildCar(T, world.kit, carDef.id, paintOf().col, paintOf().acc, { lights: true, interior: "street" }); scene.add(car.group); fitCabin();
     v = new Vehicle(carDef.spec); placeAtStart();
     if (audio) { audio.dispose(); audio = null; }
   }
   function swapMap() {
     scene.remove(car.group); car.dispose(); world.dispose(); mini.el.remove(); marks.clear(); smoke.clear();
-    world = buildDriftWorld(T, scene, map, f);
-    car = buildCar(T, world.kit, carDef.id, carDef.col, carDef.acc, { lights: true, interior: "street" }); scene.add(car.group); fitCabin();
+    ex.ghost.clear();
+    world = buildDriftWorld(T, scene, map, f, tod);
+    car = buildCar(T, world.kit, carDef.id, paintOf().col, paintOf().acc, { lights: true, interior: "street" }); scene.add(car.group); fitCabin();
     mini = createMinimap(root, world.path, { width: map.width });
     v = new Vehicle(carDef.spec); placeAtStart();
   }
@@ -144,13 +161,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   let countT = 0;
   function begin() {
     resetRun(); placeAtStart();
+    ex.ghost.start(world.kit, map.id, carDef.id, paintOf().col, paintOf().acc); ex.telemetry.start();
     menu.classList.remove("on"); result.classList.remove("on");
     state = "count"; countT = 3.2;
     if (!audio) audio = createCarAudio(carDef.sound); audio.resume();
     stage.canvas.focus();
   }
   function toMenu() {
-    state = "menu"; renderMenu(); menu.classList.add("on"); result.classList.remove("on"); countdown.classList.remove("on"); placeAtStart();
+    state = "menu"; renderMenu(); menu.classList.add("on"); result.classList.remove("on"); countdown.classList.remove("on"); placeAtStart(); ex.ghost.clear();
   }
   function bank(reason?: string) {
     if (run.chain > 0) {
@@ -172,14 +190,15 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
     const prev = (save.best[map.id] || {})[carDef.id] || 0;
     save.best[map.id] = { ...(save.best[map.id] || {}), [carDef.id]: Math.max(prev, score) };
     save.medals[map.id] = Math.max(save.medals[map.id] || 0, md); store(save);
+    const newGhost = ex.ghost.finish(map.id, carDef.id, score);
     if (md) WB_SOUND.win();
     result.innerHTML = `<div class="c3d-menu-card"><div class="c3d-title"><span>${map.name.toUpperCase()}</span> · RESULT</div>` +
       `<div class="c3d-score">${score.toLocaleString()}</div><div class="c3d-medal">${MEDAL[md] || "No medal yet"}${score > prev ? " · new best!" : ""}</div>` +
       `<div class="c3d-grid"><div><em>Time</em><b>${fmtTime(run.time)}</b></div><div><em>Biggest chain</em><b>${Math.round(run.best).toLocaleString()}</b></div><div><em>Max angle</em><b>${Math.round(run.maxAngle)}°</b></div>` +
       `<div><em>Longest drift</em><b>${run.longest.toFixed(1)} s</b></div><div><em>Clipping zones</em><b>${run.clips}</b></div><div><em>Wall hits</em><b>${run.hits}</b></div></div>` +
-      `<p class="c3d-note">Bronze ${map.medals[0].toLocaleString()} · Silver ${map.medals[1].toLocaleString()} · Gold ${map.medals[2].toLocaleString()}</p>` +
+      `<p class="c3d-note">Bronze ${map.medals[0].toLocaleString()} · Silver ${map.medals[1].toLocaleString()} · Gold ${map.medals[2].toLocaleString()}${newGhost ? " · 👻 this run is your new ghost" : ""}</p>` + ex.telemetry.html(map.id, carDef.id) +
       `<div class="c3d-row"><button type="button" class="c3d-go" data-act="again">↻ Again</button><button type="button" data-act="next">Next course ▶</button><button type="button" data-act="menu">☰ Cars & courses</button></div></div>`;
-    result.classList.add("on");
+    result.classList.add("on"); ex.telemetry.draw(result, map.id, carDef.id);
     try { opts.done && opts.done(score, map.id, carDef.id); } catch { /* ignore */ }
   }
 
@@ -274,7 +293,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
     if (Math.abs(di) < P.n / 4) run.prog += di;
     run.lastI = i;
     if (state === "run" && run.prog >= P.n * (run.laps + 1)) {
-      run.laps++;
+      run.laps++; ex.telemetry.lapDone(run.time);
       run.clipped.clear();
       if (run.laps >= map.laps) finish();
       else banner.show(`<b>LAP ${run.laps + 1} / ${map.laps}</b>`, 1200);
@@ -339,6 +358,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   // ---------------------------------------------------------------- frame
   let hudT = 0;
   stage.onFrame((dt, now) => {
+    if (ex.photo.open) { keys.taps(); car.body.children[1].visible = true; ex.photo.camera(camera); world.update(dt, now / 1000, camera, { x: v.x, z: v.z }); return; }   // photo mode: everything holds still
     for (const k of keys.taps()) {
       if (k === "KeyC" && state !== "menu") { camMode = (camMode + 1) % CAMS.length; banner.show(`<b>${CAMS[camMode]}</b>`, 700); camInit = false; }
       if (k === "KeyR" && state === "run") { lose("RESET", 0); backOnCourse(); }
@@ -357,7 +377,7 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
     if (state !== "menu" && state !== "result") v.step(dt, inp, groundFn);
     if (state === "count") { v.u = 0; v.w = 0; v.om = 0; }
     const lat = rules(dt);
-    if (state === "run") { run.time += dt; scoring(dt, lat); }
+    if (state === "run") { run.time += dt; scoring(dt, lat); ex.ghost.frame(run.time, v); const n = world.path.n; ex.telemetry.frame(run.time, v, inp, (((run.prog - n * run.laps) / n) % 1 + 1) % 1, run.laps); }
     car.update(v, dt, inp.brake > 0 || (state === "run" && inp.handbrake));
     // from the seat the glass would sit in front of the eyes; the dashboard instruments run while you can see them
     const inCab = camMode === 4 && (state === "run" || state === "count");
@@ -388,13 +408,14 @@ function run(host: HTMLElement, level: Level, save: Save, opts: DriftGameOpts, r
   });
 
   renderMenu(); menu.classList.add("on"); placeAtStart();
+  ex.photo.attach(() => ({ x: v.x, y: v.y, z: v.z, h: v.h }));
   const dbg = typeof __WB_DBG__ !== "undefined" && __WB_DBG__;
   const api = {
-    get v() { return v; }, get run() { return run; }, get state() { return state; }, get world() { return world; }, stage, keys, begin, toMenu, finish,
+    get v() { return v; }, get run() { return run; }, get state() { return state; }, get world() { return world; }, stage, keys, begin, toMenu, finish, ex,
     pick(carId: string, mapId: string) { carDef = DRIFT_CARS.find((c) => c.id === carId) || carDef; map = DRIFT_MAPS.find((m) => m.id === mapId) || map; save.car = carDef.id; save.map = map.id; swapMap(); renderMenu(); },
     dispose() {
       if (disposed) return; disposed = true;
-      stage.dispose(); keys.dispose(); pad && pad.dispose(); audio && audio.dispose(); world.dispose(); car.dispose(); smoke.dispose(); sparks.dispose(); marks.dispose();
+      ex.dispose(); stage.dispose(); keys.dispose(); pad && pad.dispose(); audio && audio.dispose(); world.dispose(); car.dispose(); smoke.dispose(); sparks.dispose(); marks.dispose();
       host.innerHTML = "";
       if (dbg && (window as any).__dk3 === api) (window as any).__dk3 = null;
     },
